@@ -54,7 +54,7 @@ st.markdown("""
 # --- DATABASE OPERATORI ---
 OPERATORI = {
     "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
-    "adv.hr@deireali.itm": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
+    "adv.hr@deireali.it": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
     "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
 }
 
