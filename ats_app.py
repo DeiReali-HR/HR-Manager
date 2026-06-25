@@ -1,173 +1,270 @@
 import streamlit as st
 import pandas as pd
-import json
-import random
 import os
-from datetime import datetime
 
-# 1. Configurazione della pagina e palette colori (Bianco, Azzurro tenue, Scritte Blu)
-st.set_page_config(page_title="Dei Reali ATS", page_icon="💼", layout="wide")
+# Configurazione della pagina con layout largo e titolo personalizzato
+st.set_page_config(page_title="Dei Reali - Dashboard", page_icon="👑", layout="wide")
 
+# CSS Avanzato per replicare l'interfaccia esatta del mockup (Mockup 1000376179.png)
 st.markdown("""
     <style>
-    /* Sfondo generale bianco e scritte blu scuro */
+    /* Sfondo generale grigio chiarissimo per dare profondità alle card bianche */
     .stApp {
-        background-color: #FFFFFF;
+        background-color: #F8FAFC;
         color: #0A2540;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    /* Sidebar azzurro tenue */
+    
+    /* Configurazione Sidebar Bianca Minimal */
     [data-testid="stSidebar"] {
-        background-color: #EBF3FC !important;
-        color: #0A2540 !important;
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0 !important;
+        padding-top: 20px;
     }
-    /* Testi principali e titoli in blu */
-    h1, h2, h3, h4, h5, h6, p, label {
-        color: #0A2540 !important;
+    
+    /* Titoli principali */
+    .main-title {
+        color: #031B4E !important;
+        font-weight: 800 !important;
+        font-size: 28px !important;
+        margin-bottom: 2px !important;
     }
-    /* Bottoni della Dashboard a tasti (Azzurro tenue con testo blu) */
-    .stButton>button {
-        background-color: #D3E5F9 !important;
-        color: #0A2540 !important;
-        border: 1px solid #B4D3F5 !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
+    .sub-title {
+        color: #64748B !important;
+        font-size: 14px !important;
+        margin-bottom: 25px !important;
+    }
+    
+    /* Stile per i pulsanti della barra di navigazione superiore */
+    div.stButton > button {
+        background-color: #FFFFFF !important;
+        color: #334155 !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 12px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease;
+        width: 100%;
+        min-height: 55px;
+    }
+    div.stButton > button:hover {
+        border-color: #3B82F6 !important;
+        color: #3B82F6 !important;
+        background-color: #F0F7FF !important;
+    }
+    
+    /* Stile per il pulsante attivo di navigazione */
+    .active-nav button {
+        border-color: #3B82F6 !important;
+        color: #3B82F6 !important;
+        background-color: #F0F7FF !important;
+    }
+
+    /* Card bianche rialzate per i moduli */
+    .custom-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -1px rgba(0, 0, 0, 0.02);
+        margin-bottom: 20px;
+        height: 100%;
+    }
+    
+    .card-header {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #031B4E !important;
+        margin-bottom: 20px !important;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Simulatore Box di caricamento trascina-e-rilascia */
+    .upload-box-sim {
+        border: 2px dashed #CBD5E1;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background-color: #F8FAFC;
+        cursor: pointer;
+        margin-bottom: 15px;
+    }
+    
+    /* Pulsante principale di Azione Blu (Pubblica Annuncio) */
+    .stButton .pub-btn-container button {
+        background-color: #0052CC !important;
+        color: #FFFFFF !important;
+        border: none !important;
         font-weight: bold !important;
-        width: 100% !important;
-        transition: all 0.3s ease;
+        border-radius: 8px !important;
+        padding: 10px 24px !important;
     }
-    .stButton>button:hover {
-        background-color: #B4D3F5 !important;
-        border-color: #0A2540 !important;
+    .stButton .pub-btn-container button:hover {
+        background-color: #0043A4 !important;
+    }
+    
+    /* Badge monitoraggio laterali */
+    .monitor-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #475569;
+    }
+    .monitor-badge {
+        background-color: #EFF6FF;
+        color: #1D4ED8;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Inizializzazione dello Stato della Sessione
+# Inizializzazione dello Stato della Navigazione
+if 'current_menu' not in st.session_state:
+    st.session_state.current_menu = "Annunci"
 if 'jobs' not in st.session_state:
     st.session_state.jobs = []
-if 'candidates' not in st.session_state:
-    st.session_state.candidates = [
-        {"id": "CAND-001", "nome": "Marco Rossi", "competenze": "Python, Django, PostgreSQL", "formazione": "Laurea Informatica", "punteggio": 9, "stato": "Nuovo"},
-        {"id": "CAND-002", "nome": "Giulia Bianchi", "competenze": "React, TypeScript, CSS", "formazione": "Master Front-End", "punteggio": 7, "stato": "Nuovo"},
-    ]
-if 'clients' not in st.session_state:
-    st.session_state.clients = [{"id": "CLI-001", "nome": "TechCorp S.r.l.", "settore": "IT", "referente": "Ing. Riva"}]
-if 'interviews' not in st.session_state:
-    st.session_state.interviews = []
-if 'current_menu' not in st.session_state:
-    st.session_state.current_menu = "📢 Annunci"
 
-# --- SIDEBAR (MENU DI SINISTRA) ---
+# --- MENU LATERALE SINISTRO (SIDEBAR) ---
 with st.sidebar:
-    # Inserimento Logo Dei Reali (Cerca l'immagine caricata nella stessa cartella)
+    # Esposizione del Logo centrato
     logo_path = "1000376160.jpeg"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
     else:
-        st.subheader("👑 DEI REALI")
-        st.caption("Corporate Consulting")
+        st.markdown("<h2 style='text-align:center; color:#031B4E;'>DEI REALI</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#64748B; font-size:12px;'>Corporate Consulting</p>", unsafe_allow_html=True)
     
-    st.divider()
-    st.caption("🔹 MONITORAGGIO APPLICATIVO")
-    st.markdown("*Utenti attivi:* 1/10\n\n*CV in Database:* 2/10000")
-    st.divider()
-    st.info("🤖 AI Gemini pronta per l'integrazione a consumo.")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    # Voci del menu laterale decorative (Stile elenco del mockup)
+    st.markdown("""
+        <div style='padding-left: 10px;'>
+            <p style='color: #3B82F6; font-weight: 600; font-size: 14px; margin-bottom:18px;'>📊 Dashboard</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>📢 Annunci</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🔍 Screening CV</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🤖 Colloqui AI</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>👥 Assunzioni</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>📈 Report</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🏢 Clienti</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>👤 Candidati</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    
+    # Monitoraggio Applicativo in Basso (Incluso i badge numerici del mockup)
+    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8; letter-spacing:0.5px;'>MONITORAGGIO APPLICATIVO</p>", unsafe_allow_html=True)
+    st.markdown('<div class="monitor-row">👥 Utenti attivi <span class="monitor-badge">1/10</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="monitor-row">📄 CV in Database <span class="monitor-badge">2/10000</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="monitor-row"><span>⚡ AI Gemini</span> <span style="color:#22C55E; font-size:12px;">● pronta</span></div>', unsafe_allow_html=True)
 
-# --- DASHBOARD A TASTI (TONI AZZURRO E BLU) ---
-st.title("💼 Sistema di Gestione & Selezione Personale")
-st.markdown("### 🎛️ Dashboard Operativa")
+# --- CONTENUTO PRINCIPALE ---
+st.markdown('<p class="main-title">Sistema di Gestione & Selezione Personale</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Dashboard Operativa</p>', unsafe_allow_html=True)
 
-# Griglia di pulsanti per la navigazione
-c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
-with c1:
-    if st.button("📢\nAnnunci"): st.session_state.current_menu = "📢 Annunci"
-with c2:
-    if st.button("📥\nScreening CV"): st.session_state.current_menu = "📥 Screening CV"
-with c3:
-    if st.button("🤝\nColloqui AI"): st.session_state.current_menu = "🤝 Colloqui AI"
-with c4:
-    if st.button("🎉\nAssunzioni"): st.session_state.current_menu = "🎉 Assunzioni"
-with c5:
-    if st.button("📊\nReport"): st.session_state.current_menu = "📊 Report"
-with c6:
-    if st.button("🏢\nClienti"): st.session_state.current_menu = "🏢 Clienti"
-with c7:
-    if st.button("👥\nCandidati"): st.session_state.current_menu = "👥 Candidati"
+# --- BARRA DI NAVIGAZIONE SUPERIORE A TASTI ---
+nav_cols = st.columns(7)
+menu_items = [
+    ("📢 Annunci", "Annunci"), 
+    ("📄 Screening CV", "Screening"), 
+    ("🤖 Colloqui AI", "Colloqui"), 
+    ("👥 Assunzioni", "Assunzioni"), 
+    ("📊 Report", "Report"), 
+    ("🏢 Clienti", "Clienti"), 
+    ("👤 Candidati", "Candidati")
+]
 
-st.divider()
+for idx, (label, key) in enumerate(menu_items):
+    with nav_cols[idx]:
+        # Applica classe CSS attiva se selezionato
+        if st.session_state.current_menu == key:
+            st.markdown('<div class="active-nav">', unsafe_allow_html=True)
+        if st.button(label, key=f"nav_{key}"):
+            st.session_state.current_menu = key
+        if st.session_state.current_menu == key:
+            st.markdown('</div>', unsafe_allow_html=True)
 
-# --- GESTIONE DELLE AREE ---
+st.markdown("<br>", unsafe_allow_html=True)
 
-# AREA 1: MODULO ANNUNCI (AGGIORNATO)
-if st.session_state.current_menu == "📢 Annunci":
-    st.header("📢 Creazione e Pubblicazione Annunci")
+# --- AREA DI LAVORO SELEZIONATA ---
+if st.session_state.current_menu == "Annunci":
     
     col_sx, col_dx = st.columns(2)
     
+    # CARD 1: DATI DELL'ANNUNCIO (A SINISTRA)
     with col_sx:
-        st.subheader("📝 Dati dell'Annuncio")
-        uploaded_img = st.file_uploader("🖼️ Foto caricabile da locale", type=["png", "jpg", "jpeg"])
-        titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. Senior Project Manager")
+        st.markdown("""
+            <div class="custom-card">
+                <div class="card-header">📢 Creazione e Pubblicazione Annunci</div>
+            </div>
+        """, unsafe_allow_html=True)
         
-        # Blocco Importi/Costi
-        st.markdown("*💰 Specifica Economica*")
-        tipo_importo = Skinner = st.radio("Tipo di tariffa", ["RAL (Annua)", "Importo Lordo", "Costo Orario"], horizontal=True)
-        valore_importo = st.text_input("Valore economico (€)", placeholder="es. 40.000 o 45/ora")
+        # Elementi interni alla card sinistra
+        st.markdown("*📋 Dati dell'Annuncio*")
+        uploaded_img = st.file_uploader("Foto caricabile da locale", type=["png", "jpg", "jpeg"])
         
-        indirizzo_job = st.text_input("🏢 Indirizzo / Sede di lavoro", placeholder="es. Via Condotti, Roma")
+        titolo_job = st.text_input("Titolo della posizione", placeholder="Es. Senior Project Manager")
+        
+        st.markdown("*💰 Inquadramento Economico*")
+        tipo_costo = st.selectbox("Seleziona la tipologia di costo", ["RAL (Annuale)", "Importo Lordo", "Costo Orario"])
+        valore_costo = st.text_input("Valore economico (€)", placeholder="Es. 45.000 o 50/ora")
+        
+        indirizzo_job = st.text_input("📍 Indirizzo / Sede di lavoro", placeholder="Es. Via Condotti, Roma")
         
         st.markdown("*📞 Dati di Contatto*")
-        cellulare_job = st.text_input("Cellulare", placeholder="es. +39 333 1234567")
-        mail_job = st.text_input("E-mail di contatto", placeholder="es. hr@deireali.com")
+        c_tel, c_mail = st.columns(2)
+        with c_tel:
+            cellulare_job = st.text_input("Cellulare", placeholder="Es. +39 333 1234567")
+        with c_mail:
+            mail_job = st.text_input("E-mail di contatto", placeholder="Es. hr@deireali.com")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown('<div class="pub-btn-container">', unsafe_allow_html=True)
+        btn_pubblica = st.button("🚀 Pubblica annuncio")
+        st.markdown('</div>', unsafe_allow_html=True)
 
+    # CARD 2: ASSISTENTE AI (A DESTRA)
     with col_dx:
-        st.subheader("🤖 Assistente di Scrittura IA")
-        info_basiche = st.text_area("Inserisci le info basiche dell'annuncio per l'editing IA", placeholder="es. Cerchiamo un esperto di consulenza aziendale per la sede di Roma, offriamo welfare...")
+        st.markdown("""
+            <div class="custom-card">
+                <div class="card-header">✨ Assistente di Scrittura IA</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        info_basiche = st.text_area("Inserisci le info base dell'annuncio per l'editing IA", placeholder="Es. Cerchiamo un esperto di consulenza aziendale per la sede di Roma...", height=150)
         tono = st.selectbox("Tono dell'editing", ["Professionale", "Istituzionale", "Moderno"])
         
-        if st.button("Ottimizza Annuncio con IA ✨"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Ottimizza Annuncio con IA 🤖"):
             if titolo_job and info_basiche:
-                st.session_state['gen_text'] = f"### Offerta di Lavoro: {titolo_job}\n\n*Sede:* {indirizzo_job}\n*Budget/Compenso:* {valore_importo} ({tipo_importo})\n\n*Descrizione Posizione:\n{info_basiche}\n\nContatti:*\n✉️ {mail_job} | 📞 {cellulare_job}"
+                st.session_state['preview_text'] = f"### {titolo_job}\n\n*Sede:* {indirizzo_job}\n*Compenso:* {valore_costo} ({tipo_costo})\n\n*Descrizione:\n{info_basiche}\n\nContatti:*\n✉️ {mail_job} | 📞 {cellulare_job}"
             else:
-                st.error("Inserisci almeno il Titolo e le Info Basiche!")
+                st.error("Inserisci prima il titolo della posizione e le info base!")
 
-    if 'gen_text' in st.session_state:
-        st.divider()
-        st.subheader("🌐 Verifica ed Esporta Pagina Web Annuncio")
-        testo_definitivo = st.text_area("Modifica il testo finale", value=st.session_state['gen_text'], height=200)
-        
-        if st.button("Conferma e Pubblica Annuncio 🌐"):
+        if 'preview_text' in st.session_state:
+            st.markdown("<br><hr><b>🌐 Anteprima Pagina Web Generata:</b>", unsafe_allow_html=True)
+            st.info(st.session_state['preview_text'])
             slug = titolo_job.lower().replace(" ", "-")
-            link_generato = f"https://deireali-hr.streamlit.app/jobs/{slug}"
-            st.session_state.jobs.append({"titolo": titolo_job, "tipo": tipo_importo, "valore": valore_importo, "link": link_generato})
-            st.success("🎉 Pagina Web dell'annuncio creata!")
-            st.code(link_generato)
+            st.code(f"https://deireali-hr.streamlit.app/jobs/{slug}")
 
-    if st.session_state.jobs:
-        st.divider()
-        st.subheader("📋 Storico Annunci Pubblicati")
-        st.dataframe(pd.DataFrame(st.session_state.jobs), use_container_width=True)
-
-# AREA 2: SCREENING CV
-elif st.session_state.current_menu == "📥 Screening CV":
-    st.header("📥 Screening CV & Catalogazione AI")
-    up_cv = st.file_uploader("Trascina qui i CV dei candidati", accept_multiple_files=True)
-    if up_cv:
-        st.success("CV importati nel database! Gemini assegnerà i punteggi reali (1-10) non appena collegata l'API key.")
-    st.dataframe(pd.DataFrame(st.session_state.candidates), use_container_width=True)
-
-# AREA 3: COLLOQUI AI
-elif st.session_state.current_menu == "🤝 Colloqui AI":
-    st.header("🤝 Sala Colloqui Virtuale con Assistente Silente")
-    cand = st.selectbox("Seleziona Candidato", [c["nome"] for c in st.session_state.candidates])
-    st.info(f"Pannello per avviare la conferenza online. L'IA registrerà la conversazione producendo lo skill summary finale.")
-
-# AREA 4: ASSUNZIONI
-elif st.session_state.current_menu == "🎉 Assunzioni":
-    st.header("🎉 Conferma Assunzione Risorse")
-    st.write("Modulo per la chiusura della risorsa e l'assegnazione finale al cliente di riferimento.")
-
-# Altre aree (Semplificate per la struttura)
 else:
-    st.header(f"{st.session_state.current_menu}")
-    st.write("Dati anagrafici e reportistica pronti per l'alimentazione del database.")
+    # Sfondo o aree temporanee per gli altri menu della navigazione
+    st.markdown(f"""
+        <div class="custom-card">
+            <div class="card-header">📬 Sezione {st.session_state.current_menu} in attesa di caricamento</div>
+            <p style='color:#64748B;'>I moduli grafici per questa sezione seguiranno le linee guida del design prescelto.</p>
+        </div>
+    """, unsafe_allow_html=True)
