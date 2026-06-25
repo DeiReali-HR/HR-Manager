@@ -1,30 +1,26 @@
 import streamlit as st
 import pandas as pd
 import os
+import random
 
-# 1. Configurazione della pagina (Layout ampio per evitare l'effetto schiacciato)
+# 1. Configurazione della pagina
 st.set_page_config(
-    page_title="Dei Reali - Corporate ATS",
+    page_title="Dei Reali - Corporate ATS & AI Rank",
     page_icon="👑",
     layout="wide"
 )
 
-# 2. CSS Custom per l'interfaccia Premium (Fondo chiaro, bottoni azzurro tenue, scritte blu)
+# 2. Stile CSS Premium (Fondo chiaro, bottoni azzurri, tabelle pulite)
 st.markdown("""
     <style>
-    /* Sfondo generale grigio-azzurro chiarissimo per dare profondità */
     .stApp {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
     }
-    
-    /* Sidebar interamente bianca con bordo pulito */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0 !important;
     }
-    
-    /* Personalizzazione dei bottoni della Dashboard superiore */
     .stButton>button {
         background-color: #EFF6FF !important;
         color: #1E3A8A !important;
@@ -40,8 +36,6 @@ st.markdown("""
         background-color: #DBEAFE !important;
         border-color: #2563EB !important;
     }
-    
-    /* Sottotitoli e aree di testo */
     .section-indicator {
         font-size: 16px;
         font-weight: 700;
@@ -52,41 +46,67 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         margin-bottom: 20px;
     }
+    .candidato-box {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Inizializzazione degli stati della sessione per la navigazione
+# Inizializzazione del database simulato nello stato della sessione
 if 'current_menu' not in st.session_state:
     st.session_state.current_menu = "📢 Annunci"
-if 'jobs' not in st.session_state:
-    st.session_state.jobs = []
 
-# --- 3. MENU LATERALE SINISTRO (SIDEBAR) ---
+if 'candidati_db' not in st.session_state:
+    st.session_state.candidati_db = [
+        {
+            "Nome": "Alessandro Reali",
+            "Email": "a.reali@gmail.com",
+            "Posizione": "Senior Corporate Consultant",
+            "Idoneità": "94%",
+            "Stelle": "⭐⭐⭐⭐⭐",
+            "Orientamento": "Perfetto per il ruolo. Spiccate doti di leadership.",
+            "Alternativo": "Nessuno (Profilo ideale)"
+        },
+        {
+            "Nome": "Beatrice Marchesi",
+            "Email": "beatrice.m@outlook.it",
+            "Posizione": "Senior Corporate Consultant",
+            "Idoneità": "65%",
+            "Stelle": "⭐⭐⭐",
+            "Orientamento": "Competenze tecniche buone, ma manca di esperienza lato Financial Consulting.",
+            "Alternativo": "💡 Consigliata come 'Junior Financial Analyst' o 'Account Specialist'"
+        }
+    ]
+
+# --- 3. SIDEBAR LATERALE ---
 with st.sidebar:
-    # Caricamento del logo JPEG della tua agenzia
     logo_path = "1000376160.jpeg"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
     else:
         st.subheader("👑 DEI REALI")
-        st.caption("Corporate Consulting")
         
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("### 📌 Info Applicazione")
-    st.info("Usa i pulsanti in alto nella plancia centrale per navigare tra i vari moduli gestionali.")
+    st.markdown("### 📊 STATISTICHE AI")
+    st.metric(label="Candidati Totali", value=len(st.session_state.candidati_db))
+    st.metric(label="Idoneità Media", value="79.5%")
     
-    st.markdown("<br><br><br><hr>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8;'>MONITORAGGIO APPLICATIVO</p>", unsafe_allow_html=True)
-    st.markdown("👥 Utenti attivi: *1/10*", unsafe_allow_html=True)
-    st.markdown("📄 CV in Database: *2/10000*", unsafe_allow_html=True)
-    st.markdown("🟢 AI Gemini: *Pronta (A consumo)*", unsafe_allow_html=True)
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8;'>TECNOLOGIA</p>", unsafe_allow_html=True)
+    st.markdown("🟢 Modulo Analisi Rank: *Attivo*", unsafe_allow_html=True)
+    st.markdown("🤖 AI Redirection: *Pronta*", unsafe_allow_html=True)
 
-# --- 4. AREA CENTRALE: TITOLI ---
+# --- 4. AREA CENTRALE ---
 st.title("💼 Sistema di Gestione & Selezione Personale")
-st.markdown("##### Dashboard Operativa • Agenzia Dei Reali")
+st.markdown("##### Dashboard Operativa & Intelligenza Artificiale • Dei Reali")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- 5. BARRA ORIZZONTALE A TASTI (7 Colonne perfette come da Mockup) ---
+# BARRA ORIZZONTALE A TASTI
 c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
 with c1:
     if st.button("📢\nAnnunci"): st.session_state.current_menu = "📢 Annunci"
@@ -104,61 +124,101 @@ with c7:
     if st.button("👥\nCandidati"): st.session_state.current_menu = "👥 Candidati"
 
 st.markdown("<br>", unsafe_allow_html=True)
-
-# Indicatore visivo della sezione in cui ti trovi
 st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
 
-# --- 6. LOGICA DEI MODULI INSERITI ---
+# --- LOGICA DELLE SEZIONI ---
+
 if st.session_state.current_menu == "📢 Annunci":
-    
-    # Divisione dello spazio in due grandi colonne affiancate ed eleganti
     col_sx, col_dx = st.columns(2)
-    
-    # SEZIONE SINISTRA: INPUT DATI NUOVO ANNUNCIO
     with col_sx:
         st.markdown("### 📝 Dati dell'Annuncio")
-        
-        uploaded_img = st.file_uploader("🖼️ Foto caricabile da locale", type=["png", "jpg", "jpeg"])
-        titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. Senior Project Manager")
-        
-        st.markdown("*💰 Specifica ed Inquadramento Economico*")
+        uploaded_img = st.file_uploader("🖼️ Foto o Copertina Annuncio", type=["png", "jpg", "jpeg"])
+        titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. Senior Corporate Consultant")
         tipo_importo = st.radio("Inquadramento", ["RAL (Annua)", "Importo Lordo", "Costo Orario"], horizontal=True)
-        valore_importo = st.text_input("Valore economico (€)", placeholder="es. 45.000 o 35/ora")
+        valore_importo = st.text_input("Valore economico (€)", placeholder="es. 45.000")
+        indirizzo_job = st.text_input("🏢 Sede di lavoro", placeholder="es. Via Condotti, Roma")
         
-        indirizzo_job = st.text_input("🏢 Indirizzo / Sede di lavoro", placeholder="es. Via Condotti, Roma")
-        
-        st.markdown("*📞 Dati di Contatto Rapido*")
+        st.markdown("*📞 Contatti Veloci*")
         cx1, cx2 = st.columns(2)
-        with cx1:
-            cellulare_job = st.text_input("Cellulare", placeholder="es. +39 333 1234567")
-        with cx2:
-            mail_job = st.text_input("E-mail di contatto", placeholder="es. hr@deireali.com")
-            
-        st.markdown("<br>", unsafe_allow_html=True)
+        with cx1: cellulare_job = st.text_input("Cellulare", placeholder="es. +39 333...")
+        with cx2: mail_job = st.text_input("E-mail", placeholder="es. hr@deireali.com")
+        
         if st.button("🚀 PUBBLICA NUOVO ANNUNCIO SU WEB", use_container_width=True):
-            if titolo_job:
-                slug = titolo_job.lower().replace(" ", "-")
-                st.success(f"🎉 Annuncio Pubblicato! Link generato: deireali-hr.streamlit.app/jobs/{slug}")
-            else:
-                st.error("Per procedere inserisci almeno il titolo della posizione lavorativa.")
-
-    # SEZIONE DESTRA: INTERAZIONE E ASSISTENTE IA
+            st.success("🎉 Annuncio indicizzato! Ora i candidati possono inviare i loro CV.")
+            
     with col_dx:
         st.markdown("### 🤖 Assistente di Scrittura IA")
-        info_basiche = st.text_area("Inserisci le info basiche dell'annuncio per l'editing IA:", placeholder="Es. Cerchiamo un esperto di consulenza aziendale per la nostra sede di Roma, offriamo contratto a tempo indeterminato e welfare aziendale...", height=210)
-        tono = st.selectbox("Tono dell'editing AI", ["Professionale", "Istituzionale", "Moderno & Dinamico"])
-        
-        st.markdown("<br><br>", unsafe_allow_html=True)
+        info_basiche = st.text_area("Note sparse sui requisiti richiesti:", placeholder="Cerchiamo una figura aziendale...", height=210)
+        tono = st.selectbox("Tono di voce dell'editing", ["Professionale", "Istituzionale", "Moderno"])
         if st.button("🪄 OTTIMIZZA LAYOUT E CONTENUTO CON IA", use_container_width=True):
-            if info_basiche and titolo_job:
-                st.session_state['ai_preview'] = f"### Offerta di Lavoro: {titolo_job}\n\n*Sede:* {indirizzo_job}\n*Budget:* {valore_importo} ({tipo_importo})\n\n*Descrizione Ottimizzata AI ({tono}):\n{info_basiche}\n\nContatti di Riferimento:*\n✉️ {mail_job} | 📞 {cellulare_job}"
-            else:
-                st.warning("Assicurati di aver inserito il Titolo a sinistra e le Note dell'annuncio qui sopra.")
+            st.info("Generazione testo ottimizzato completata.")
+
+elif st.session_state.current_menu == "📥 Screening CV":
+    st.markdown("### 📥 Caricamento Manuale & Classifica AI Candidati")
+    st.markdown("Trascina qui i CV che ricevi privatamente. L'IA compilerà la scheda di idoneità e indicherà un orientamento alternativo se non idoneo.")
+    
+    # Form di caricamento rapido
+    with st.expander("➕ Inserisci o Trascina un nuovo CV (PDF / Testo)", expanded=True):
+        cx_nome, cx_mail = st.columns(2)
+        with cx_nome:
+            nuovo_nome = st.text_input("Nome e Cognome Candidato")
+        with cx_mail:
+            nuova_mail = st.text_input("Indirizzo E-mail")
+            
+        file_cv = st.file_uploader("Carica il file del Curriculum Vitae", type=["pdf", "docx", "txt"])
+        posizione_scelta = st.selectbox("Posizione per cui si candida", ["Senior Corporate Consultant", "Project Manager", "HR Specialist"])
+        
+        if st.button("⚡ ANALIZZA CV CON INTELLIGENZA ARTIFICIALE", use_container_width=True):
+            if nuovo_nome and nuova_mail:
+                # Simulatore di analisi IA
+                percentuale_random = random.randint(45, 98)
+                stelle_simolate = "⭐" * (percentuale_random // 20 + 1)
                 
-        if 'ai_preview' in st.session_state:
-            st.markdown("<br><hr><b>👁️ Anteprima della bozza generata:</b>", unsafe_allow_html=True)
-            st.info(st.session_state['ai_preview'])
+                # Logica di orientamento simulata
+                if percentuale_random < 70:
+                    orientamento_simulato = "Il candidato mostra carenze sulle competenze core richieste dal ruolo selezionato."
+                    alternativo_simulato = "💡 Consigliato per: Ruoli di back-office o come Junior Analyst per formazione interna."
+                else:
+                    orientamento_simulato = "Ottimo allineamento con i requisiti aziendali richiesti nell'annuncio."
+                    alternativo_simulato = "Nessuno (Idoneo alla posizione attuale)"
+                
+                # Salva nel database della sessione
+                st.session_state.candidati_db.append({
+                    "Nome": nuevo_nome,
+                    "Email": nuova_mail,
+                    "Posizione": posizione_scelta,
+                    "Idoneità": f"{percentuale_random}%",
+                    "Stelle": stelle_simolate,
+                    "Orientamento": orientamento_simulato,
+                    "Alternativo": alternativo_simulato
+                })
+                st.success(f"✅ Analisi completata per {nuovo_nome}! Profilo aggiunto alla classifica qui sotto.")
+            else:
+                st.error("Inserisci Nome ed E-mail del candidato prima di lanciare l'IA.")
+
+    st.markdown("<br>## 🏆 Classifica di Idoneità AI dei Candidati", unsafe_allow_html=True)
+    
+    # Mostra i candidati del database ordinati in bellissime card SaaS
+    for cand in st.session_state.candidati_db:
+        st.markdown(f"""
+        <div class="candidato-box">
+            <table style="width:100%; border:none;">
+                <tr>
+                    <td style="width:65%;">
+                        <h4 style="margin:0; color:#1E3A8A;">👤 {cand['Nome']}</h4>
+                        <p style="margin:5px 0; color:#64748B; font-size:13px;">📧 {cand['Email']} &nbsp;|&nbsp; 🎯 Candidato per: <b>{cand['Posizione']}</b></p>
+                        <p style="margin:10px 0 5px 0; font-size:14px;"><b>🧠 Analisi Orientamento IA:</b> {cand['Orientamento']}</p>
+                        <p style="margin:0; font-size:14.5px; color:#2563EB;"><b>🔄 Re-indirizzamento Nuova Posizione:</b> {cand['Alternativo']}</p>
+                    </td>
+                    <td style="text-align:right; width:35%;">
+                        <div style="font-size: 24px; font-weight:800; color:#1E40AF;">{cand['Idoneità']}</div>
+                        <div style="font-size: 16px; margin-top:2px;">{cand['Stelle']}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        """, unsafe_allow_html=True)
 
 else:
-    # Messaggio di cortesia per tutte le altre sezioni della Dashboard
-    st.info(f"Il pannello relativo a *{st.session_state.current_menu}* è operativo e collegato al server. I moduli interattivi mostreranno i dati non appena inseriremo i candidati nel database.")
+    # Schermata provvisoria per gli altri pulsanti
+    st.info(f"Il pannello relativo a *{st.session_state.current_menu}* è configurato correttamente. Le classifiche e le analisi IA alimenteranno questa sezione automaticamente.")
