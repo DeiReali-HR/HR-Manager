@@ -7,7 +7,7 @@ from datetime import datetime, date, time
 
 # 1. Configurazione della pagina
 st.set_page_config(
-    page_title="Dei Reali - Corporate ATS & Shared Agenda",
+    page_title="Dei Reali - Corporate ATS Full Suite",
     page_icon="👑",
     layout="wide"
 )
@@ -48,13 +48,18 @@ st.markdown("""
         padding: 10px 16px !important; border-radius: 10px !important; font-weight: bold !important;
         text-decoration: none !important; display: inline-block !important; text-align: center !important; margin-top: 5px; font-size: 12px;
     }
+    .plan-btn {
+        background-color: #F59E0B !important; color: white !important; border: none !important;
+        padding: 10px 16px !important; border-radius: 10px !important; font-weight: bold !important;
+        text-decoration: none !important; display: inline-block !important; text-align: center !important; margin-top: 5px; font-size: 12px;
+    }
     .global-banner {
         background-color: #FFFBEB; border-left: 5px solid #F59E0B; padding: 15px; border-radius: 8px; margin-bottom: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- NUOVO DATABASE UTENTI / OPERATORI AGGIORNATO ---
+# --- DATABASE UTENTI / OPERATORI AGGIORNATO ---
 OPERATORI = {
     "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
     "adv.hr@deireali.it": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
@@ -149,13 +154,54 @@ else:
             """, unsafe_allow_html=True)
 
     # ==========================================
+    # MODULO 2: 📥 SCREENING CV & SELEZIONE LIVE (LA TUA FOTO)
+    # ==========================================
+    if st.session_state.current_menu in ["📥 Screening CV", "👥 Candidati"]:
+        st.markdown("### 👥 Elenco Candidati e Monitor Chiamate Live")
+        
+        for index, cand in enumerate(st.session_state.candidati_db):
+            st.markdown('<div class="saas-box">', unsafe_allow_html=True)
+            col_info, col_status = st.columns([2.3, 1.7])
+            
+            with col_info:
+                st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px; color:#64748B;'>📱 {cand['Telefono']}</span>", unsafe_allow_html=True)
+                st.markdown(f"🎯 *Posizione:* {cand['Posizione']} &emsp;|&emsp; *Voto IA:* {cand['Idoneità']} ({cand['Stelle']})")
+                
+            with col_status:
+                if cand.get("Impegnato", False):
+                    st.markdown(f'<div class="status-occupato">🔴 IN VIDEO CONFERENZA ({cand.get("Operatore_Call")})</div>', unsafe_allow_html=True)
+                    st.markdown(f'<a href="{cand["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Entra su Meet Room</a>', unsafe_allow_html=True)
+                    
+                    if cand.get("Operatore_Call") == st.session_state.utente_connesso['nome']:
+                        if st.button("📴 Chiudi Sessione e Salva", key=f"stop_btn_{index}"):
+                            st.session_state.candidati_db[index]["Impegnato"] = False
+                            st.session_state.candidati_db[index]["Operatore_Call"] = None
+                            st.rerun()
+                else:
+                    st.markdown('<div class="status-disponibile">🟢 PRONTO / Libero</div>', unsafe_allow_html=True)
+                    
+                    # TASTO 1: Chiamata Diretta Istantanea
+                    if st.button("📞 Chiama Ora (Link Istantaneo)", key=f"start_btn_{index}"):
+                        st.session_state.candidati_db[index]["Impegnato"] = True
+                        st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
+                        meet_code = f"{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
+                        st.session_state.candidati_db[index]["Meet_Link"] = f"https://meet.google.com/{meet_code}"
+                        st.rerun()
+                    
+                    # TASTO 2 RAPIDO: Sposta subito alla tab Calendario pre-compilando il candidato!
+                    if st.button("🗓️ Pianifica / Invia su Calendario", key=f"plan_fast_{index}"):
+                        st.session_state.current_menu = "🤝 Colloqui AI"
+                        st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==========================================
     # MODULO 3: 🤝 AGENDA CALENDARIO E STANZE AI
     # ==========================================
-    if st.session_state.current_menu == "🤝 Colloqui AI":
+    elif st.session_state.current_menu == "🤝 Colloqui AI":
         st.markdown("### 🗓️ Calendario Globale e Pianificazione Turni")
         st.markdown("Questa è l'area aziendale condivisa. Tutti gli operatori vedono lo stesso tabellone per evitare sovrapposizioni.")
         
-        # TABELLONE CALENDARIO COMPLETO
+        # TABELLONE CALENDARIO COMPLETO (SOTTO GLI OCCHI DI TUTTI)
         st.markdown("#### 📋 Calendario dei Colloqui Pianificati")
         if not st.session_state.agenda_db:
             st.info("Nessun colloquio registrato in calendario.")
@@ -216,65 +262,27 @@ else:
                     st.markdown(f'<a href="{wa_url}" target="_blank" class="whatsapp-btn" style="width:100%;">💬 Notifica Numero Candidato</a>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
-    # ==========================================
-    # MODULO 2: 📥 SCREENING CV & SELEZIONE LIVE
-    # ==========================================
-    elif st.session_state.current_menu in ["📥 Screening CV", "👥 Candidati"]:
-        st.markdown("### 👥 Elenco Candidati e Monitor Chiamate Live")
-        
-        for index, cand in enumerate(st.session_state.candidati_db):
-            st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-            col_info, col_status = st.columns([2.5, 1.5])
-            
-            with col_info:
-                st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px; color:#64748B;'>📱 {cand['Telefono']}</span>", unsafe_allow_html=True)
-                st.markdown(f"🎯 *Posizione:* {cand['Posizione']} &emsp;|&emsp; *Voto IA:* {cand['Idoneità']} ({cand['Stelle']})")
-                
-            with col_status:
-                if cand.get("Impegnato", False):
-                    st.markdown(f'<div class="status-occupato">🔴 IN VIDEO CONFERENZA ({cand.get("Operatore_Call")})</div>', unsafe_allow_html=True)
-                    st.markdown(f'<a href="{cand["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Schermata Principale Meet</a>', unsafe_allow_html=True)
-                    
-                    if cand.get("Operatore_Call") == st.session_state.utente_connesso['nome']:
-                        if st.button("📴 Chiudi Sessione e Salva", key=f"stop_btn_{index}"):
-                            st.session_state.candidati_db[index]["Impegnato"] = False
-                            st.session_state.candidati_db[index]["Operatore_Call"] = None
-                            st.rerun()
-                else:
-                    st.markdown('<div class="status-disponibile">🟢 PRONTO / Libero</div>', unsafe_allow_html=True)
-                    if st.button("📞 Chiama Ora (Link Istantaneo)", key=f"start_btn_{index}"):
-                        st.session_state.candidati_db[index]["Impegnato"] = True
-                        st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
-                        meet_code = f"{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
-                        st.session_state.candidati_db[index]["Meet_Link"] = f"https://meet.google.com/{meet_code}"
-                        st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    # ==========================================
-    # MODULO 1: 📢 GESTIONE ANNUNCI 
-    # ==========================================
+    # --- GLI ALTRI MODULI ---
     elif st.session_state.current_menu == "📢 Annunci":
         col_sx, col_dx = st.columns(2)
         with col_sx:
             st.markdown("### 📝 Dati dell'Annuncio")
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-            st.file_uploader("🖼️ Carica Copertina Annuncio", type=["png", "jpg", "jpeg"], key="uploader_annunci_img")
+            st.file_uploader("🖼️ Carica Copertina", type=["png", "jpg", "jpeg"], key="uploader_annunci_img")
             st.text_input("📍 Titolo della posizione", placeholder="es. Senior Corporate Consultant", key="input_annuncio_titolo")
-            st.radio("Inquadramento", ["RAL (Annua)", "Importo Lordo", "Costo Orario"], horizontal=True, key="radio_annuncio_tipo")
+            st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True, key="radio_annuncio_tipo")
             st.text_input("Valore economico (€)", placeholder="es. 45.000", key="input_annuncio_valore")
-            st.text_input("🏢 Sede di lavoro", placeholder="es. Via Condotti, Roma", key="input_annuncio_sede")
-            if st.button("🚀 PUBBLICA NUOVO ANNUNCIO", use_container_width=True, key="btn_annuncio_pubblica"): 
-                st.success("🎉 Annuncio indicizzato e pubblicato online!")
+            st.text_input("🏢 Sede di lavoro", placeholder="es. Roma", key="input_annuncio_sede")
+            if st.button("🚀 PUBBLICA NUOVO ANNUNCIO", use_container_width=True): st.success("🎉 Pubblicato online!")
             st.markdown('</div>', unsafe_allow_html=True)
         with col_dx:
             st.markdown("### 🤖 Assistente Scrittura IA")
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-            st.text_area("Note e requisiti sparsi da elaborare:", placeholder="Esperienza minima 3 anni...", height=240, key="textarea_annuncio_note")
+            st.text_area("Note e requisiti sparsi:", height=240, key="textarea_annuncio_note")
             st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.current_menu == "🏢 Clienti":
         st.markdown("### 🏢 Anagrafica Clienti Partner")
-        for cli in st.session_state.clienti_db:
-            st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b></div>', unsafe_allow_html=True)
+        for cli in st.session_state.clienti_db: st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b></div>', unsafe_allow_html=True)
     else:
         st.info(f"Pannello {st.session_state.current_menu} attivo.")
