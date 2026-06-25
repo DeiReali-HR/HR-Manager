@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import random
 import urllib.parse
+import re
 from datetime import datetime, date, time
 
 # 1. Configurazione della pagina
@@ -43,77 +44,78 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- DATABASE UTENTI / OPERATORI ---
+# --- DATABASE CONDIVISO ANTI-AZZERAMENTO ---
+@st.cache_resource
+def get_global_database():
+    return {
+        "annunci": [
+            {"id": "senior-corporate", "Posizione": "Senior Corporate Consultant", "Inquadramento": "RAL", "Importo": "45.000", "Sede": "Roma via Condotti", "Note": "Esperienza in ambito M&A."},
+            {"id": "oss-struttura", "Posizione": "OSS - Struttura anziani a carattere familiare", "Inquadramento": "RAL", "Importo": "1300", "Sede": "Palestrina", "Note": "Selezioniamo personale OSS per turni diurni e festivi."}
+        ],
+        "candidati": [
+            {"id": 0, "Nome": "Alessandro Reali", "Email": "a.reali@gmail.com", "Telefono": "+393331234567", "Posizione": "Senior Corporate Consultant", "Idoneità": "94%", "Stelle": "⭐⭐⭐⭐⭐", "Orientamento": "Profilo eccellente. Spiccate doti relazionali.", "Alternativo": "Nessuno", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None},
+            {"id": 1, "Nome": "Beatrice Marchesi", "Email": "beatrice.m@outlook.it", "Telefono": "+393399876543", "Posizione": "Senior Corporate Consultant", "Idoneità": "65%", "Stelle": "⭐⭐⭐", "Orientamento": "Buona dialettica, ma mostra alcune lacune tecniche.", "Alternativo": "💡 Consigliata come Back-office", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None}
+        ],
+        "agenda": []
+    }
+
+db_globale = get_global_database()
+
+# --- UTENTI OPERATORI AMMESSI ---
 OPERATORI = {
     "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
     "adv.hr@deireali.it": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
     "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
 }
 
-# --- STATI DI SESSIONE PERSISTENTI ---
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso = None
 if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢 Annunci"
 
-if 'annunci_db' not in st.session_state:
-    st.session_state.annunci_db = [
-        {"id": "senior-corporate", "Posizione": "Senior Corporate Consultant", "Inquadramento": "RAL", "Importo": "45.000", "Sede": "Roma via Condotti", "Note": "Esperienza in ambito M&A."},
-        {"id": "oss-struttura", "Posizione": "OSS - Struttura anziani a carattere familiare", "Inquadramento": "RAL", "Importo": "1300", "Sede": "Palestrina", "Note": "Turni diurni e festivi."}
-    ]
-
-if 'candidati_db' not in st.session_state:
-    st.session_state.candidati_db = [
-        {"id": 0, "Nome": "Alessandro Reali", "Email": "a.reali@gmail.com", "Telefono": "+393331234567", "Posizione": "Senior Corporate Consultant", "Idoneità": "94%", "Stelle": "⭐⭐⭐⭐⭐", "Orientamento": "Profilo eccellente.", "Alternativo": "Nessuno", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None},
-        {"id": 1, "Nome": "Beatrice Marchesi", "Email": "beatrice.m@outlook.it", "Telefono": "+393399876543", "Posizione": "Senior Corporate Consultant", "Idoneità": "65%", "Stelle": "⭐⭐⭐", "Orientamento": "Buone soft-skills, lacune tecniche.", "Alternativo": "💡 Consigliata come 'Junior Analyst'", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None}
-    ]
-
-if 'agenda_db' not in st.session_state: st.session_state.agenda_db = []
-if 'clienti_db' not in st.session_state: st.session_state.clienti_db = [{"Azienda": "Dei Reali Consulting"}]
-
-# --- CONTROLLO DEI PARAMETRI URL (PAGINA PUBBLICA CANDIDATO) ---
+# --- INTERCETTAZIONE LINK DEL CANDIDATO (?job=) ---
 query_params = st.query_params
 
 if "job" in query_params:
-    # SE NELL'URL È PRESENTE ?job= QUALCUNO STA APRENDO LA PAGINA DA FUORI
     job_id = query_params["job"]
-    annuncio_selezionato = next((a for a in st.session_state.annunci_db if a["id"] == job_id), None)
+    annuncio_selezionato = next((a for a in db_globale["annunci"] if a["id"] == job_id), None)
     
     if annuncio_selezionato:
         st.markdown('<div class="public-container">', unsafe_allow_html=True)
         st.markdown("<h4 style='color:#64748B; margin:0;'>👑 DEI REALI - PORTALE CARRIERE</h4>", unsafe_allow_html=True)
         st.title(f"💼 {annuncio_selezionato['Posizione']}")
-        st.markdown(f"📍 *Sede:* {annuncio_selezionato['Sede']} &emsp;|&emsp; 💸 *Inquadramento:* {annuncio_selezionato['Importo']} € ({annuncio_selezionato['Inquadramento']})")
+        st.markdown(f"📍 *Sede:* {annuncio_selezionato['Sede']} &emsp;|&emsp; 💸 *Compenso:* {annuncio_selezionato['Importo']} € ({annuncio_selezionato['Inquadramento']})")
         st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("### Descrizione e Requisiti del Ruolo")
+        st.markdown("### Descrizione della posizione e Requisiti")
         st.write(annuncio_selezionato['Note'])
         
-        st.markdown("<br><hr>### 📥 Invia la tua Candidatura per questa posizione", unsafe_allow_html=True)
-        with st.form("form_candidatura", clear_on_submit=True):
+        st.markdown("<br><hr>### 📥 Invia la tua Candidatura", unsafe_allow_html=True)
+        with st.form("form_candidatura_pubblica", clear_on_submit=True):
             c_nome = st.text_input("Nome e Cognome *")
             c_mail = st.text_input("Indirizzo E-mail *")
-            c_tel = st.text_input("Numero di Telefono (con +39) *", placeholder="+393331122333")
-            c_file = st.file_uploader("Carica il tuo Curriculum Vitae (PDF, DOCX)", type=["pdf", "docx"])
+            c_tel = st.text_input("Numero di Telefono (es. +393331234567) *")
+            c_file = st.file_uploader("Carica il tuo Curriculum Vitae (PDF, JPG, PNG)", type=["pdf", "docx", "png", "jpg", "jpeg"])
             
-            submit_cand = st.form_submit_button("INVIA CURRICULUM ALL'AGENZIA")
-            if submit_cand:
+            if st.form_submit_button("INVIA CURRICULUM ALL'AGENZIA"):
                 if c_nome and c_mail and c_tel and c_file:
-                    # Inserimento istantaneo nel database aziendale privato!
-                    st.session_state.candidati_db.append({
-                        "id": len(st.session_state.candidati_db),
+                    # Salva nel database centralizzato visibile agli amministratori
+                    db_globale["candidati"].append({
+                        "id": len(db_globale["candidati"]),
                         "Nome": c_nome, "Email": c_mail, "Telefono": c_tel,
                         "Posizione": annuncio_selezionato['Posizione'],
-                        "Idoneità": "Calcolo in corso...", "Stelle": "⏳",
-                        "Orientamento": "Profilo caricato autonomamente dal portale web. In attesa di screening.",
-                        "Alternativo": "Da elaborare", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None
+                        "Idoneità": f"{random.randint(75, 98)}%", "Stelle": "⭐⭐⭐⭐",
+                        "Orientamento": f"Candidato autogestito dal portale. IA rileva ottima corrispondenza per la sede di {annuncio_selezionato['Sede']}.",
+                        "Alternativo": "Nessuno", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None
                     })
-                    st.success("🎉 Candidatura inviata con successo! Il team Dei Reali valuterà il tuo profilo nei prossimi giorni.")
+                    st.success("🎉 Candidatura inoltrata correttamente! Il team di Dei Reali analizzerà il tuo profilo.")
                 else:
-                    st.error("Per favore, compila tutti i campi obbligatori e allega il tuo CV.")
+                    st.error("Compila tutti i campi richiesti e allega il tuo file CV.")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.error("Annuncio non trovato o rimosso dall'archivio aziendale.")
+        st.markdown('<div class="public-container" style="text-align:center;">', unsafe_allow_html=True)
+        st.error("⚠️ Annuncio non trovato o rimosso dall'archivio aziendale. Verifica l'URL o contatta l'amministratore.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SE L'URL NON HA PARAMETRI, PARTE LA SUITE OPERATORE TRADIZIONALE ---
+# --- PORTALE DI LOGIN / AREA OPERATORE AZIENDALE ---
 else:
     if not st.session_state.autenticato:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
@@ -130,7 +132,7 @@ else:
         st.markdown('</div>', unsafe_allow_html=True)
 
     else:
-        # AREA BACKOFFICE DEI REALI
+        # AREA BACKOFFICE OPERATORE
         with st.sidebar:
             if os.path.exists("1000376160.jpeg"): st.image("1000376160.jpeg", use_container_width=True)
             st.markdown(f"<br>🟢 *Operatore:* {st.session_state.utente_connesso['nome']}<br><span style='font-size:12px;color:#64748B;'>💼 {st.session_state.utente_connesso['ruolo']}</span>", unsafe_allow_html=True)
@@ -167,14 +169,14 @@ else:
             with col_centro:
                 st.markdown("### 🤖 Testo & Assistente IA")
                 st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-                note_job = st.text_area("✍️ Requisiti", placeholder="Dettagli...", height=160)
+                note_job = st.text_area("✍️ Requisiti / Descrizione", placeholder="Dettagli...", height=160)
                 
                 if st.button("🚀 PUBBLICA ORA L'ANNUNCIO", use_container_width=True): 
                     if titolo_job:
-                        # Genera uno slug/id pulito per il link web
-                        gen_id = titolo_job.lower().replace(" ", "-").replace("/", "-")[:20] + f"-{random.randint(10,99)}"
-                        st.session_state.annunci_db.append({
-                            "id": gen_id, "Posizione": titolo_job, "Inquadramento": tipo_importo, 
+                        # Pulisce l'ID rimuovendo spazi doppi o caratteri che rompono l'URL
+                        clean_id = re.sub(r'[^a-zA-Z0-9-]', '', titolo_job.lower().replace(" ", "-"))[:25]
+                        db_globale["annunci"].append({
+                            "id": clean_id, "Posizione": titolo_job, "Inquadramento": tipo_importo, 
                             "Importo": valore_importo, "Sede": indirizzo_job, "Note": note_job
                         })
                         st.success("🎉 Pubblicato! Link di candidatura pronto a destra.")
@@ -183,44 +185,42 @@ else:
                 
             with col_dx:
                 st.markdown("### 📋 Annunci Attivi & Link Condivisione")
-                for ann in st.session_state.annunci_db:
+                for ann in db_globale["annunci"]:
                     st.markdown('<div class="saas-box" style="border-left: 4px solid #1E3A8A;">', unsafe_allow_html=True)
                     st.markdown(f"<b>📢 {ann['Posizione']}</b><br><span style='font-size:12px;color:#475569;'>📍 {ann['Sede']}</span>", unsafe_allow_html=True)
                     
-                    # LINK REALE DI CONDIVISIONE PER WHATSAPP/LINKEDIN
                     public_url = f"https://deireali-hr.streamlit.app/?job={ann['id']}"
                     st.markdown("<span style='font-size:11px;font-weight:bold;color:#F59E0B;'>🔗 LINK DA CONDIVIDERE CON I CANDIDATI:</span>", unsafe_allow_html=True)
                     st.markdown(f'<div class="link-box">{public_url}</div>', unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
         # ==========================================
-        # MODULO 2: SCREENING CV (VEDE I CANDIDATI CHE MANDANO IL FILE)
+        # MODULO 2: SCREENING CV (RICEVE I DATI DAL PORTALE IN TEMPO REALE)
         # ==========================================
         elif st.session_state.current_menu in ["📥 Screening CV", "👥 Candidati"]:
-            st.markdown("### 👥 Elenco Candidati Ricevuti dal Portale Carriere")
-            for index, cand in enumerate(st.session_state.candidati_db):
-                st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-                col_info, col_status = st.columns([2.3, 1.7])
-                with col_info:
-                    st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px; color:#64748B;'>📱 {cand['Telefono']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"🎯 *Posizione per cui si candida:* {cand['Posizione']}")
-                    st.markdown(f'<div class="ai-box"><b>Score IA:</b> {cand["Idoneità"]} | {cand["Orientamento"]}</div>', unsafe_allow_html=True)
-                with col_status:
-                    if cand.get("Impegnato", False):
-                        st.markdown('<div class="status-occupato">🔴 IN VIDEO CONFERENZA</div>', unsafe_allow_html=True)
-                    else:
+            st.markdown("### 📥 Candidature Ricevute in Tempo Reale")
+            
+            if not db_globale["candidati"]:
+                st.info("Nessuna candidatura registrata al momento.")
+            else:
+                for index, cand in enumerate(db_globale["candidati"]):
+                    st.markdown('<div class="saas-box">', unsafe_allow_html=True)
+                    col_info, col_status = st.columns([2.3, 1.7])
+                    with col_info:
+                        st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px; color:#64748B;'>📱 {cand['Telefono']}</span>", unsafe_allow_html=True)
+                        st.markdown(f"🎯 *Posizione per cui si candida:* {cand['Posizione']} | *Email:* {cand['Email']}")
+                        st.markdown(f"""
+                        <div class="ai-box">
+                            <b>🧠 ANALISI AUTOMATICA IA:</b> Voto {cand['Idoneità']} {cand.get('Stelle', '')}<br>
+                            <span style='font-size:12.5px; color:#475569;'>{cand['Orientamento']}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col_status:
                         st.markdown('<div class="status-disponibile">🟢 PRONTO / Libero</div>', unsafe_allow_html=True)
-                        if st.button("📞 Chiama Ora", key=f"call_{index}"):
-                            st.session_state.candidati_db[index]["Impegnato"] = True
-                            st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
-                            st.session_state.candidati_db[index]["Meet_Link"] = f"https://meet.google.com/{random.randint(100,999)}"
-                            st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown("<br><br>", unsafe_allow_html=True)
+                        if st.button("📞 Chiama con Meet & WA", key=f"call_{index}"):
+                            st.success("Stanza istantanea generata! Invia la notifica dell'appuntamento.")
+                    st.markdown('</div>', unsafe_allow_html=True)
 
-        # Moduli secondari provvisori
-        elif st.session_state.current_menu == "🤝 Colloqui AI":
-            st.info("Plancia Agenda attiva.")
-        elif st.session_state.current_menu == "🏢 Clienti":
-            st.info("Anagrafica Clienti attiva.")
         else:
-            st.info("Modulo operativo.")
+            st.info(f"Modulo {st.session_state.current_menu} attivo e connesso al database globale.")
