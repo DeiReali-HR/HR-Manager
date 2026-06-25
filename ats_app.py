@@ -2,133 +2,172 @@ import streamlit as st
 import pandas as pd
 import json
 import random
+import os
 from datetime import datetime
 
-st.set_page_config(page_title="Zenith ATS & HR Manager", page_icon="💼", layout="wide")
+# 1. Configurazione della pagina e palette colori (Bianco, Azzurro tenue, Scritte Blu)
+st.set_page_config(page_title="Dei Reali ATS", page_icon="💼", layout="wide")
 
+st.markdown("""
+    <style>
+    /* Sfondo generale bianco e scritte blu scuro */
+    .stApp {
+        background-color: #FFFFFF;
+        color: #0A2540;
+    }
+    /* Sidebar azzurro tenue */
+    [data-testid="stSidebar"] {
+        background-color: #EBF3FC !important;
+        color: #0A2540 !important;
+    }
+    /* Testi principali e titoli in blu */
+    h1, h2, h3, h4, h5, h6, p, label {
+        color: #0A2540 !important;
+    }
+    /* Bottoni della Dashboard a tasti (Azzurro tenue con testo blu) */
+    .stButton>button {
+        background-color: #D3E5F9 !important;
+        color: #0A2540 !important;
+        border: 1px solid #B4D3F5 !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: bold !important;
+        width: 100% !important;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #B4D3F5 !important;
+        border-color: #0A2540 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Inizializzazione dello Stato della Sessione
 if 'jobs' not in st.session_state:
-    st.session_state.jobs = [
-        {"id": "JOB-001", "titolo": "Senior Python Developer", "cliente": "TechCorp S.r.l.", "stato": "Attivo", "link": "https://ats.zenith.hr/jobs/python-dev"},
-        {"id": "JOB-002", "titolo": "Social Media Manager", "cliente": "Inbound Marketing SpA", "stato": "Bozza", "link": ""},
-    ]
-
+    st.session_state.jobs = []
 if 'candidates' not in st.session_state:
     st.session_state.candidates = [
-        {"id": "CAND-001", "nome": "Marco Rossi", "competenze": "Python, Django, PostgreSQL", "formazione": "Laurea Informatica", "punteggio": 9, "stato": "Colloquio", "annuncio": "Senior Python Developer"},
-        {"id": "CAND-002", "nome": "Giulia Bianchi", "competenze": "React, TypeScript, CSS", "formazione": "Master Front-End", "punteggio": 7, "stato": "Nuovo", "annuncio": "Senior Python Developer"},
-        {"id": "CAND-003", "nome": "Alessandro Neri", "competenze": "Copywriting, ADV, SEO", "formazione": "Laurea Comunicazione", "punteggio": 8, "stato": "Assunto", "annuncio": "Social Media Manager"},
+        {"id": "CAND-001", "nome": "Marco Rossi", "competenze": "Python, Django, PostgreSQL", "formazione": "Laurea Informatica", "punteggio": 9, "stato": "Nuovo"},
+        {"id": "CAND-002", "nome": "Giulia Bianchi", "competenze": "React, TypeScript, CSS", "formazione": "Master Front-End", "punteggio": 7, "stato": "Nuovo"},
     ]
-
 if 'clients' not in st.session_state:
-    st.session_state.clients = [
-        {"id": "CLI-001", "nome": "TechCorp S.r.l.", "settore": "IT & Software", "referente": "Ing. Riva"},
-        {"id": "CLI-002", "nome": "Inbound Marketing SpA", "settore": "Digital Agency", "referente": "Dott.ssa Ferro"},
-    ]
-
+    st.session_state.clients = [{"id": "CLI-001", "nome": "TechCorp S.r.l.", "settore": "IT", "referente": "Ing. Riva"}]
 if 'interviews' not in st.session_state:
     st.session_state.interviews = []
+if 'current_menu' not in st.session_state:
+    st.session_state.current_menu = "📢 Annunci"
 
-st.sidebar.title("💼 Zenith ATS v1.0")
-st.sidebar.caption("AI-Powered Recruitment Platform")
-st.sidebar.markdown(f"*Utenti attivi:* 1/10 | *CV in Database:* {len(st.session_state.candidates)}/10000")
+# --- SIDEBAR (MENU DI SINISTRA) ---
+with st.sidebar:
+    # Inserimento Logo Dei Reali (Cerca l'immagine caricata nella stessa cartella)
+    logo_path = "1000376160.jpg"
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
+    else:
+        st.subheader("👑 DEI REALI")
+        st.caption("Corporate Consulting")
+    
+    st.divider()
+    st.caption("🔹 MONITORAGGIO APPLICATIVO")
+    st.markdown("*Utenti attivi:* 1/10\n\n*CV in Database:* 2/10000")
+    st.divider()
+    st.info("🤖 AI Gemini pronta per l'integrazione a consumo.")
 
-menu = st.sidebar.radio("Navigazione Aree:", [
-    "📢 Creazione & Pubblicazione Annunci",
-    "📥 Screening CV & Classificazione AI",
-    "🤝 Area Colloqui (AI Assistant)",
-    "🎉 Conferma Assunzione & Risorse",
-    "📊 Report Attività & Analytics",
-    "🏢 Elenco Clienti",
-    "👥 Database Candidati Totale"
-])
+# --- DASHBOARD A TASTI (TONI AZZURRO E BLU) ---
+st.title("💼 Sistema di Gestione & Selezione Personale")
+st.markdown("### 🎛️ Dashboard Operativa")
 
-st.sidebar.divider()
-st.sidebar.info("🤖 Intelligenza Artificiale connessa tramite API Gemini (Piano a consumo)")
+# Griglia di pulsanti per la navigazione
+c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+with c1:
+    if st.button("📢\nAnnunci"): st.session_state.current_menu = "📢 Annunci"
+with c2:
+    if st.button("📥\nScreening CV"): st.session_state.current_menu = "📥 Screening CV"
+with c3:
+    if st.button("🤝\nColloqui AI"): st.session_state.current_menu = "🤝 Colloqui AI"
+with c4:
+    if st.button("🎉\nAssunzioni"): st.session_state.current_menu = "🎉 Assunzioni"
+with c5:
+    if st.button("📊\nReport"): st.session_state.current_menu = "📊 Report"
+with c6:
+    if st.button("🏢\nClienti"): st.session_state.current_menu = "🏢 Clienti"
+with c7:
+    if st.button("👥\nCandidati"): st.session_state.current_menu = "👥 Candidati"
 
-if menu == "📢 Creazione & Pubblicazione Annunci":
-    st.header("📢 Creazione e Pubblicazione Annunci con AI")
-    st.subheader("Inserisci le informazioni di base per generare l'annuncio")
-    col1, col2 = st.columns(2)
-    with col1:
-        titolo_job = st.text_input("Titolo della posizione", placeholder="es. Junior Data Analyst")
-        cliente_job = st.selectbox("Seleziona Cliente", [c["nome"] for c in st.session_state.clients])
-        competenze_req = st.text_area("Competenze chiave richieste (separate da virgola)", placeholder="es. SQL, Tableau, Excel")
-        esperienza = st.slider("Anni di esperienza richiesti", 0, 10, 2)
-    with col2:
-        st.markdown("*🤖 Assistente Scrittura AI (Gemini):*")
-        tono = st.selectbox("Tono dell'annuncio", ["Professionale", "Moderno/Startup", "Istituzionale"])
-        if st.button("Genera/Ottimizza Annuncio con AI ✨"):
-            if titolo_job:
-                with st.spinner("Gemini sta elaborando..."):
-                    testo_ai = f"### Offerta di Lavoro: {titolo_job} ({tono})\n\n*Azienda:* {cliente_job}\n\nCerchiamo un profilo con {esperienza} anni di esperienza in *{competenze_req}*."
-                    st.session_state['last_generated_job'] = testo_ai
+st.divider()
+
+# --- GESTIONE DELLE AREE ---
+
+# AREA 1: MODULO ANNUNCI (AGGIORNATO)
+if st.session_state.current_menu == "📢 Annunci":
+    st.header("📢 Creazione e Pubblicazione Annunci")
+    
+    col_sx, col_dx = st.columns(2)
+    
+    with col_sx:
+        st.subheader("📝 Dati dell'Annuncio")
+        uploaded_img = st.file_uploader("🖼️ Foto caricabile da locale", type=["png", "jpg", "jpeg"])
+        titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. Senior Project Manager")
+        
+        # Blocco Importi/Costi
+        st.markdown("*💰 Specifica Economica*")
+        tipo_importo = Skinner = st.radio("Tipo di tariffa", ["RAL (Annua)", "Importo Lordo", "Costo Orario"], horizontal=True)
+        valore_importo = st.text_input("Valore economico (€)", placeholder="es. 40.000 o 45/ora")
+        
+        indirizzo_job = st.text_input("🏢 Indirizzo / Sede di lavoro", placeholder="es. Via Condotti, Roma")
+        
+        st.markdown("*📞 Dati di Contatto*")
+        cellulare_job = st.text_input("Cellulare", placeholder="es. +39 333 1234567")
+        mail_job = st.text_input("E-mail di contatto", placeholder="es. hr@deireali.com")
+
+    with col_dx:
+        st.subheader("🤖 Assistente di Scrittura IA")
+        info_basiche = st.text_area("Inserisci le info basiche dell'annuncio per l'editing IA", placeholder="es. Cerchiamo un esperto di consulenza aziendale per la sede di Roma, offriamo welfare...")
+        tono = st.selectbox("Tono dell'editing", ["Professionale", "Istituzionale", "Moderno"])
+        
+        if st.button("Ottimizza Annuncio con IA ✨"):
+            if titolo_job and info_basiche:
+                st.session_state['gen_text'] = f"### Offerta di Lavoro: {titolo_job}\n\n*Sede:* {indirizzo_job}\n*Budget/Compenso:* {valore_importo} ({tipo_importo})\n\n*Descrizione Posizione:\n{info_basiche}\n\nContatti:*\n✉️ {mail_job} | 📞 {cellulare_job}"
             else:
-                st.error("Inserisci il titolo!")
-    if 'last_generated_job' in st.session_state:
-        st.markdown("---")
-        edited_annuncio = st.text_area("Testo definitivo", value=st.session_state['last_generated_job'], height=250)
-        if st.button("Conferma e Genera Pagina Web 🌐"):
-            new_link = f"https://ats.zenith.hr/jobs/{titolo_job.lower().replace(' ', '-')}"
-            st.session_state.jobs.append({"id": f"JOB-00{len(st.session_state.jobs)+1}", "titolo": titolo_job, "cliente": cliente_job, "stato": "Attivo", "link": new_link})
-            st.success("🎉 Pagina Web dell'annuncio generata!")
-            st.code(new_link)
-    st.markdown("---")
-    st.dataframe(pd.DataFrame(st.session_state.jobs), use_container_width=True)
+                st.error("Inserisci almeno il Titolo e le Info Basiche!")
 
-elif menu == "📥 Screening CV & Classificazione AI":
-    st.header("📥 Archivio CV & Analisi Predittiva AI")
-    uploaded_files = st.file_uploader("Carica i file dei CV (PDF, DOCX)", accept_multiple_files=True)
-    if uploaded_files:
-        for f in uploaded_files:
-            if f.name not in [c["nome"] for c in st.session_state.candidates]:
-                st.session_state.candidates.append({
-                    "id": f"CAND-00{len(st.session_state.candidates)+1}", "nome": f.name.split(".")[0].title(),
-                    "competenze": "Rilevate dall'AI", "formazione": "Analizzata dal CV",
-                    "punteggio": random.randint(5, 10), "stato": "Nuovo", "annuncio": st.session_state.jobs[0]["titolo"]
-                })
-        st.success("CV analizzati con successo da Gemini!")
-    df_cand = pd.DataFrame(st.session_state.candidates).sort_values(by="punteggio", ascending=False)
-    st.data_editor(df_cand, column_config={"punteggio": st.column_config.ProgressColumn("Punteggio AI Match", min_value=1, max_value=10, format="%d")}, disabled=True, use_container_width=True)
+    if 'gen_text' in st.session_state:
+        st.divider()
+        st.subheader("🌐 Verifica ed Esporta Pagina Web Annuncio")
+        testo_definitivo = st.text_area("Modifica il testo finale", value=st.session_state['gen_text'], height=200)
+        
+        if st.button("Conferma e Pubblica Annuncio 🌐"):
+            slug = titolo_job.lower().replace(" ", "-")
+            link_generato = f"https://deireali-hr.streamlit.app/jobs/{slug}"
+            st.session_state.jobs.append({"titolo": titolo_job, "tipo": tipo_importo, "valore": valore_importo, "link": link_generato})
+            st.success("🎉 Pagina Web dell'annuncio creata!")
+            st.code(link_generato)
 
-elif menu == "🤝 Area Colloqui (AI Assistant)":
-    st.header("🤝 Sala Colloqui Online Virtuale con Copilot AI")
-    candidato_sel = st.selectbox("Seleziona candidato", [c["nome"] for c in st.session_state.candidates])
-    if st.button("Inizia Colloquio Ora 🚀"):
-        st.session_state.interviews.append({"candidato": candidato_sel, "data": datetime.now().strftime("%d/%m/%Y %H:%M"), "stato": "In Corso"})
-    if st.session_state.interviews and st.session_state.interviews[-1]["stato"] == "In Corso":
-        st.markdown("---")
-        c1, c2 = st.columns(2)
-        with c1: st.image("https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400", caption="Streaming Video")
-        with c2:
-            st.markdown("#### 🤖 Suggerimenti Live di Gemini AI:")
-            st.warning("💡 *Domanda Consigliata:* 'Chiedi come ha gestito l'ottimizzazione delle query nell'ultimo progetto.'")
-            if st.button("Termina Colloquio e Salva 💾"):
-                st.session_state.interviews[-1]["stato"] = "Completato"
-                st.rerun()
-    if st.session_state.interviews and st.session_state.interviews[-1]["stato"] == "Completato":
-        st.markdown("---")
-        st.success("### 📝 Scheda di Valutazione Finale (Generata da Gemini)")
-        st.markdown(f"*Candidato:* {st.session_state.interviews[-1]['candidato']}\n\n* *Competenze Tecniche:* 8.5/10\n* *Soft Skills:* 9/10\n\n*Il candidato dimostra ottime capacità organizzative.*")
+    if st.session_state.jobs:
+        st.divider()
+        st.subheader("📋 Storico Annunci Pubblicati")
+        st.dataframe(pd.DataFrame(st.session_state.jobs), use_container_width=True)
 
-elif menu == "🎉 Conferma Assunzione & Risorse":
-    st.header("🎉 Area Conferma Assunzione e Assegnazione")
-    cand_assunto = st.selectbox("Candidato da Assumere", [c["nome"] for c in st.session_state.candidates])
-    cliente_dest = st.selectbox("Assegna al Cliente", [c["nome"] for c in st.session_state.clients])
-    if st.button("Conferma Assunzione e Genera Lettera 📝"):
-        st.balloons()
-        st.success(f"Risorsa '{cand_assunto}' configurata per '{cliente_dest}'!")
-        for c in st.session_state.candidates:
-            if c["nome"] == cand_assunto: c["stato"] = "Assunto"
-
-elif menu == "📊 Report Attività & Analytics":
-    st.header("📊 Area Report Attività & Analytics")
-    st.metric("Totale CV Gestiti", f"{len(st.session_state.candidates)} / 10000")
-    st.line_chart(pd.DataFrame({'Mese': ['Gen', 'Feb', 'Mar'], 'CV': [120, 240, len(st.session_state.candidates)]}).set_index('Mese'))
-
-elif menu == "🏢 Elenco Clienti":
-    st.header("🏢 Registro Aziende Clienti")
-    st.dataframe(pd.DataFrame(st.session_state.clients), use_container_width=True)
-
-elif menu == "👥 Database Candidati Totale":
-    st.header("👥 Elenco Globale Candidati")
+# AREA 2: SCREENING CV
+elif st.session_state.current_menu == "📥 Screening CV":
+    st.header("📥 Screening CV & Catalogazione AI")
+    up_cv = st.file_uploader("Trascina qui i CV dei candidati", accept_multiple_files=True)
+    if up_cv:
+        st.success("CV importati nel database! Gemini assegnerà i punteggi reali (1-10) non appena collegata l'API key.")
     st.dataframe(pd.DataFrame(st.session_state.candidates), use_container_width=True)
+
+# AREA 3: COLLOQUI AI
+elif st.session_state.current_menu == "🤝 Colloqui AI":
+    st.header("🤝 Sala Colloqui Virtuale con Assistente Silente")
+    cand = st.selectbox("Seleziona Candidato", [c["nome"] for c in st.session_state.candidates])
+    st.info(f"Pannello per avviare la conferenza online. L'IA registrerà la conversazione producendo lo skill summary finale.")
+
+# AREA 4: ASSUNZIONI
+elif st.session_state.current_menu == "🎉 Assunzioni":
+    st.header("🎉 Conferma Assunzione Risorse")
+    st.write("Modulo per la chiusura della risorsa e l'assegnazione finale al cliente di riferimento.")
+
+# Altre aree (Semplificate per la struttura)
+else:
+    st.header(f"{st.session_state.current_menu}")
+    st.write("Dati anagrafici e reportistica pronti per l'alimentazione del database.")
