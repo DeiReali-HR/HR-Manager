@@ -137,20 +137,20 @@ if 'clienti_db' not in st.session_state:
 if not st.session_state.autenticato:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     
-    # Mostra logo in modo pulito senza costrutti inline problematici
+    # Visualizzazione sicura del titolo o dell'immagine senza costrutti complessi inline
     logo_path = "1000376160.jpeg"
     if os.path.exists(logo_path):
         st.image(logo_path, width=220)
     else:
-        st.markdown("## 👑 DEI REALI")
+        st.markdown("<h2 style='color:#1E3A8A; margin-top:0;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
         
     st.markdown("### Accesso alla Suite Aziendale")
     st.markdown("<p style='font-size:13px; color:#64748B;'>Inserisci le tue credenziali ufficiali per accedere alla tua plancia di lavoro.</p>", unsafe_allow_html=True)
     
-    login_mail = st.text_input("📧 E-mail Ufficiale")
-    login_pw = st.text_input("🔑 Password Assegnata", type="password")
+    login_mail = st.text_input("📧 E-mail Ufficiale", key="input_mail_login")
+    login_pw = st.text_input("🔑 Password Assegnata", type="password", key="input_pw_login")
     
-    if st.button("ACCEDI AL SISTEMA", use_container_width=True):
+    if st.button("ACCEDI AL SISTEMA", use_container_width=True, key="btn_submit_login"):
         if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
             st.session_state.autenticato = True
             st.session_state.utente_connesso = OPERATORI[login_mail]
@@ -169,7 +169,7 @@ else:
         st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}")
         st.caption(f"💼 {st.session_state.utente_connesso['ruolo']}")
         
-        if st.sidebar.button("🔒 Disconnetti"):
+        if st.sidebar.button("🔒 Disconnetti", key="btn_logout_sidebar"):
             st.session_state.autenticato = False
             st.session_state.utente_connesso = None
             st.rerun()
@@ -197,10 +197,10 @@ else:
         st.markdown("I candidati possono sostenere un solo colloquio alla volta. Controlla i badge colorati prima di avviare una stanza digitale.")
         
         with st.expander("➕ Aggiungi un nuovo Candidato alla lista", expanded=False):
-            nuovo_n = st.text_input("Nome e Cognome")
-            nuova_m = st.text_input("E-mail")
-            nuova_p = st.selectbox("Posizione", ["Senior Corporate Consultant", "Project Manager"])
-            if st.button("PROCESSA E AGGIUNGI"):
+            nuovo_n = st.text_input("Nome e Cognome", key="add_cand_name")
+            nuova_m = st.text_input("E-mail", key="add_cand_mail")
+            nuova_p = st.selectbox("Posizione", ["Senior Corporate Consultant", "Project Manager"], key="add_cand_pos")
+            if st.button("PROCESSA E AGGIUNGI", key="btn_add_cand"):
                 if nuovo_n and nuova_m:
                     st.session_state.candidati_db.append({
                         "id": len(st.session_state.candidati_db),
@@ -221,15 +221,15 @@ else:
                 st.markdown(f"🔄 *Orientamento Consigliato:* {cand['Alternativo']}")
                 
             with col_status:
-                if cand["ImpeGNato" if "ImpeGNato" in cand else "Impegnato"]:
-                    st.markdown(f'<div class="status-occupato">🔴 IMPEGNATO in altra chiamata ({cand["Operatore_Call"]})</div>', unsafe_allow_html=True)
-                    if st.button("📴 Chiudi Chiamata", key=f"stop_{index}"):
+                if cand.get("Impegnato", False):
+                    st.markdown(f'<div class="status-occupato">🔴 IMPEGNATO in altra chiamata ({cand.get("Operatore_Call", "N/D")})</div>', unsafe_allow_html=True)
+                    if st.button("📴 Chiudi Chiamata", key=f"stop_btn_{index}"):
                         st.session_state.candidati_db[index]["Impegnato"] = False
                         st.session_state.candidati_db[index]["Operatore_Call"] = None
                         st.rerun()
                 else:
                     st.markdown('<div class="status-disponibile">🟢 ATTIVO / Libero</div>', unsafe_allow_html=True)
-                    if st.button("📞 Avvia Colloquio AI", key=f"start_{index}"):
+                    if st.button("📞 Avvia Colloquio AI", key=f"start_btn_{index}"):
                         st.session_state.candidati_db[index]["Impegnato"] = True
                         st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
                         st.rerun()
@@ -251,7 +251,7 @@ else:
                 for c_occ in occupati:
                     st.markdown(f"""
                     <div class="saas-box" style="border-left: 4px solid #EF4444; background-color: #FEF2F2;">
-                        🔒 <b>Linea Occupata da {c_occ['Operatore_Call']}</b><br>
+                        🔒 <b>Linea Occupata da {c_occ.get('Operatore_Call', 'Operatore')}</b><br>
                         👥 Candidato connesso: <b>{c_occ['Nome']}</b><br>
                         🎯 Ruolo: <i>{c_occ['Posizione']}</i><br>
                         ⏱️ Supporto IA: <span style='color:#22C55E; font-weight:bold;'>● Trascrizione Silenziosa Attiva</span>
@@ -273,15 +273,16 @@ else:
         col_sx, col_dx = st.columns(2)
         with col_sx:
             st.markdown("### 📝 Dati dell'Annuncio")
-            uploaded_img = st.file_uploader("🖼️ Scegli file", type=["png", "jpg", "jpeg"])
-            titolo_job = st.text_input("📍 Titolo della posizione")
-            tipo_importo = st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True)
-            valore_importo = st.text_input("Valore (€)")
-            indirizzo_job = st.text_input("🏢 Sede di lavoro")
-            if st.button("🚀 PUBBLICA ANNUNCIO"): st.success("Annuncio indicizzato!")
+            uploaded_img = st.file_uploader("🖼️ Scegli file", type=["png", "jpg", "jpeg"], key="uploader_annunci_img")
+            titolo_job = st.text_input("📍 Titolo della posizione", key="input_annuncio_titolo")
+            tipo_importo = st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True, key="radio_annuncio_tipo")
+            valore_importo = st.text_input("Valore (€)", key="input_annuncio_valore")
+            indirizzo_job = st.text_input("🏢 Sede di lavoro", key="input_annuncio_sede")
+            if st.button("🚀 PUBBLICA ANNUNCIO", key="btn_annuncio_pubblica"): 
+                st.success("Annuncio indicizzato!")
         with col_dx:
             st.markdown("### 🤖 Assistente Scrittura")
-            st.text_area("Note sparse:", height=210)
+            st.text_area("Note sparse:", height=210, key="textarea_annuncio_note")
 
     elif st.session_state.current_menu == "🏢 Clienti":
         for cli in st.session_state.clienti_db:
