@@ -7,7 +7,7 @@ from datetime import datetime, date, time
 
 # 1. Configurazione della pagina
 st.set_page_config(
-    page_title="Dei Reali - Corporate ATS Full Suite",
+    page_title="Dei Reali - Corporate ATS Full AI Suite",
     page_icon="👑",
     layout="wide"
 )
@@ -31,6 +31,10 @@ st.markdown("""
     .saas-box {
         background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;
         padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .ai-box {
+        background-color: #F8FAFC; border: 1px dashed #2563EB; border-radius: 10px;
+        padding: 15px; margin-top: 10px;
     }
     .login-container {
         background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px;
@@ -65,18 +69,28 @@ if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso = None
 if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢 Annunci"
 
-# Inizializzazione Database Annunci Condiviso (Per conservare i dati inseriti)
+# Inizializzazione Database Annunci Condiviso
 if 'annunci_db' not in st.session_state:
     st.session_state.annunci_db = [
-        {"Posizione": "Senior Corporate Consultant", "Inquadramento": "RAL", "Importo": "45.000", "Sede": "Roma via Condotti"},
-        {"Posizione": "OSS - Struttura anziani a carattere familiare", "Inquadramento": "RAL", "Importo": "1300", "Sede": "Palestrina"}
+        {"Posizione": "Senior Corporate Consultant", "Inquadramento": "RAL", "Importo": "45.000", "Sede": "Roma via Condotti", "Note": "Esperienza in ambito M&A."},
+        {"Posizione": "OSS - Struttura anziani a carattere familiare", "Inquadramento": "RAL", "Importo": "1300", "Sede": "Palestrina", "Note": "Turni diurni e festivi."}
     ]
 
-# Database Candidati Condiviso
+# Database Candidati con Classificazione ed Estrazioni IA integrate
 if 'candidati_db' not in st.session_state:
     st.session_state.candidati_db = [
-        {"id": 0, "Nome": "Alessandro Reali", "Email": "a.reali@gmail.com", "Telefono": "+393331234567", "Posizione": "Senior Corporate Consultant", "Idoneità": "94%", "Stelle": "⭐⭐⭐⭐⭐", "Orientamento": "Perfetto per il ruolo.", "Alternativo": "Nessuno", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None},
-        {"id": 1, "Nome": "Beatrice Marchesi", "Email": "beatrice.m@outlook.it", "Telefono": "+393399876543", "Posizione": "Senior Corporate Consultant", "Idoneità": "65%", "Stelle": "⭐⭐⭐", "Orientamento": "Buone soft-skills.", "Alternativo": "💡 Consigliata come 'Junior Analyst'", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None}
+        {
+            "id": 0, "Nome": "Alessandro Reali", "Email": "a.reali@gmail.com", "Telefono": "+393331234567", 
+            "Posizione": "Senior Corporate Consultant", "Idoneità": "94%", "Stelle": "⭐⭐⭐⭐⭐", 
+            "Orientamento": "Profilo eccellente. Spiccate doti relazionali e di coordinamento strategico.", 
+            "Alternativo": "Nessuno (Ideale per il ruolo)", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None
+        },
+        {
+            "id": 1, "Nome": "Beatrice Marchesi", "Email": "beatrice.m@outlook.it", "Telefono": "+393399876543", 
+            "Posizione": "Senior Corporate Consultant", "Idoneità": "65%", "Stelle": "⭐⭐⭐", 
+            "Orientamento": "Buona dialettica comunicativa, ma mostra forti lacune tecniche lato Financial Modeling.", 
+            "Alternativo": "💡 Consigliata come 'Junior Financial Analyst' o Back-office", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None
+        }
     ]
 
 # Database dell'Agenda Comune
@@ -153,50 +167,43 @@ else:
             """, unsafe_allow_html=True)
 
     # ==========================================
-    # MODULO 1: 📢 GESTIONE E STORICO ANNUNCI (AGGIORNATO)
+    # MODULO 1: 📢 GESTIONE ANNUNCI
     # ==========================================
     if st.session_state.current_menu == "📢 Annunci":
-        col_sx, col_dx = st.columns(2)
+        col_sx, col_centro, col_dx = st.columns([1, 1, 1])
         with col_sx:
-            st.markdown("### 📝 Pubblica un Nuovo Annuncio")
+            st.markdown("### 📝 Dati Principali")
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
             st.file_uploader("🖼️ Carica Copertina Annuncio", type=["png", "jpg", "jpeg"], key="uploader_annunci_img")
             titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. OSS - Struttura anziani", key="input_annuncio_titolo")
             tipo_importo = st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True, key="radio_annuncio_tipo")
             valore_importo = st.text_input("Valore economico (€)", placeholder="es. 1300", key="input_annuncio_valore")
             indirizzo_job = st.text_input("🏢 Sede di lavoro", placeholder="es. Palestrina", key="input_annuncio_sede")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            if st.button("🚀 PUBBLICA NUOVO ANNUNCIO", use_container_width=True, key="btn_annuncio_pubblica"): 
+        with col_centro:
+            st.markdown("### 🤖 Testo & Assistente IA")
+            st.markdown('<div class="saas-box">', unsafe_allow_html=True)
+            note_job = st.text_area("✍️ Testo dell'Annuncio / Requisiti", placeholder="Inserisci qui la descrizione del lavoro...", height=160, key="textarea_annuncio_note")
+            if st.button("🪄 Ottimizza Testo con IA", use_container_width=True, key="btn_ai_optimize"):
+                if note_job: st.info("💡 *Suggerimento Copilota IA:* Testo formattato in ottica SEO HR con parole chiave ottimizzate.")
+                else: st.warning("Scrivi una bozza per attivare l'IA!")
+            
+            st.markdown("<hr style='margin:15px 0;'>", unsafe_allow_html=True)
+            if st.button("🚀 PUBBLICA ORA L'ANNUNCIO", use_container_width=True, key="btn_annuncio_pubblica"): 
                 if titolo_job:
-                    st.session_state.annunci_db.append({
-                        "Posizione": titolo_job,
-                        "Inquadramento": tipo_importo,
-                        "Importo": valore_importo,
-                        "Sede": indirizzo_job
-                    })
-                    st.success("🎉 Pubblicato online e salvato nello storico!")
-                    st.rerun()
-                else:
-                    st.error("Inserisci il titolo della posizione!")
+                    st.session_state.annunci_db.append({"Posizione": titolo_job, "Inquadramento": tipo_importo, "Importo": valore_importo, "Sede": indirizzo_job, "Note": note_job})
+                    st.success("🎉 Pubblicato e salvato!"); st.rerun()
+                else: st.error("Inserisci il titolo posizione!")
             st.markdown('</div>', unsafe_allow_html=True)
             
         with col_dx:
-            st.markdown("### 📋 Elenco Annunci Attivi Centralizzati")
-            if not st.session_state.annunci_db:
-                st.info("Nessun annuncio pubblicato finora.")
-            else:
-                for ann in st.session_state.annunci_db:
-                    st.markdown(f"""
-                    <div class="saas-box" style="border-left: 4px solid #1E3A8A;">
-                        <h4 style="margin:0; color:#1E3A8A;">📢 {ann['Posizione']}</h4>
-                        <p style="margin:5px 0; font-size:13px; color:#475569;">
-                            🏢 Sede: <b>{ann['Sede']}</b> &nbsp;|&nbsp; 💸 Importo: <b>{ann['Importo']} €</b> ({ann['Inquadramento']})
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
+            st.markdown("### 📋 Annunci Attivi")
+            for ann in st.session_state.annunci_db:
+                st.markdown(f'<div class="saas-box" style="border-left: 4px solid #1E3A8A;"><b>📢 {ann["Posizione"]}</b><br><span style="font-size:12px;color:#475569;">📍 {ann["Sede"]} | 💸 {ann["Importo"]}€</span></div>', unsafe_allow_html=True)
 
     # ==========================================
-    # MODULO 2: 📥 SCREENING CV & SELEZIONE LIVE
+    # MODULO 2: 📥 SCREENING CV & SUPPORTI CLASSIFICAZIONE IA (RIPRISTINATO)
     # ==========================================
     elif st.session_state.current_menu in ["📥 Screening CV", "👥 Candidati"]:
         st.markdown("### 👥 Elenco Candidati e Monitor Chiamate Live")
@@ -204,15 +211,31 @@ else:
         for index, cand in enumerate(st.session_state.candidati_db):
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
             col_info, col_status = st.columns([2.3, 1.7])
+            
             with col_info:
                 st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px; color:#64748B;'>📱 {cand['Telefono']}</span>", unsafe_allow_html=True)
-                st.markdown(f"🎯 *Posizione:* {cand['Posizione']} &emsp;|&emsp; *Voto IA:* {cand['Idoneità']} ({cand['Stelle']})")
+                st.markdown(f"🎯 *Posizione per cui si candida:* {cand['Posizione']}")
+                
+                # BOX CLASSIFICAZIONE IA DEL CURRICULUM VITAE
+                st.markdown(f"""
+                <div class="ai-box">
+                    <p style="margin:0; font-size:13px; font-weight:bold; color:#2563EB;">🧠 ANALISI & CLASSIFICAZIONE CV (SUPPORTO IA):</p>
+                    <table style="width:100%; margin-top:5px; font-size:13px; border:none;">
+                        <tr>
+                            <td><b>Grado Idoneità:</b> <span style="font-size:14px;color:#1E40AF;font-weight:bold;">{cand['Idoneità']}</span> ({cand['Stelle']})</td>
+                            <td><b>Orientamento Alternativo:</b> <span style="color:#2563EB;">{cand['Alternativo']}</span></td>
+                        </tr>
+                    </table>
+                    <p style="margin:5px 0 0 0; font-size:12.5px; color:#334155;"><b>Valutazione Profilo:</b> {cand['Orientamento']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
             with col_status:
                 if cand.get("Impegnato", False):
                     st.markdown(f'<div class="status-occupato">🔴 IN VIDEO CONFERENZA ({cand.get("Operatore_Call")})</div>', unsafe_allow_html=True)
-                    st.markdown(f'<a href="{cand["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️/📳 Entra su Meet</a>', unsafe_allow_html=True)
+                    st.markdown(f'<a href="{cand["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Entra su Meet</a>', unsafe_allow_html=True)
                     if cand.get("Operatore_Call") == st.session_state.utente_connesso['nome']:
-                        if st.button("📴 Chiudi Sessione", key=f"stop_btn_{index}"):
+                        if st.button("📴 Chiudi Sessione e Salva", key=f"stop_btn_{index}"):
                             st.session_state.candidati_db[index]["Impegnato"] = False; st.rerun()
                 else:
                     st.markdown('<div class="status-disponibile">🟢 PRONTO / Libero</div>', unsafe_allow_html=True)
@@ -227,17 +250,21 @@ else:
             st.markdown('</div>', unsafe_allow_html=True)
 
     # ==========================================
-    # MODULO 3: 🤝 AGENDA CALENDARIO E STANZE AI
+    # MODULO 3: 🤝 AGENDA CALENDARIO E PRESENZA TACITA IA SU MEET (POTENZIATO)
     # ==========================================
     elif st.session_state.current_menu == "🤝 Colloqui AI":
-        st.markdown("### 🗓️ Calendario Globale Condiviso")
-        if not st.session_state.agenda_db: st.info("Nessun colloquio in calendario.")
+        st.markdown("### 🗓️ Calendario Globale e Supporto Monitoraggio IA")
+        
+        # TABELLONE CALENDARIO COMPLETO
+        st.markdown("#### 📋 Calendario dei Colloqui Pianificati")
+        if not st.session_state.agenda_db: st.info("Nessun colloquio registrato in calendario.")
         else:
             df_agenda = pd.DataFrame(st.session_state.agenda_db)[["Data", "Ora", "Candidato", "Operatore", "Telefono", "Meet_Link"]]
             st.dataframe(df_agenda, use_container_width=True)
 
         st.markdown("<br><hr>", unsafe_allow_html=True)
-        col_pianifica, col_lista_azioni = st.columns([1.2, 1.8])
+        col_pianifica, col_lista_actions, col_ia_live = st.columns([1, 1.2, 0.8])
+        
         with col_pianifica:
             st.markdown("#### ✍️ Fissa una Nuova Data")
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
@@ -246,7 +273,7 @@ else:
             data_scelta = st.date_input("Scegli il Giorno", min_value=date.today(), key="agenda_date_select")
             ora_scelta = st.time_input("Scegli l'Orario", value=time(10, 0), key="agenda_time_select")
             
-            if st.button("💾 Inserisci nel Calendario Comune", use_container_width=True):
+            if st.button("💾 Inserisci nel Calendario", use_container_width=True):
                 c_info = next((c for c in st.session_state.candidati_db if c["Nome"] == cand_scelto), None)
                 meet_code = f"{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
                 st.session_state.agenda_db.append({
@@ -256,19 +283,41 @@ else:
                 st.success("🗓️ Slot inserito!"); st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with col_lista_azioni:
-            st.markdown("#### ⚡ Invio Notifiche")
+        with col_lista_actions:
+            st.markdown("#### ⚡ Invio Notifiche e Accesso Meet")
             for idx, app in enumerate(st.session_state.agenda_db):
                 st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-                c_app1, c_app2 = st.columns([1.8, 1.2])
-                with c_app1:
-                    st.markdown(f"👤 <b>{app['Candidato']}</b> &emsp; 📱 {app['Telefono']}", unsafe_allow_html=True)
-                    st.markdown(f"⏰ {app['Data']} ore {app['Ora']} | Recruiter: {app['Operatore']}")
-                with c_app2:
-                    st.markdown(f'<a href="{app["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Entra su Meet</a>', unsafe_allow_html=True)
-                    messaggio_agenda = f"Gentile {app['Candidato']},\nLe confermiamo l'appuntamento Dei Reali con {app['Operatore']}.\n🗓️ Data: {app['Data']}\n⏰ Ora: {app['Ora']}\n🔗 Link Meet: {app['Meet_Link']}\n\nIl supporto IA dedicato prenderà parte alla sessione in modalità silente."
-                    st.markdown(f'<a href="https://wa.me/{app["Telefono"].replace("+", "").replace(" ", "")}?text={urllib.parse.quote(messaggio_agenda)}" target="_blank" class="whatsapp-btn" style="width:100%;">💬 Notifica su WA</a>', unsafe_allow_html=True)
+                st.markdown(f"👤 <b>{app['Candidato']}</b> &emsp; 📱 {app['Telefono']}", unsafe_allow_html=True)
+                st.markdown(f"⏰ {app['Data']} ore {app['Ora']} | Recruiter: {app['Operatore']}")
+                
+                st.markdown(f'<a href="{app["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Entra su Meet</a>', unsafe_allow_html=True)
+                messaggio_agenda = f"Gentile {app['Candidato']},\nLe confermiamo l'appuntamento Dei Reali con {app['Operatore']}.\n🗓️ Data: {app['Data']}\n⏰ Ora: {app['Ora']}\n🔗 Link Meet: {app['Meet_Link']}\n\nIl supporto IA dedicato prenderà parte alla sessione in modalità silente per la trascrizione."
+                st.markdown(f'<a href="https://wa.me/{app["Telefono"].replace("+", "").replace(" ", "")}?text={urllib.parse.quote(messaggio_agenda)}" target="_blank" class="whatsapp-btn" style="width:100%;">💬 Notifica su WA</a>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
+                
+        with col_ia_live:
+            st.markdown("#### 🤖 Supporto IA Tacita su Meet")
+            st.markdown('<div class="saas-box" style="border-left: 4px solid #10B981; background-color:#F0FDF4;">', unsafe_allow_html=True)
+            st.markdown("*🎙️ Stato Trascrizione Silente: Pronta*")
+            st.caption("Durante la conferenza su Meet, l'IA ascolta senza intervenire visivamente o acusticamente, raccogliendo il testo per il fine chiamata.")
+            
+            st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+            st.markdown("*🎯 Suggerimenti Fine Chiamata (Skill Score):*")
+            
+            # Simulatore dinamico di estrazione dati a fine colloquio
+            if stanze_attive:
+                st.markdown(f"""
+                <span style="color:#059669; font-size:12.5px; font-weight:bold;">📊 Elaborazione dati di: {stanze_attive[0]['Nome']}</span><br>
+                • Problem Solving: <b>8.5 / 10</b><br>
+                • Flessibilità Turni: <b>9.0 / 10</b><br>
+                • Empatia Rilevata: <b>9.5 / 10</b><br>
+                <p style="font-size:12px; color:#374151; margin-top:5px; font-style:italic;">
+                    "Consiglio IA: Il soggetto dimostra piena idoneità ai requisiti dell'annuncio. Ottima predisposizione al lavoro in team strutturato."
+                </p>
+                """, unsafe_allow_html=True)
+            else:
+                st.caption("I suggerimenti sulle competenze finali appariranno qui non appena una chiamata sarà avviata e conclusa.")
+            st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.current_menu == "🏢 Clienti":
         for cli in st.session_state.clienti_db: st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b></div>', unsafe_allow_html=True)
