@@ -5,12 +5,12 @@ import random
 
 # 1. Configurazione della pagina
 st.set_page_config(
-    page_title="Dei Reali - Corporate ATS & CRM",
+    page_title="Dei Reali - Corporate ATS & Call Monitor",
     page_icon="👑",
     layout="wide"
 )
 
-# 2. CSS Custom per l'interfaccia Premium
+# 2. CSS Custom per l'interfaccia Premium, Login e Badge di Stato
 st.markdown("""
     <style>
     .stApp {
@@ -54,232 +54,227 @@ st.markdown("""
         margin-bottom: 15px;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
+    .login-container {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 40px;
+        max-width: 500px;
+        margin: 80px auto;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+    .status-disponibile {
+        background-color: #DCFCE7;
+        color: #166534;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 12px;
+        display: inline-block;
+    }
+    .status-occupato {
+        background-color: #FEE2E2;
+        color: #991B1B;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 12px;
+        display: inline-block;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Inizializzazione dei Database nella Sessione (se non già presenti)
+# --- DATABASE OPERATORI ---
+OPERATORI = {
+    "daniele@deireali.com": {"nome": "Daniele", "pw": "Daniele2026", "ruolo": "Senior Recruiter"},
+    "julian@deireali.com": {"nome": "Julian", "pw": "Julian2026", "ruolo": "HR Director"},
+    "admin@deireali.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
+}
+
+# Inizializzazione degli stati della sessione
+if 'autenticato' not in st.session_state:
+    st.session_state.autenticato = False
+if 'utente_connesso' not in st.session_state:
+    st.session_state.utente_connesso = None
 if 'current_menu' not in st.session_state:
     st.session_state.current_menu = "📢 Annunci"
 
+# Inizializzazione Database Candidati con l'aggiunta della chiave di stato 'Impegnato'
 if 'candidati_db' not in st.session_state:
     st.session_state.candidati_db = [
         {
-            "Nome": "Alessandro Reali",
-            "Email": "a.reali@gmail.com",
-            "Posizione": "Senior Corporate Consultant",
-            "Idoneità": "94%",
-            "Stelle": "⭐⭐⭐⭐⭐",
-            "Orientamento": "Perfetto per il ruolo. Spiccate doti di leadership aziendale.",
-            "Alternativo": "Nessuno (Profilo ideale)"
+            "id": 0,
+            "Nome": "Alessandro Reali", 
+            "Email": "a.reali@gmail.com", 
+            "Posizione": "Senior Corporate Consultant", 
+            "Idoneità": "94%", 
+            "Stelle": "⭐⭐⭐⭐⭐", 
+            "Orientamento": "Perfetto per il ruolo strategico.", 
+            "Alternativo": "Nessuno",
+            "Impegnato": True,
+            "Operatore_Call": "Julian"
         },
         {
-            "Nome": "Beatrice Marchesi",
-            "Email": "beatrice.m@outlook.it",
-            "Posizione": "Senior Corporate Consultant",
-            "Idoneità": "65%",
-            "Stelle": "⭐⭐⭐",
-            "Orientamento": "Buone competenze tecniche, ma mostra lacune lato Financial Modeling.",
-            "Alternativo": "💡 Consigliata come 'Junior Financial Analyst'"
+            "id": 1,
+            "Nome": "Beatrice Marchesi", 
+            "Email": "beatrice.m@outlook.it", 
+            "Posizione": "Senior Corporate Consultant", 
+            "Idoneità": "65%", 
+            "Stelle": "⭐⭐⭐", 
+            "Orientamento": "Buona dialettica, lacune in Financial modeling.", 
+            "Alternativo": "💡 Consigliata come 'Junior Financial Analyst'",
+            "Impegnato": False,
+            "Operatore_Call": None
         }
     ]
 
 if 'clienti_db' not in st.session_state:
     st.session_state.clienti_db = [
-        {
-            "Azienda": "Dei Reali Consulting",
-            "Settore": "Consulenza Aziendale & HR",
-            "Referente": "Direzione HR",
-            "Email": "info@deireali.com",
-            "Posizioni_Aperte": 2
-        },
-        {
-            "Azienda": "Finanza & Sviluppo S.p.A.",
-            "Settore": "Banking & Finance",
-            "Referente": "Dott. Enrico Verdi",
-            "Email": "e.verdi@finanzasviluppo.it",
-            "Posizioni_Aperte": 1
-        }
+        {"Azienda": "Dei Reali Consulting", "Settore": "Consulenza Aziendale", "Referente": "Direzione HR", "Email": "info@deireali.com", "Posizioni_Aperte": 2}
     ]
 
-# --- 3. SIDEBAR LATERALE ---
-with st.sidebar:
-    logo_path = "1000376160.jpeg"
-    if os.path.exists(logo_path):
-        st.image(logo_path, use_container_width=True)
-    else:
-        st.subheader("👑 DEI REALI")
-        
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("### 📊 STATISTICHE SUITE")
-    st.metric(label="Candidati in Classifica", value=len(st.session_state.candidati_db))
-    st.metric(label="Aziende Clienti Partner", value=len(st.session_state.clienti_db))
+# --- MODULO DI AUTENTICAZIONE ---
+if not st.session_state.autenticato:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.image("1000376160.jpeg", width=200) if os.path.exists("1000376160.jpeg") else st.markdown("## 👑 DEI REALI")
+    st.markdown("### Accesso alla Suite Aziendale")
     
-    st.markdown("<br><hr>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8;'>STATO SISTEMA</p>", unsafe_allow_html=True)
-    st.markdown("🟢 Database Interno: *Attivo*", unsafe_allow_html=True)
-    st.markdown("🤖 Screening Rank & Orientamento AI: *Pronti*", unsafe_allow_html=True)
-
-# --- 4. AREA CENTRALE ---
-st.title("💼 Sistema di Gestione & Selezione Personale")
-st.markdown("##### Dashboard Operativa Integrata • Agenzia Dei Reali")
-st.markdown("<br>", unsafe_allow_html=True)
-
-# BARRA ORIZZONTALE A TASTI
-c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
-with c1:
-    if st.button("📢\nAnnunci"): st.session_state.current_menu = "📢 Annunci"
-with c2:
-    if st.button("📥\nScreening CV"): st.session_state.current_menu = "📥 Screening CV"
-with c3:
-    if st.button("🤝\nColloqui AI"): st.session_state.current_menu = "🤝 Colloqui AI"
-with c4:
-    if st.button("🎉\nAssunzioni"): st.session_state.current_menu = "🎉 Assunzioni"
-with c5:
-    if st.button("📊\nReport"): st.session_state.current_menu = "📊 Report"
-with c6:
-    if st.button("🏢\nClienti"): st.session_state.current_menu = "🏢 Clienti"
-with c7:
-    if st.button("👥\nCandidati"): st.session_state.current_menu = "👥 Candidati"
-
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
-
-# --- 5. LOGICA DEI MODULI ---
-
-# --- MODULO 1: ANNUNCI ---
-if st.session_state.current_menu == "📢 Annunci":
-    col_sx, col_dx = st.columns(2)
-    with col_sx:
-        st.markdown("### 📝 Dati dell'Annuncio")
-        uploaded_img = st.file_uploader("🖼️ Foto o Copertina Annuncio", type=["png", "jpg", "jpeg"])
-        titolo_job = st.text_input("📍 Titolo della posizione", placeholder="es. Senior Corporate Consultant")
-        tipo_importo = st.radio("Inquadramento", ["RAL (Annua)", "Importo Lordo", "Costo Orario"], horizontal=True)
-        valore_importo = st.text_input("Valore economico (€)", placeholder="es. 45.000")
-        indirizzo_job = st.text_input("🏢 Sede di lavoro", placeholder="es. Via Condotti, Roma")
-        
-        st.markdown("*📞 Contatti*")
-        cx1, cx2 = st.columns(2)
-        with cx1: cellulare_job = st.text_input("Cellulare", placeholder="es. +39 333...")
-        with cx2: mail_job = st.text_input("E-mail", placeholder="es. hr@deireali.com")
-        
-        if st.button("🚀 PUBBLICA NUOVO ANNUNCIO SU WEB", use_container_width=True):
-            st.success("🎉 Annuncio indicizzato con successo nel sistema!")
-            
-    with col_dx:
-        st.markdown("### 🤖 Assistente di Scrittura IA")
-        info_basiche = st.text_area("Note e requisiti per il Copy dell'annuncio:", placeholder="Cerchiamo una figura...", height=210)
-        tono = st.selectbox("Tono dell'editing", ["Professionale", "Istituzionale", "Moderno"])
-        if st.button("🪄 OTTIMIZZA LAYOUT E CONTENUTO CON IA", use_container_width=True):
-            st.info("Bozza ottimizzata generata correttamente.")
-
-# --- MODULO 2: SCREENING CV & RANK IA ---
-elif st.session_state.current_menu == "📥 Screening CV":
-    st.markdown("### 📥 Caricamento CV & Analisi Predittiva Idoneità")
-    st.markdown("Gestisci la classifica dei candidati, calcola l'affinità con l'annuncio e scopri il loro orientamento professionale alternativo consigliato dall'IA.")
+    login_mail = st.text_input("📧 E-mail Ufficiale")
+    login_pw = st.text_input("🔑 Password Assegnata", type="password")
     
-    with st.expander("➕ Carica Manualmente un Nuovo Profilo / Curriculum", expanded=True):
-        cx_nome, cx_mail = st.columns(2)
-        with cx_nome: nuovo_nome = st.text_input("Nome e Cognome Candidato")
-        with cx_mail: nuova_mail = st.text_input("Indirizzo E-mail")
-        file_cv = st.file_uploader("Seleziona o trascina il file del CV (PDF / Word)", type=["pdf", "docx", "txt"])
-        posizione_scelta = st.selectbox("Posizione desiderata", ["Senior Corporate Consultant", "Project Manager", "Financial Analyst"])
-        
-        if st.button("⚡ VALUTA COMPATIBILITÀ E ORIENTAMENTO CON IA", use_container_width=True):
-            if nuovo_nome and nuova_mail:
-                percentuale_random = random.randint(50, 97)
-                stelle_simolate = "⭐" * (percentuale_random // 20 + 1)
-                
-                if percentuale_random < 70:
-                    orientamento_simulato = "Il candidato mostra solide soft-skills ma competenze tecniche parziali per questo specifico annuncio."
-                    alternativo_simulato = f"💡 Consigliato come: 'Junior Assistant' o ricollocamento in area Back-Office."
-                else:
-                    orientamento_simulato = "Ottimo bilanciamento tra background accademico ed esperienze sul campo."
-                    alternativo_simulato = "Nessuno (Profilo perfettamente in linea con le richieste)"
-                
-                st.session_state.candidati_db.append({
-                    "Nome": nuovo_nome,
-                    "Email": nuova_mail,
-                    "Posizione": posizione_scelta,
-                    "Idoneità": f"{percentuale_random}%",
-                    "Stelle": stelle_simolate,
-                    "Orientamento": orientamento_simulato,
-                    "Alternativo": alternativo_simulato
-                })
-                st.success(f"📊 Classificazione completata per {nuovo_nome}!")
-            else:
-                st.error("Inserisci Nome e Mail per processare il profilo.")
+    if st.button("ACCEDI AL SISTEMA", use_container_width=True):
+        if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
+            st.session_state.autenticato = True
+            st.session_state.utente_connesso = OPERATORI[login_mail]
+            st.rerun()
+        else:
+            st.error("Credenziali non corrette.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("<br>## 🏆 Graduatoria di Idoneità AI dei Candidati", unsafe_allow_html=True)
-    for cand in st.session_state.candidati_db:
-        st.markdown(f"""
-        <div class="saas-box">
-            <table style="width:100%; border:none; border-collapse: collapse;">
-                <tr>
-                    <td style="width:70%; vertical-align: top;">
-                        <h4 style="margin:0; color:#1E3A8A;">👤 {cand['Nome']}</h4>
-                        <p style="margin:5px 0; color:#64748B; font-size:13px;">📧 {cand['Email']} &nbsp;|&nbsp; 🎯 Candidato per: <b>{cand['Posizione']}</b></p>
-                        <p style="margin:10px 0 5px 0; font-size:14px;"><b>🧠 Idoneità al Ruolo (IA):</b> {cand['Orientamento']}</p>
-                        <p style="margin:0; font-size:14px; color:#2563EB;"><b>🔄 Orientamento Alternativo Sconsigliato/Consigliato:</b> {cand['Alternativo']}</p>
-                    </td>
-                    <td style="text-align:right; width:30%; vertical-align: middle;">
-                        <div style="font-size: 26px; font-weight:800; color:#1E40AF;">{cand['Idoneità']}</div>
-                        <div style="font-size: 16px; margin-top:2px;">{cand['Stelle']}</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        """, unsafe_allow_html=True)
-
-# --- MODULO 6: GESTIONE CLIENTI (CRM AZIENDE) ---
-elif st.session_state.current_menu == "🏢 Clienti":
-    st.markdown("### 🏢 Anagrafica Clienti & Aziende Partner")
-    st.markdown("Monitora le aziende mandanti, i referenti interni e il numero di ricerche di personale attive per ciascun cliente.")
-    
-    with st.expander("➕ Registra una Nuova Azienda Cliente Partner", expanded=False):
-        c_az, c_set = st.columns(2)
-        with c_az: nome_azienda = st.text_input("Ragione Sociale / Nome Azienda")
-        with c_set: settore_azienda = st.text_input("Settore Industriale", placeholder="es. Tech, Luxury, Finance")
-        
-        c_ref, c_m = st.columns(2)
-        with c_ref: referente_azienda = st.text_input("Nome Referente / HR Manager")
-        with c_m: mail_azienda = st.text_input("E-mail Referente")
-        
-        posizioni_attive = st.number_input("Numero di Annunci/Ricerche affidate a Dei Reali", min_value=0, value=1, step=1)
-        
-        if st.button("💾 SALVA AZIENDA NEL DATABASE", use_container_width=True):
-            if nome_azienda and referente_azienda:
-                st.session_state.clienti_db.append({
-                    "Azienda": nome_azienda,
-                    "Settore": settore_azienda,
-                    "Referente": referente_azienda,
-                    "Email": mail_azienda,
-                    "Posizioni_Aperte": int(posizioni_attive)
-                })
-                st.success(f"🏢 Azienda '{nome_azienda}' registrata correttamente nei sistemi centrali!")
-            else:
-                st.error("Compila almeno il Nome Azienda e il Referente per salvare.")
-
-    st.markdown("<br>## 📋 Elenco Aziende Partner Sincronizzate", unsafe_allow_html=True)
-    for cli in st.session_state.clienti_db:
-        st.markdown(f"""
-        <div class="saas-box">
-            <table style="width:100%; border:none; border-collapse: collapse;">
-                <tr>
-                    <td style="width:75%; vertical-align: top;">
-                        <h4 style="margin:0; color:#0F172A;">🏢 {cli['Azienda']}</h4>
-                        <p style="margin:4px 0; color:#64748B; font-size:13px;">💼 Settore: <b>{cli['Settore']}</b> &nbsp;|&nbsp; 📧 Contatto: {cli['Email']}</p>
-                        <p style="margin:8px 0 0 0; font-size:14px; color:#334155;">👤 Referente Interno: <b>{cli['Referente']}</b></p>
-                    </td>
-                    <td style="text-align:right; width:25%; vertical-align: middle;">
-                        <span style="background-color: #F1F5F9; border: 1px solid #CBD5E1; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #1E3A8A;">
-                            📂 {cli['Posizioni_Aperte']} Ricerche Attive
-                        </span>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        """, unsafe_allow_html=True)
-
+# --- APPLICAZIONE COMPLETA ---
 else:
-    # Schermata provvisoria per gli altri pulsanti
-    st.info(f"Il pannello relativo a *{st.session_state.current_menu}* è operativo. I moduli interattivi si popoleranno automaticamente non appena integreremo le restanti tabelle dati.")
+    with st.sidebar:
+        logo_path = "1000376160.jpeg"
+        if os.path.exists(logo_path):
+            st.image(logo_path, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}")
+        st.caption(f"💼 {st.session_state.utente_connesso['ruolo']}")
+        
+        if st.sidebar.button("🔒 Disconnetti"):
+            st.session_state.autenticato = False
+            st.session_state.utente_connesso = None
+            st.rerun()
+
+    st.title("💼 Sistema di Gestione & Selezione Personale")
+    st.markdown(f"##### Suite Multi-Operatore • Dei Reali &emsp;|&emsp; Operatore loggato: *{st.session_state.utente_connesso['nome']}*")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # BARRA ORIZZONTALE A TASTI
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+    buttons_nav = [("📢\nAnnunci", "📢 Annunci"), ("📥\nScreening CV", "📥 Screening CV"), ("🤝\nColloqui AI", "🤝 Colloqui AI"),
+                   ("🎉\nAssunzioni", "🎉 Assunzioni"), ("📊\nReport", "📊 Report"), ("🏢\nClienti", "🏢 Clienti"), ("👥\nCandidati", "👥 Candidati")]
+    
+    for i, (label, key) in enumerate(buttons_nav):
+        with [c1, c2, c3, c4, c5, c6, c7][i]:
+            if st.button(label): st.session_state.current_menu = key
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
+
+    # --- SCREENING CV & ELENCO CANDIDATI CON STATO LIVE ---
+    if st.session_state.current_menu == "📥 Screening CV" or st.session_state.current_menu == "👥 Candidati":
+        st.markdown("### 👥 Elenco Candidati e Stato Linea Live")
+        st.markdown("I candidati possono sostenere un solo colloquio alla volta. Controlla i badge colorati prima di avviare una stanza digitale.")
+        
+        # Form per simulare l'inserimento di un nuovo candidato
+        with st.expander("➕ Aggiungi un nuovo Candidato alla lista", expanded=False):
+            nuovo_n = st.text_input("Nome e Cognome")
+            nuova_m = st.text_input("E-mail")
+            nuova_p = st.selectbox("Posizione", ["Senior Corporate Consultant", "Project Manager"])
+            if st.button("PROCESSA E AGGIUNGI"):
+                if nuovo_n and nuova_m:
+                    st.session_state.candidati_db.append({
+                        "id": len(st.session_state.candidati_db),
+                        "Nome": nuovo_n, "Email": nuova_m, "Posizione": nuova_p,
+                        "Idoneità": "72%", "Stelle": "⭐⭐⭐⭐", "Orientamento": "Profilo idoneo.", "Alternativo": "Nessuno",
+                        "Impegnato": False, "Operatore_Call": None
+                    })
+                    st.success("Candidato aggiunto!")
+                    st.rerun()
+
+        # Visualizzazione della lista candidati con monitor di occupazione line
+        for index, cand in enumerate(st.session_state.candidati_db):
+            st.markdown('<div class="saas-box">', unsafe_allow_html=True)
+            
+            # Griglia interna: Dati a sinistra, controlli e stati a destra
+            col_info, col_status = st.columns([3, 1])
+            
+            with col_info:
+                st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:14px; font-weight:normal; color:#64748B;'>({cand['Email']})</span>", unsafe_allow_html=True)
+                st.markdown(f"🎯 *Candidato per:* {cand['Posizione']} &emsp;|&emsp; *Voto IA:* {cand['Idoneità']} ({cand['Stelle']})")
+                st.markdown(f"🔄 *Orientamento Consigliato:* {cand['Alternativo']}")
+                
+            with col_status:
+                # Logica del Badge Grafico
+                if cand["Impegnato"]:
+                    st.markdown(f'<div class="status-occupato">🔴 IMPEGNATO in altra chiamata ({cand["Operatore_Call"]})</div>', unsafe_allow_html=True)
+                    # Bottone per sbloccare la linea (Simulazione fine chiamata)
+                    if st.button("📴 Chiudi Chiamata", key=f"stop_{index}"):
+                        st.session_state.candidati_db[index]["Impegnato"] = False
+                        st.session_state.candidati_db[index]["Operatore_Call"] = None
+                        st.rerun()
+                else:
+                    st.markdown('<div class="status-disponibile">🟢 ATTIVO / Libero</div>', unsafe_allow_html=True)
+                    # Bottone per occupare la linea
+                    if st.button("📞 Avvia Colloquio AI", key=f"start_{index}"):
+                        st.session_state.candidati_db[index]["Impegnato"] = True
+                        st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
+                        st.rerun()
+                        
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- SEZIONE COLLOQUI AI CON MONITORE ROOM ---
+    elif st.session_state.current_menu == "🤝 Colloqui AI":
+        st.markdown("### 🤝 Monitoraggio Stanze Colloqui in Background")
+        st.markdown("Visualizzazione dei flussi audio/video operativi supportati dal Copilota IA.")
+        
+        # Genera dinamicamente le stanze in base a chi è impegnato nel DB
+        occupati = [c for c in st.session_state.candidati_db if c["Impegnato"]]
+        
+        col_stanze, col_ia = st.columns([2, 1])
+        
+        with col_stanze:
+            st.markdown("#### 📞 Linee Telefoniche Occupate al momento")
+            if not occupati:
+                st.info("Nessuna chiamata attiva al momento. Tutti i candidati sono liberi ed in linea.")
+            else:
+                for c_occ in occupati:
+                    st.markdown(f"""
+                    <div class="saas-box" style="border-left: 4px solid #EF4444; background-color: #FEF2F2;">
+                        🔒 <b>Linea Occupata da {c_occ['Operatore_Call']}</b><br>
+                        👥 Candidato connesso: <b>{c_occ['Nome']}</b><br>
+                        🎯 Ruolo: <i>{c_occ['Posizione']}</i><br>
+                        ⏱️ Supporto IA: <span style='color:#22C55E; font-weight:bold;'>● Trascrizione Silenziosa Attiva</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+        with col_ia:
+            st.markdown("#### 🤖 Analisi Skill Live (Esempio)")
+            st.markdown("""
+            <div class="saas-box">
+                <b>📡 Estrazione Dati Tacita</b><br>
+                <p style="font-size:12px; color:#475569; font-style:italic;">
+                   "L'IA sta elaborando i dati vocali per definire lo skill final score del profilo..."
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Restanti moduli
+    elif st.session_state.current_menu == "📢 Annunci":
+        st.info("Modulo Annunci pronto. Compila la sezione a sinistra per caricare posizioni.")
+    elif st.session_state.current_menu == "🏢 Clienti":
+        for cli in st.session_state.clienti_db:
+            st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b> - Referente: {cli["Referente"]}</div>', unsafe_allow_html=True)
+    else:
+        st.info(f"Pannello {st.session_state.current_menu} attivo.")
