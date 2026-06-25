@@ -53,9 +53,9 @@ st.markdown("""
 
 # --- DATABASE OPERATORI ---
 OPERATORI = {
-    "daniele@deireali.com": {"nome": "Daniele", "pw": "Daniele2026", "ruolo": "Senior Recruiter"},
-    "julian@deireali.com": {"nome": "Julian", "pw": "Julian2026", "ruolo": "HR Director"},
-    "admin@deireali.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
+    "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
+    "adv.hr@deireali.itm": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
+    "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
 }
 
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
