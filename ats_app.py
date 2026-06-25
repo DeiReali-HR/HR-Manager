@@ -60,7 +60,7 @@ if 'current_menu' not in st.session_state:
 # --- SIDEBAR (MENU DI SINISTRA) ---
 with st.sidebar:
     # Inserimento Logo Dei Reali (Cerca l'immagine caricata nella stessa cartella)
-    logo_path = "1000376160.jpg"
+    logo_path = "1000376160.jpeg"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
     else:
