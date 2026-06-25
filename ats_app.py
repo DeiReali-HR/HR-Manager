@@ -60,7 +60,7 @@ st.markdown("""
         border-radius: 16px;
         padding: 40px;
         max-width: 500px;
-        margin: 80px auto;
+        margin: 60px auto;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
     .status-disponibile {
@@ -99,7 +99,7 @@ if 'utente_connesso' not in st.session_state:
 if 'current_menu' not in st.session_state:
     st.session_state.current_menu = "📢 Annunci"
 
-# Inizializzazione Database Candidati con l'aggiunta della chiave di stato 'Impegnato'
+# Inizializzazione Database Candidati
 if 'candidati_db' not in st.session_state:
     st.session_state.candidati_db = [
         {
@@ -133,11 +133,19 @@ if 'clienti_db' not in st.session_state:
         {"Azienda": "Dei Reali Consulting", "Settore": "Consulenza Aziendale", "Referente": "Direzione HR", "Email": "info@deireali.com", "Posizioni_Aperte": 2}
     ]
 
-# --- MODULO DI AUTENTICAZIONE ---
+# --- MODULO DI AUTENTICAZIONE (SCHERMATA INIZIALE) ---
 if not st.session_state.autenticato:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.image("1000376160.jpeg", width=200) if os.path.exists("1000376160.jpeg") else st.markdown("## 👑 DEI REALI")
+    
+    # Mostra logo in modo pulito senza costrutti inline problematici
+    logo_path = "1000376160.jpeg"
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=220)
+    else:
+        st.markdown("## 👑 DEI REALI")
+        
     st.markdown("### Accesso alla Suite Aziendale")
+    st.markdown("<p style='font-size:13px; color:#64748B;'>Inserisci le tue credenziali ufficiali per accedere alla tua plancia di lavoro.</p>", unsafe_allow_html=True)
     
     login_mail = st.text_input("📧 E-mail Ufficiale")
     login_pw = st.text_input("🔑 Password Assegnata", type="password")
@@ -148,15 +156,15 @@ if not st.session_state.autenticato:
             st.session_state.utente_connesso = OPERATORI[login_mail]
             st.rerun()
         else:
-            st.error("Credenziali non corrette.")
+            st.error("Credenziali non corrette o utente non abilitato.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- APPLICAZIONE COMPLETA ---
+# --- APPLICAZIONE COMPLETA (ACCESSIBILE SOLO DOPO IL LOGIN) ---
 else:
     with st.sidebar:
-        logo_path = "1000376160.jpeg"
-        if os.path.exists(logo_path):
-            st.image(logo_path, use_container_width=True)
+        logo_side = "1000376160.jpeg"
+        if os.path.exists(logo_side):
+            st.image(logo_side, use_container_width=True)
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}")
         st.caption(f"💼 {st.session_state.utente_connesso['ruolo']}")
@@ -177,7 +185,8 @@ else:
     
     for i, (label, key) in enumerate(buttons_nav):
         with [c1, c2, c3, c4, c5, c6, c7][i]:
-            if st.button(label): st.session_state.current_menu = key
+            if st.button(label, key=f"nav_{key}"): 
+                st.session_state.current_menu = key
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
@@ -187,7 +196,6 @@ else:
         st.markdown("### 👥 Elenco Candidati e Stato Linea Live")
         st.markdown("I candidati possono sostenere un solo colloquio alla volta. Controlla i badge colorati prima di avviare una stanza digitale.")
         
-        # Form per simulare l'inserimento di un nuovo candidato
         with st.expander("➕ Aggiungi un nuovo Candidato alla lista", expanded=False):
             nuovo_n = st.text_input("Nome e Cognome")
             nuova_m = st.text_input("E-mail")
@@ -203,11 +211,8 @@ else:
                     st.success("Candidato aggiunto!")
                     st.rerun()
 
-        # Visualizzazione della lista candidati con monitor di occupazione line
         for index, cand in enumerate(st.session_state.candidati_db):
             st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-            
-            # Griglia interna: Dati a sinistra, controlli e stati a destra
             col_info, col_status = st.columns([3, 1])
             
             with col_info:
@@ -216,22 +221,18 @@ else:
                 st.markdown(f"🔄 *Orientamento Consigliato:* {cand['Alternativo']}")
                 
             with col_status:
-                # Logica del Badge Grafico
-                if cand["Impegnato"]:
+                if cand["ImpeGNato" if "ImpeGNato" in cand else "Impegnato"]:
                     st.markdown(f'<div class="status-occupato">🔴 IMPEGNATO in altra chiamata ({cand["Operatore_Call"]})</div>', unsafe_allow_html=True)
-                    # Bottone per sbloccare la linea (Simulazione fine chiamata)
                     if st.button("📴 Chiudi Chiamata", key=f"stop_{index}"):
                         st.session_state.candidati_db[index]["Impegnato"] = False
                         st.session_state.candidati_db[index]["Operatore_Call"] = None
                         st.rerun()
                 else:
                     st.markdown('<div class="status-disponibile">🟢 ATTIVO / Libero</div>', unsafe_allow_html=True)
-                    # Bottone per occupare la linea
                     if st.button("📞 Avvia Colloquio AI", key=f"start_{index}"):
                         st.session_state.candidati_db[index]["Impegnato"] = True
                         st.session_state.candidati_db[index]["Operatore_Call"] = st.session_state.utente_connesso['nome']
                         st.rerun()
-                        
             st.markdown('</div>', unsafe_allow_html=True)
 
     # --- SEZIONE COLLOQUI AI CON MONITORE ROOM ---
@@ -239,9 +240,7 @@ else:
         st.markdown("### 🤝 Monitoraggio Stanze Colloqui in Background")
         st.markdown("Visualizzazione dei flussi audio/video operativi supportati dal Copilota IA.")
         
-        # Genera dinamicamente le stanze in base a chi è impegnato nel DB
-        occupati = [c for c in st.session_state.candidati_db if c["Impegnato"]]
-        
+        occupati = [c for c in st.session_state.candidati_db if c.get("Impegnato", False)]
         col_stanze, col_ia = st.columns([2, 1])
         
         with col_stanze:
@@ -270,9 +269,20 @@ else:
             </div>
             """, unsafe_allow_html=True)
 
-    # Restanti moduli
     elif st.session_state.current_menu == "📢 Annunci":
-        st.info("Modulo Annunci pronto. Compila la sezione a sinistra per caricare posizioni.")
+        col_sx, col_dx = st.columns(2)
+        with col_sx:
+            st.markdown("### 📝 Dati dell'Annuncio")
+            uploaded_img = st.file_uploader("🖼️ Scegli file", type=["png", "jpg", "jpeg"])
+            titolo_job = st.text_input("📍 Titolo della posizione")
+            tipo_importo = st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True)
+            valore_importo = st.text_input("Valore (€)")
+            indirizzo_job = st.text_input("🏢 Sede di lavoro")
+            if st.button("🚀 PUBBLICA ANNUNCIO"): st.success("Annuncio indicizzato!")
+        with col_dx:
+            st.markdown("### 🤖 Assistente Scrittura")
+            st.text_area("Note sparse:", height=210)
+
     elif st.session_state.current_menu == "🏢 Clienti":
         for cli in st.session_state.clienti_db:
             st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b> - Referente: {cli["Referente"]}</div>', unsafe_allow_html=True)
