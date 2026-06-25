@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st
 import pandas as pd
 import os
 import random
@@ -70,7 +70,7 @@ def get_global_database():
                 "Inquadramento": "RAL", 
                 "Importo": "1300", 
                 "Sede": "Palestrina / Cave", 
-                "Note": "Cerchiamo persone serie, presenti e umane. Non solo 'operatori'. Selezione per inserimento immediato con disponibilità ai turni residenziali.",
+                "Note": "Cerchiamo persone serie, presenti e umane. Selezione per inserimento immediato con disponibilità ai turni residenziali.",
                 "Foto_Data": None
             }
         ],
@@ -147,15 +147,15 @@ if "job" in query_params:
                     db_globale["candidati"].append({
                         "id": len(db_globale["candidati"]), "Nome": c_nome, "Email": c_mail, "Telefono": c_tel,
                         "Posizione": annuncio_selezionato['Posizione'], "Idoneità": f"{random.randint(78, 97)}%", "Stelle": "⭐⭐⭐⭐",
-                        "Orientamento": f"Candidatura ricevuta dal portale web. Idoneità ottimale per la sede di {annuncio_selezionato['Sede']}.",
+                        "Orientamento": f"Candidatura ricevuta dal portale web. Profilo idoneo per la sede di {annuncio_selezionato['Sede']}.",
                         "Alternativo": "Nessuno", "Impegnato": False, "Operatore_Call": None, "Meet_Link": None, "Stato": "In Screening"
                     })
-                    st.success("🎉 Candidatura caricata con successo! Il team Dei Reali analizzerà il tuo profilo.")
-                else: st.error("Compila i campi richiesti e inserisci il CV.")
+                    st.success("🎉 Candidatura caricata con successo!")
+                else: st.error("Compila tutti i campi richiesti.")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="public-card" style="text-align:center;">', unsafe_allow_html=True)
-        st.error("⚠️ Annuncio non trovato o rimosso dall'archivio aziendale.")
+        st.error("⚠️ Annuncio non trovato.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 # --- SUITE AMMINISTRATIVA INTERNA PRIVATA ---
@@ -209,7 +209,7 @@ else:
                 st.markdown(f'<div class="global-banner">🚨 <b>COLLOQUIO IN CORSO:</b> L\'operatore <b>{s["Operatore_Call"]}</b> è in linea con <b>{s["Nome"]}</b>. <a href="{s["Meet_Link"]}" target="_blank" style="margin-left:15px; font-weight:bold; color:#1A73E8;">🖥️ CLICCA QUI PER UNIRTI AL MEET</a></div>', unsafe_allow_html=True)
 
         # ==========================================
-        # MODULO 1: 📢 GESTIONE ANNUNCI (3 COLONNE COMPLETE)
+        # MODULO 1: 📢 GESTIONE ANNUNCI
         # ==========================================
         if st.session_state.current_menu == "📢 Annunci":
             col_sx, col_centro, col_dx = st.columns([1, 1, 1])
@@ -248,12 +248,13 @@ else:
                     st.markdown('</div>', unsafe_allow_html=True)
 
         # ==========================================
-        # MODULO 2: 📥 SCREENING CV (COMPLETO)
+        # MODULO 2: 📥 SCREENING CV
         # ==========================================
         elif st.session_state.current_menu == "📥 Screening CV":
             st.markdown("### 📥 Curriculum Ricevuti ed Esiti Screening IA")
             screening_list = [c for c in db_globale["candidati"] if c["Stato"] == "In Screening"]
-            if not screening_list: st.info("Nessuna candidatura da esaminare in questo momento.")
+            if not screening_list: 
+                st.info("Nessuna candidatura da esaminare in questo momento.")
             for index, cand in enumerate(db_globale["candidati"]):
                 if cand["Stato"] == "In Screening":
                     st.markdown('<div class="saas-box">', unsafe_allow_html=True)
@@ -263,7 +264,11 @@ else:
                         st.markdown(f"🎯 *Candidato per:* {cand['Posizione']} &emsp;|&emsp; 📧 *Email:* {cand['Email']}")
                         st.markdown(f'<div class="ai-box"><b>🧠 CLASSIFICAZIONE IA ({cand["Idoneità"]}):</b> {cand["Orientamento"]}<br><b>Re-routing consigliato:</b> {cand["Alternativo"]}</div>', unsafe_allow_html=True)
                     with c_r:
-                        if cand.get("Impegnato", False): st.markdown('<div class="status-occupato">🔴 IN VIDEO CHIAMATA</div>', unsafe_allow_html=True)
+                        if cand.get("Impegnato", False): 
+                            st.markdown('<div class="status-occupato">🔴 IN VIDEO CHIAMATA</div>', unsafe_allow_html=True)
+                            if st.button("Termina Chiamata", key=f"scr_term_{index}"):
+                                db_globale["candidati"][index]["Impegnato"] = False
+                                st.rerun()
                         else:
                             st.markdown('<div class="status-disponibile">🟢 LIBERO / Pronto</div>', unsafe_allow_html=True)
                             if st.button("📞 Chiama Ora (Istantaneo)", key=f"scr_call_{index}"):
@@ -273,21 +278,23 @@ else:
                                 st.rerun()
                             if st.button("🤝 Promuovi a Colloqui", key=f"scr_appr_{index}"):
                                 db_globale["candidati"][index]["Stato"] = "Approvato per Colloquio"
-                                st.success("Spostato nell'elenco dell'agenda!"); st.rerun()
+                                st.success("Spostato in Agenda!"); st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
         # ==========================================
-        # MODULO 3: 🤝 COLLOQUI AI (COMPLETO)
+        # MODULO 3: 🤝 COLLOQUI AI
         # ==========================================
         elif st.session_state.current_menu == "🤝 Colloqui AI":
             st.markdown("### 🗓️ Calendario Globale Condiviso e Supporto IA")
-            if not db_globale["agenda"]: st.info("Nessun colloquio pianificato in calendario.")
-            else: st.dataframe(pd.DataFrame(db_globale["agenda"])[["Data", "Ora", "Candidato", "Operatore", "Telefono", "Meet_Link"]], use_container_width=True)
+            if not db_globale["agenda"]: 
+                st.info("Nessun colloquio pianificato in calendario.")
+            else: 
+                st.dataframe(pd.DataFrame(db_globale["agenda"])[["Data", "Ora", "Candidato", "Operatore", "Telefono", "Meet_Link"]], use_container_width=True)
             
             st.markdown("<br><hr>", unsafe_allow_html=True)
             col_plan, col_act, col_ia = st.columns([1, 1.2, 0.8])
             with col_plan:
-                st.markdown("#### ✍️ Fissa Turno")
+                st.markdown("#### ✍️ ... Fissa Turno")
                 st.markdown('<div class="saas-box">', unsafe_allow_html=True)
                 cand_scelto = st.selectbox("Seleziona Candidato", [c["Nome"] for c in db_globale["candidati"]])
                 d_s = st.date_input("Giorno", min_value=date.today())
@@ -295,20 +302,20 @@ else:
                 if st.button("💾 Conferma Appuntamento", use_container_width=True):
                     c_inf = next((c for c in db_globale["candidati"] if c["Nome"] == cand_scelto), None)
                     db_globale["agenda"].append({"Candidato": cand_scelto, "Data": str(d_s), "Ora": o_s.strftime("%H:%M"), "Operatore": st.session_state.utente_connesso['nome'], "Meet_Link": f"https://meet.google.com/{random.randint(100,999)}-{random.randint(100,999)}", "Telefono": c_inf["Telefono"] if c_inf else "+39333000"})
-                    st.success("Inserito in calendario!"); st.rerun()
+                    st.success("Inserito!"); st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             with col_act:
                 st.markdown("#### ⚡ Azioni Invito")
                 for idx, app in enumerate(db_globale["agenda"]):
                     st.markdown(f'<div class="saas-box"><b>{app["Candidato"]}</b> ({app["Data"]} ore {app["Ora"]})<br><a href="{app["Meet_Link"]}" target="_blank" class="meet-btn" style="width:100%;">🖥️ Avvia Meet Room</a>', unsafe_allow_html=True)
-                    txt_wa = f"Gentile {app['Candidato']},\nLe confermiamo l'appuntamento Dei Reali con {app['Operatore']}.\n🗓️ Data: {app['Data']}\n⏰ Ora: {app['Ora']}\n🔗 Link Meet: {app['Meet_Link']}\n\nNota: Il supporto IA prenderà parte alla sessione in modalità silente."
-                    st.markdown(f'<a href="https://wa.me/{app["Telefono"].replace("+","").replace(" ","")}?text={urllib.parse.quote(txt_wa)}" target="_blank" class="whatsapp-btn" style="width:100%;">💬 Notifica Numero Candidato</a></div>', unsafe_allow_html=True)
+                    txt_wa = f"Gentile {app['Candidato']},\nLe confermiamo l'appuntamento Dei Reali.\n🗓️ Data: {app['Data']}\n⏰ Ora: {app['Ora']}\n🔗 Link Meet: {app['Meet_Link']}"
+                    st.markdown(f'<a href="https://wa.me/{app["Telefono"].replace("+","").replace(" ","")}?text={urllib.parse.quote(txt_wa)}" target="_blank" class="whatsapp-btn" style="width:100%;">💬 Invia Notifica WhatsApp</a></div>', unsafe_allow_html=True)
             with col_ia:
                 st.markdown("#### 🤖 Assistente Trascrizione Tacita")
-                st.markdown('<div class="saas-box" style="border-left: 4px solid #10B981; background-color:#F0FDF4;">🎙️ <b>Trascrizione in background attiva.</b><br><span style="font-size:12px;color:#475569;">L\'IA ascolta la sessione in modalità passiva. Al fine chiamata produrrà qui lo Skill Score e le metriche finali delle competenze.</span></div>', unsafe_allow_html=True)
+                st.markdown('<div class="saas-box" style="border-left: 4px solid #10B981; background-color:#F0FDF4;">🎙️ <b>Trascrizione in background attiva.</b><br><span style="font-size:12px;color:#475569;">L\'IA ascolta la sessione e produrrà qui lo Skill Score e le metriche finali al termine.</span></div>', unsafe_allow_html=True)
 
         # ==========================================
-        # MODULO 4: 🎉 ASSUNZIONI (COMPLETO)
+        # MODULO 4: 🎉 ASSUNZIONI
         # ==========================================
         elif st.session_state.current_menu == "🎉 Assunzioni":
             st.markdown("### 🎉 Pratiche e Contratti di Assunzione in Corso")
@@ -320,7 +327,7 @@ else:
                     <div class="saas-box" style="border-left: 4px solid #10B981;">
                         👤 <b>Dipendente:</b> {ass['Candidato']}<br>
                         🎯 <b>Posizione:</b> {ass['Posizione']} &emsp;|&emsp; 📝 <b>Contratto:</b> {ass['Contratto']} ({ass['RAL']})<br>
-                        ⏱️ <b>Data Avvio Attività:</b> {ass['Data_Inizio']} &emsp;|&emsp; 🔷 <b>Stato Avanzamento:</b> <span style="color:#059669;font-weight:bold;">{ass['Stato']}</span>
+                        ⏱️ <b>Data Avvio Attività:</b> {ass['Data_Inizio']} &emsp;|&emsp; 🔷 <b>Stato:</b> <span style="color:#059669;font-weight:bold;">{ass['Stato']}</span>
                     </div>
                     """, unsafe_allow_html=True)
             with col_ass2:
@@ -329,14 +336,14 @@ else:
                     n_a = st.text_input("Nome Risorsa")
                     p_a = st.text_input("Mansione Assegnata")
                     c_a = st.selectbox("Inquadramento Nazionale", ["Tempo Indeterminato", "Tempo Determinato", "Apprendistato"])
-                    r_a = st.text_input("RAL Concordata Ufficiale (€)")
+                    r_a = st.text_input("RAL Concordata (€)")
                     if st.form_submit_button("CONVALIDA E REGISTRA PRATICA"):
                         if n_a:
                             db_globale["assunzioni"].append({"Candidato": n_a, "Posizione": p_a, "Data_Inizio": str(date.today()), "Contratto": c_a, "RAL": r_a + " €", "Stato": "Pratica Convalidata"})
-                            st.success("Pratica registrata nel sistema centrale!"); st.rerun()
+                            st.success("Pratica registrata!"); st.rerun()
 
         # ==========================================
-        # MODULO 5: 📊 REPORT (COMPLETO)
+        # MODULO 5: 📊 REPORT
         # ==========================================
         elif st.session_state.current_menu == "📊 Report":
             st.markdown("### 📊 Performance KPI e Statistiche Agenzia")
@@ -346,20 +353,22 @@ else:
             with kpi3: st.metric("Colloqui in Agenda", len(db_globale["agenda"]))
             with kpi4: st.metric("Assunzioni Concluse", len(db_globale["assunzioni"]))
             
-            st.markdown("<br>#### 📈 Rendimento Mensile Operatori dei Reali", unsafe_allow_html=True)
-            rep_data = pd.DataFrame([{"Operatore": "Danilo", "Screening CV": 42, "Colloqui Sostenuti": 18, "Pratiche Chiuse": 3},
-                                     {"Operatore", "Dionisio", "Screening CV": 35, "Colloqui Sostenuti": 22, "Pratiche Chiuse": 5}])
-            st.table(rep_data)
+            st.markdown("<br>#### 📈 Rendimento Mensile Operatori", unsafe_allow_html=True)
+            rep_data = pd.DataFrame([
+                {"Operatore": "Danilo", "Screening CV": 42, "Colloqui Sostenuti": 18, "Pratiche Chiuse": 3},
+                {"Operatore": "Dionisio", "Screening CV": 35, "Colloqui Sostenuti": 22, "Pratiche Chiuse": 5}
+            ])
+            st.dataframe(rep_data, use_container_width=True)
 
         # ==========================================
-        # MODULO 6: 🏢 CLIENTI (COMPLETO)
+        # MODULO 6: 🏢 CLIENTI
         # ==========================================
         elif st.session_state.current_menu == "🏢 Clienti":
             st.markdown("### 🏢 CRM Anagrafica Aziende Partner Mandatarie")
             col_cli1, col_cli2 = st.columns([2, 1])
             with col_cli1:
                 for cli in db_globale["clienti"]:
-                    st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b><br><span style="font-size:12px;color:#475569;">Settore: {cli["Settore"]} | Account Manager Interno: {cli["Referente"]} | Mandati Attivi: {cli["Posizioni"]}</span></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="saas-box">🏢 <b>{cli["Azienda"]}</b><br><span style="font-size:12px;color:#475569;">Settore: {cli["Settore"]} | Account Manager: {cli["Referente"]} | Mandati Attivi: {cli["Posizioni"]}</span></div>', unsafe_allow_html=True)
             with col_cli2:
                 st.markdown("#### ➕ Registra Nuova Azienda Partner")
                 with st.form("add_cli_form"):
@@ -372,13 +381,13 @@ else:
                             st.success("Azienda partner registrata!"); st.rerun()
 
         # ==========================================
-        # MODULO 7: 👥 CANDIDATI (COMPLETO)
+        # MODULO 7: 👥 CANDIDATI
         # ==========================================
         elif st.session_state.current_menu == "👥 Candidati":
             st.markdown("### 👥 Archivio Anagrafico Globale Candidati")
             for index, cand in enumerate(db_globale["candidati"]):
                 st.markdown('<div class="saas-box">', unsafe_allow_html=True)
                 st.markdown(f"#### 👤 {cand['Nome']} &emsp; <span style='font-size:13px;color:#64748B;'>📱 {cand['Telefono']} | 📧 {cand['Email']}</span>", unsafe_allow_html=True)
-                st.markdown(f"🎯 *Mansione / Ruolo:* {cand['Posizione']} &emsp;|&emsp; 🔷 *Stato Pratica Interno:* {cand.get('Stato','In Screening')}")
+                st.markdown(f"🎯 *Mansione:* {cand['Posizione']} &emsp;|&emsp; 🔷 *Stato Pratica:* {cand.get('Stato','In Screening')}")
                 st.markdown(f"<p style='margin:5px 0 0 0; font-size:12px; color:#475569;'><b>Note IA Centrali:</b> {cand['Orientamento']}</p>", unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
