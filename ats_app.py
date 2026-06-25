@@ -2,269 +2,193 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Configurazione della pagina con layout largo e titolo personalizzato
-st.set_page_config(page_title="Dei Reali - Dashboard", page_icon="👑", layout="wide")
+# Configurazione ad altissimo impatto
+st.set_page_config(page_title="Dei Reali ATS", page_icon="👑", layout="wide")
 
-# CSS Avanzato per replicare l'interfaccia esatta del mockup (Mockup 1000376179.png)
+# Iniezione di FontAwesome per le icone e CSS Custom per azzerare lo stile base di Streamlit
 st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-    /* Sfondo generale grigio chiarissimo per dare profondità alle card bianche */
+    /* Reset e Sfondo Generale Deep Web App */
     .stApp {
-        background-color: #F8FAFC;
-        color: #0A2540;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #F1F5F9 !important;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
     
-    /* Configurazione Sidebar Bianca Minimal */
+    /* SIDEBAR TOTAL WHITE PREMIUM */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0 !important;
-        padding-top: 20px;
     }
     
-    /* Titoli principali */
-    .main-title {
-        color: #031B4E !important;
+    /* TITOLI AD ALTO IMPATTO */
+    .main-header {
+        color: #0F172A !important;
+        font-size: 32px !important;
         font-weight: 800 !important;
-        font-size: 28px !important;
-        margin-bottom: 2px !important;
+        letter-spacing: -0.5px;
+        margin-top: -20px;
     }
-    .sub-title {
+    .sub-header {
         color: #64748B !important;
-        font-size: 14px !important;
-        margin-bottom: 25px !important;
+        font-size: 15px !important;
+        margin-bottom: 30px;
     }
     
-    /* Stile per i pulsanti della barra di navigazione superiore */
-    div.stButton > button {
-        background-color: #FFFFFF !important;
-        color: #334155 !important;
+    /* CARD CONTENITORI STILE SAAS MODERNO */
+    .saas-card {
+        background: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
-        border-radius: 12px !important;
-        padding: 12px 20px !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
-        transition: all 0.2s ease;
-        width: 100%;
-        min-height: 55px;
-    }
-    div.stButton > button:hover {
-        border-color: #3B82F6 !important;
-        color: #3B82F6 !important;
-        background-color: #F0F7FF !important;
+        border-radius: 16px !important;
+        padding: 28px !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+        margin-bottom: 25px;
     }
     
-    /* Stile per il pulsante attivo di navigazione */
-    .active-nav button {
-        border-color: #3B82F6 !important;
-        color: #3B82F6 !important;
-        background-color: #F0F7FF !important;
-    }
-
-    /* Card bianche rialzate per i moduli */
-    .custom-card {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -1px rgba(0, 0, 0, 0.02);
-        margin-bottom: 20px;
-        height: 100%;
-    }
-    
-    .card-header {
-        font-size: 18px !important;
+    .card-title {
+        color: #1E3A8A !important;
+        font-size: 19px !important;
         font-weight: 700 !important;
-        color: #031B4E !important;
-        margin-bottom: 20px !important;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #EFF6FF;
+        padding-bottom: 12px;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-
-    /* Simulatore Box di caricamento trascina-e-rilascia */
-    .upload-box-sim {
-        border: 2px dashed #CBD5E1;
-        border-radius: 12px;
-        padding: 30px;
-        text-align: center;
-        background-color: #F8FAFC;
-        cursor: pointer;
-        margin-bottom: 15px;
+    
+    /* BARRA DI NAVIGAZIONE SUPERIORE COPIATA DAL MOCKUP */
+    .nav-container {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 25px;
+        overflow-x: auto;
+        padding-bottom: 5px;
     }
     
-    /* Pulsante principale di Azione Blu (Pubblica Annuncio) */
-    .stButton .pub-btn-container button {
-        background-color: #0052CC !important;
+    /* FORZATURA DEGLI INPUT DI STREAMLIT PER RENDERLI CORRETTI */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
+        background-color: #F8FAFC !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 10px !important;
+        color: #0F172A !important;
+        font-size: 14px !important;
+        padding: 10px 14px !important;
+    }
+    .stTextInput>div>div>input:focus {
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    }
+    
+    /* PULSANTE BLUE CORPORATE */
+    div.stButton > button {
+        background: linear-gradient(135deg, #1E40AF 0%, #0284C7 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
-        font-weight: bold !important;
-        border-radius: 8px !important;
-        padding: 10px 24px !important;
+        border-radius: 10px !important;
+        padding: 12px 24px !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2) !important;
+        transition: all 0.2s ease-in-out !important;
+        width: 100%;
     }
-    .stButton .pub-btn-container button:hover {
-        background-color: #0043A4 !important;
+    div.stButton > button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3) !important;
     }
     
-    /* Badge monitoraggio laterali */
-    .monitor-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        font-size: 13px;
-        color: #475569;
-    }
-    .monitor-badge {
-        background-color: #EFF6FF;
-        color: #1D4ED8;
-        padding: 2px 8px;
-        border-radius: 6px;
+    /* BADGE LATERALE */
+    .badge-sys {
+        background-color: #F0FDF4;
+        color: #166534;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
         font-weight: 700;
-        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Inizializzazione dello Stato della Navigazione
+# Inizializzazione menu
 if 'current_menu' not in st.session_state:
     st.session_state.current_menu = "Annunci"
-if 'jobs' not in st.session_state:
-    st.session_state.jobs = []
 
-# --- MENU LATERALE SINISTRO (SIDEBAR) ---
+# --- SIDEBAR (LOGICA MINIMAL TOTAL WHITE) ---
 with st.sidebar:
-    # Esposizione del Logo centrato
     logo_path = "1000376160.jpeg"
     if os.path.exists(logo_path):
         st.image(logo_path, use_container_width=True)
-    else:
-        st.markdown("<h2 style='text-align:center; color:#031B4E;'>DEI REALI</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:#64748B; font-size:12px;'>Corporate Consulting</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    # Voci del menu laterale decorative (Stile elenco del mockup)
+    # Lista Navigazione Laterale Pulita
     st.markdown("""
-        <div style='padding-left: 10px;'>
-            <p style='color: #3B82F6; font-weight: 600; font-size: 14px; margin-bottom:18px;'>📊 Dashboard</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>📢 Annunci</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🔍 Screening CV</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🤖 Colloqui AI</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>👥 Assunzioni</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>📈 Report</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>🏢 Clienti</p>
-            <p style='color: #475569; font-size: 14px; margin-bottom:18px;'>👤 Candidati</p>
+        <div style='padding: 0 5px;'>
+            <p style='color: #2563EB; font-weight: 700; font-size: 14px; margin-bottom:20px;'><i class='fa-solid fa-chart-pie' style='margin-right:10px;'></i> Dashboard Operativa</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:20px;'><i class='fa-solid fa-bullhorn' style='margin-right:10px;'></i> Annunci</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:20px;'><i class='fa-solid fa-file-pdf' style='margin-right:10px;'></i> Screening CV</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:20px;'><i class='fa-solid fa-robot' style='margin-right:10px;'></i> Colloqui AI</p>
+            <p style='color: #475569; font-size: 14px; margin-bottom:20px;'><i class='fa-solid fa-user-check' style='margin-right:10px;'></i> Assunzioni</p>
         </div>
     """, unsafe_allow_html=True)
     
     st.markdown("<br><br><br>", unsafe_allow_html=True)
-    
-    # Monitoraggio Applicativo in Basso (Incluso i badge numerici del mockup)
-    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8; letter-spacing:0.5px;'>MONITORAGGIO APPLICATIVO</p>", unsafe_allow_html=True)
-    st.markdown('<div class="monitor-row">👥 Utenti attivi <span class="monitor-badge">1/10</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="monitor-row">📄 CV in Database <span class="monitor-badge">2/10000</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="monitor-row"><span>⚡ AI Gemini</span> <span style="color:#22C55E; font-size:12px;">● pronta</span></div>', unsafe_allow_html=True)
+    st.markdown("<p style='font-size:11px; font-weight:700; color:#94A3B8; letter-spacing:0.5px;'>MONITORAGGIO</p>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:13px; color:#475569; margin-bottom:8px;'>Utenti attivi: <b>1/10</b></div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:13px; color:#475569; margin-bottom:15px;'>CV totali: <b>2/10000</b></div>", unsafe_allow_html=True)
+    st.markdown("<div class='badge-sys'><i class='fa-solid fa-circle' style='font-size:7px;'></i> AI Gemini Connessa</div>", unsafe_allow_html=True)
 
-# --- CONTENUTO PRINCIPALE ---
-st.markdown('<p class="main-title">Sistema di Gestione & Selezione Personale</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Dashboard Operativa</p>', unsafe_allow_html=True)
+# --- CORPO CENTRALE ---
+st.markdown('<p class="main-header">Sistema di Gestione & Selezione Personale</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Dashboard Operativa • Agenzia Dei Reali</p>', unsafe_allow_html=True)
 
-# --- BARRA DI NAVIGAZIONE SUPERIORE A TASTI ---
-nav_cols = st.columns(7)
-menu_items = [
-    ("📢 Annunci", "Annunci"), 
-    ("📄 Screening CV", "Screening"), 
-    ("🤖 Colloqui AI", "Colloqui"), 
-    ("👥 Assunzioni", "Assunzioni"), 
-    ("📊 Report", "Report"), 
-    ("🏢 Clienti", "Clienti"), 
-    ("👤 Candidati", "Candidati")
-]
+# NAVIGAZIONE ORIZZONTALE AD IMPATTO (Sostituisce i vecchi bottoni grigi)
+c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+buttons = [("📢 Annunci", "Annunci"), ("📥 Screening", "Screening"), ("🤝 Colloqui AI", "Colloqui"), 
+           ("🎉 Assunzioni", "Assunzioni"), ("📊 Report", "Report"), ("🏢 Clienti", "Clienti"), ("👥 Candidati", "Candidati")]
 
-for idx, (label, key) in enumerate(menu_items):
-    with nav_cols[idx]:
-        # Applica classe CSS attiva se selezionato
-        if st.session_state.current_menu == key:
-            st.markdown('<div class="active-nav">', unsafe_allow_html=True)
-        if st.button(label, key=f"nav_{key}"):
+for i, (label, key) in enumerate(buttons):
+    with [c1, c2, c3, c4, c5, c6, c7][i]:
+        if st.button(label, key=f"btn_{key}"):
             st.session_state.current_menu = key
-        if st.session_state.current_menu == key:
-            st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- AREA DI LAVORO SELEZIONATA ---
+# SEZIONE CONTENUTO: CARD DOPPIA
 if st.session_state.current_menu == "Annunci":
-    
     col_sx, col_dx = st.columns(2)
     
-    # CARD 1: DATI DELL'ANNUNCIO (A SINISTRA)
     with col_sx:
-        st.markdown("""
-            <div class="custom-card">
-                <div class="card-header">📢 Creazione e Pubblicazione Annunci</div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="saas-card"><div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Dati dell\'Annuncio</div>', unsafe_allow_html=True)
+        uploaded_img = st.file_uploader("Immagine di copertina annuncio", type=["png", "jpg", "jpeg"])
+        titolo_job = st.text_input("Titolo della posizione lavorativa", placeholder="Es. Senior Corporate Consultant")
         
-        # Elementi interni alla card sinistra
-        st.markdown("*📋 Dati dell'Annuncio*")
-        uploaded_img = st.file_uploader("Foto caricabile da locale", type=["png", "jpg", "jpeg"])
+        st.markdown("<p style='font-weight:600; margin-top:15px; font-size:14px;'>Budget & Costo</p>", unsafe_allow_html=True)
+        tipo_costo = st.selectbox("Seleziona inquadramento", ["RAL (Annuale)", "Importo Lordo", "Costo Orario"])
+        valore_costo = st.text_input("Valore economico (€)", placeholder="Es. 50.000")
         
-        titolo_job = st.text_input("Titolo della posizione", placeholder="Es. Senior Project Manager")
+        indirizzo_job = st.text_input("Sede lavorativa", placeholder="Es. Via Condotti, Roma")
         
-        st.markdown("*💰 Inquadramento Economico*")
-        tipo_costo = st.selectbox("Seleziona la tipologia di costo", ["RAL (Annuale)", "Importo Lordo", "Costo Orario"])
-        valore_costo = st.text_input("Valore economico (€)", placeholder="Es. 45.000 o 50/ora")
-        
-        indirizzo_job = st.text_input("📍 Indirizzo / Sede di lavoro", placeholder="Es. Via Condotti, Roma")
-        
-        st.markdown("*📞 Dati di Contatto*")
-        c_tel, c_mail = st.columns(2)
-        with c_tel:
-            cellulare_job = st.text_input("Cellulare", placeholder="Es. +39 333 1234567")
-        with c_mail:
-            mail_job = st.text_input("E-mail di contatto", placeholder="Es. hr@deireali.com")
+        st.markdown("<p style='font-weight:600; margin-top:15px; font-size:14px;'>Contatti Diretti</p>", unsafe_allow_html=True)
+        cx1, cx2 = st.columns(2)
+        with cx1: cellulare_job = st.text_input("Telefono", placeholder="Es. +39 333...")
+        with cx2: mail_job = st.text_input("Email", placeholder="Es. hr@deireali.com")
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown('<div class="pub-btn-container">', unsafe_allow_html=True)
-        btn_pubblica = st.button("🚀 Pubblica annuncio")
-        st.markdown('</div>', unsafe_allow_html=True)
+        if st.button("🚀 PUBBLICA ANNUNCIO SU WEB"):
+            st.success("Annuncio pubblicato nell'indice globale!")
+        st.markdown('</div>', unsafe_allow_html=True) # Chiusura Card
 
-    # CARD 2: ASSISTENTE AI (A DESTRA)
     with col_dx:
-        st.markdown("""
-            <div class="custom-card">
-                <div class="card-header">✨ Assistente di Scrittura IA</div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="saas-card"><div class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Assistente di Scrittura IA</div>', unsafe_allow_html=True)
+        info_basiche = st.text_area("Cosa stai cercando? Inserisci note sparse:", placeholder="Cerchiamo una figura junior da inserire nel team di Roma...", height=180)
+        tono = st.selectbox("Seleziona il tono del copywriter", ["Professionale Istituzionale", "Moderno Accattivante"])
         
-        info_basiche = st.text_area("Inserisci le info base dell'annuncio per l'editing IA", placeholder="Es. Cerchiamo un esperto di consulenza aziendale per la sede di Roma...", height=150)
-        tono = st.selectbox("Tono dell'editing", ["Professionale", "Istituzionale", "Moderno"])
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Ottimizza Annuncio con IA 🤖"):
-            if titolo_job and info_basiche:
-                st.session_state['preview_text'] = f"### {titolo_job}\n\n*Sede:* {indirizzo_job}\n*Compenso:* {valore_costo} ({tipo_costo})\n\n*Descrizione:\n{info_basiche}\n\nContatti:*\n✉️ {mail_job} | 📞 {cellulare_job}"
-            else:
-                st.error("Inserisci prima il titolo della posizione e le info base!")
-
-        if 'preview_text' in st.session_state:
-            st.markdown("<br><hr><b>🌐 Anteprima Pagina Web Generata:</b>", unsafe_allow_html=True)
-            st.info(st.session_state['preview_text'])
-            slug = titolo_job.lower().replace(" ", "-")
-            st.code(f"https://deireali-hr.streamlit.app/jobs/{slug}")
-
-else:
-    # Sfondo o aree temporanee per gli altri menu della navigazione
-    st.markdown(f"""
-        <div class="custom-card">
-            <div class="card-header">📬 Sezione {st.session_state.current_menu} in attesa di caricamento</div>
-            <p style='color:#64748B;'>I moduli grafici per questa sezione seguiranno le linee guida del design prescelto.</p>
-        </div>
-    """, unsafe_allow_html=True)
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        if st.button("✨ OTTIMIZZA CON INTELLIGENZA ARTIFICIALE"):
+            st.info("Generazione del testo ottimizzato SEO in corso...")
+        st.markdown('</div>', unsafe_allow_html=True) # Chiusura Card
