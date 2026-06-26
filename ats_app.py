@@ -55,7 +55,7 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     
     prompt = f"""
     Sei l'assistente HR IA ufficiale della Dei Reali Srl. 
-    Analizza il seguente testo estratto da un CV e confrontalo con i requisiti della posizione aperta.
+    Analizza il disappearance testo estratto da un CV e confrontalo con i requisiti della posizione aperta.
     
     REQUISITI ANNUNCIO:
     {requisiti_annuncio}
@@ -89,7 +89,7 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
     - POSIZIONE: {titolo}
     - SEDE DI LAVORO: {sede}
     - INQUADRAMENTO: {inquadramento} ({importo} €)
-    - SPUNTI/NOTE INIZIALI: {note_breaks if note_breve else 'Nessuna nota aggiuntiva fornita'}
+    - SPUNTI/NOTE INIZIALI: {note_brevi if note_breve else 'Nessuna nota aggiuntiva fornita'}
     
     Articola il testo in 3 sezioni chiare:
     1. Chi Siamo ed Obiettivo del Ruolo (introduzione d'impatto per conto dei nostri clienti di alto livello).
@@ -149,7 +149,6 @@ if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso =
 if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢 Annunci"
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
-# Memorizzazione temporanea del testo IA nel form
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 
 buttons_nav = [
@@ -309,7 +308,6 @@ else:
             
             def_pos, def_inq, def_imp, def_sede, def_foto, def_note = "", "RAL", "", "", "", ""
             
-            # Se siamo in modifica carica i dati esistenti, altrimenti usa l'eventuale testo generato dall'IA
             if st.session_state.edit_mode and st.session_state.edit_job_id:
                 job_da_modificare = next((a for a in elenco_annunci if a["id"] == st.session_state.edit_job_id), None)
                 if job_da_modificare:
@@ -335,7 +333,6 @@ else:
                 st.markdown("### 🤖 Descrizione Offerta")
                 note_job = st.text_area("✍️ Note, Requisiti o Testo Annuncio Completo", value=def_note, height=220)
                 
-                # Pulsante Copilot IA per scrivere automaticamente l'annuncio dai dati base
                 if st.button("🪄 Ottimizza e Completa con IA", use_container_width=True, type="secondary"):
                     if titolo_job:
                         with st.spinner("🧠 Scrittura dell'annuncio professionale in corso con Gemini..."):
