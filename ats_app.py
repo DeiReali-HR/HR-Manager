@@ -153,7 +153,7 @@ if "job" in query_params:
                 </div>
                 <div class="umana-kpi">
                     <div class="umana-kpi-label">💼 Inquadramento</div>
-                    <div class="umana-kpi-value">{annuncio_selezionato['inquadramento']}</div>
+                    <div class="umana-kpi-value">{annuncio_selezinemento['inquadramento']}</div>
                 </div>
                 <div class="umana-kpi">
                     <div class="umana-kpi-label">💸 Compenso Lordo</div>
@@ -191,50 +191,54 @@ if "job" in query_params:
 # --- SUITE INTERNA AMMINISTRATIVA CON LOGIN STRUTTURATO ---
 else:
     if not st.session_state.autenticato:
-        # Layout centrato per il Box Bianco contenente il vostro logo reale
         _, col_box, _ = st.columns([1, 1.2, 1])
         with col_box:
             st.markdown("<br><br><br>", unsafe_allow_html=True)
-            with st.container():
-                # Integrazione Box Bianco con Logo Ufficiale Dei Reali
-                st.markdown("""
-                    <div style="background:#FFFFFF; padding:30px 40px 15px 40px; border-radius:16px 16px 0 0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; text-align:center;">
-                        <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpeg" style="max-width:210px; height:auto; margin-bottom:0px;">
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # Form di login incorporato con CSS modificato per scritte Bianche
-                with st.form("login_form_premium"):
-                    login_mail = st.text_input("📧 E-mail Aziendale")
-                    login_pw = st.text_input("🔑 Password Coordinatore", type="password")
-                    submit_login = st.form_submit_button("ACCEDI AL SISTEMA")
-                    
-                    if submit_login:
-                        if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
-                            st.session_state.autenticato = True
-                            st.session_state.utente_connesso = OPERATORI[login_mail]
-                            st.rerun()
-                        else:
-                            st.error("⚠️ Credenziali errate. Riprova.")
             
-            # CSS Iniezione Forzata per rendere ESCLUSIVAMENTE bianche le scritte email e password
+            # Contenitore superiore bianco arrotondato per ospitare il Logo in modo nativo
+            st.markdown("""
+                <div style="background:#FFFFFF; padding:25px 40px 10px 40px; border-radius:16px 16px 0 0; border-top: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; text-align:center;">
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Caricamento del logo tramite la funzione sicura di Streamlit (inserito tra il box e il form)
+            if os.path.exists("1000376160.jpg"):
+                st.image("1000376160.jpg", use_container_width=True)
+                
+            # Form di login incorporato con CSS modificato per scritte Bianche
+            with st.form("login_form_premium"):
+                login_mail = st.text_input("📧 E-mail Aziendale")
+                login_pw = st.text_input("🔑 Password Coordinatore", type="password")
+                submit_login = st.form_submit_button("ACCEDI AL SISTEMA")
+                
+                if submit_login:
+                    if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
+                        st.session_state.autenticato = True
+                        st.session_state.utente_connesso = OPERATORI[login_mail]
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Credenziali errate. Riprova.")
+            
+            # CSS Iniezione Forzata per sfondo Navy e scritte etichette in bianco puro
             st.markdown("""
                 <style>
                     .stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; }
-                    /* Forza il colore bianco puro su tutte le label dei moduli di login */
                     .stApp label, .stApp p { color: #FFFFFF !important; font-weight: 600 !important; text-shadow: 0px 1px 2px rgba(0,0,0,0.5); }
-                    div[data-testid="stForm"] { background: transparent !important; border: 1px solid #E2E8F0 !important; border-top: none !important; border-radius: 0 0 16px 16px !important; padding: 10px 40px 40px 40px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                    div[data-testid="stForm"] { background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-top: none !important; border-radius: 0 0 16px 16px !important; padding: 10px 40px 40px 40px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                    div[data-testid="stForm"] label { color: #0F172A !important; text-shadow: none !important; } /* Colore etichette interne al box */
+                    .stApp div[data-testid="stBlock"] img { background: #FFFFFF; padding: 10px 40px; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; }
                 </style>
             """, unsafe_allow_html=True)
 
     else:
         with st.sidebar:
             st.markdown("""
-                <div style="text-align:center; padding: 10px 0;">
-                    <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpeg" style="max-width:140px; height:auto; margin-bottom:10px;">
+                <div style="text-align:center; padding: 5px 0;">
                 </div>
-                <hr style="margin-top:5px; margin-bottom:15px;">
             """, unsafe_allow_html=True)
+            if os.path.exists("1000376160.jpg"):
+                st.image("1000376160.jpg", use_container_width=True)
+            st.markdown("<hr style='margin-top:10px; margin-bottom:15px;'>", unsafe_allow_html=True)
             st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}<br><span style='font-size:12px;color:#64748B;'>💼 {st.session_state.utente_connesso['ruolo']}</span>", unsafe_allow_html=True)
             if ai_client: st.success("🤖 Copilota IA Connesso")
             else: st.warning("⚠️ IA in modalità simulata")
