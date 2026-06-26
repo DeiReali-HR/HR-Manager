@@ -199,7 +199,7 @@ else:
                 # Integrazione Box Bianco con Logo Ufficiale Dei Reali
                 st.markdown("""
                     <div style="background:#FFFFFF; padding:30px 40px 15px 40px; border-radius:16px 16px 0 0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; text-align:center;">
-                        <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpg" style="max-width:210px; height:auto; margin-bottom:0px;">
+                        <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpeg" style="max-width:210px; height:auto; margin-bottom:0px;">
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -231,7 +231,7 @@ else:
         with st.sidebar:
             st.markdown("""
                 <div style="text-align:center; padding: 10px 0;">
-                    <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpg" style="max-width:140px; height:auto; margin-bottom:10px;">
+                    <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpeg" style="max-width:140px; height:auto; margin-bottom:10px;">
                 </div>
                 <hr style="margin-top:5px; margin-bottom:15px;">
             """, unsafe_allow_html=True)
