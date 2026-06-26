@@ -304,6 +304,10 @@ else:
             st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
+            # Recuperiamo i dati pianificati dalla tabella agenda per fare il match visivo
+            res_agenda_db = supabase.table("agenda").select("*").execute()
+            agenda_list = res_agenda_db.data if res_agenda_db.data else []
+            
             with col_agenda:
                 st.markdown("### 📅 Agenda Appuntamenti Fissati")
                 res_col = supabase.table("candidati").select("*").eq("stato", "Approvato per Colloquio").execute()
@@ -312,12 +316,14 @@ else:
                 if not colloqui:
                     st.info("Nessun colloquio pianificato in agenda.")
                 for c in colloqui:
-                    data_col = c.get('data_colloquio', 'Da pianificare')
-                    ora_col = c.get('ora_colloquio', 'N/D')
+                    # Troviamo l'appuntamento corrispondente nella tabella agenda
+                    match_appuntamento = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
+                    data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
+                    ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
+                    meet_url = match_appuntamento['meet_link'] if match_appuntamento else "https://meet.google.com/new"
                     
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}.")
+                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
-                    link_meet = f"https://meet.google.com/new"
                     
                     st.markdown(f"""
                     <div class='saas-box'>
@@ -325,7 +331,7 @@ else:
                         <b>Ruolo:</b> {c['posizione']} <br>
                         <b>Pianificazione:</b> 🗓️ Data: {data_col} | ⏰ Ora: {ora_col}<br><br>
                         <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 WhatsApp Web</a>
-                        <a href="{link_meet}" target="_blank" class="meet-btn">📹 Avvia Google Meet</a>
+                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Google Meet</a>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -344,14 +350,22 @@ else:
                     c_obj = next(c for c in colloqui if c['nome'] == candidato_sel)
                     
                     nuova_data = st.date_input("Scegli la Data", date.today())
-                    nuova_ora = st.time_input("Scegli l'Orario", time(10, 0))
+                    nuova_ora = st.time_input("Scegli l'Orario", time(15, 30))
                     
                     if st.button("Salva Data Schedulazione", use_container_width=True):
-                        supabase.table("candidati").update({
-                            "data_colloquio": str(nuova_data),
-                            "ora_colloquio": str(nuova_ora)
-                        }).eq("id", c_obj['id']).execute()
-                        st.success("Appuntamento inserito correttamente in agenda!")
+                        gen_meet = f"https://meet.google.com/{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
+                        
+                        # Salviamo correttamente all'interno della tabella "agenda" strutturata
+                        supabase.table("agenda").insert({
+                            "candidato": c_obj['nome'],
+                            "data": str(nuova_data),
+                            "ora": nuova_ora.strftime("%H:%M"),
+                            "operatore": st.session_state.utente_connesso['nome'],
+                            "meet_link": gen_meet,
+                            "telefono": c_obj.get('telefono', '')
+                        }).execute()
+                        
+                        st.success("Appuntamento inserito correttamente nel Cloud Agenda!")
                         st.rerun()
                 else:
                     st.write("Abilitato quando ci sono candidati approvati.")
