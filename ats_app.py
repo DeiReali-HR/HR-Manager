@@ -307,94 +307,65 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-# --- SEZIONE 3: COLLOQUI (Versione Completa e Integrata) ---
+# --- SEZIONE 3: COLLOQUI (Versione Aggiornata Senza Tabelle Extra) ---
         elif st.session_state.current_menu == "Colloqui":
             st.subheader("🤝 Calendario, Agenda e Assistente IA Live")
             
-            # 1. Sidebar Assistente IA Live (Sempre attiva durante il colloquio)
+            # --- Sidebar Assistente IA Live ---
             with st.sidebar:
                 st.markdown("---")
                 st.markdown("### 🤖 Assistente HR Live")
-                if "note_colloquio" not in st.session_state: 
-                    st.session_state.note_colloquio = ""
-                
-                st.write("💡 Suggerimenti in tempo reale:")
-                st.info("• Approfondire esperienza tecnica\n• Verificare disponibilità\n• Chiedere aspettative RAL")
-                
-                st.session_state.note_colloquio = st.text_area(
-                    "Note colloquio in corso:", 
-                    value=st.session_state.note_colloquio, 
-                    height=200
-                )
+                if "note_colloquio" not in st.session_state: st.session_state.note_colloquio = ""
+                st.session_state.note_colloquio = st.text_area("Note colloquio in corso:", value=st.session_state.note_colloquio, height=250)
 
-            # 2. Area Agenda e Moduli
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
+            # Recupero dati agenda
             res_agenda_db = supabase.table("agenda").select("*").execute()
             agenda_list = res_agenda_db.data if res_agenda_db.data else []
             
             with col_agenda:
-                st.markdown("### 📅 Agenda Appuntamenti Fissati")
+                st.markdown("### 📅 Agenda Appuntamenti")
                 res_col = supabase.table("candidati").select("*").eq("stato", "Approvato per Colloquio").execute()
                 colloqui = res_col.data if res_col.data else []
                 
-                if not colloqui:
-                    st.info("Nessun colloquio pianificato in agenda.")
-                
+                if not colloqui: st.info("Nessun colloquio in agenda.")
                 for c in colloqui:
-                    match_appuntamento = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
-                    data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
-                    ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
-                    
-                    # Link ufficiale per garantire una stanza valida e funzionante
+                    match = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
+                    data_col = match['data'] if match else 'Da pianificare'
+                    ora_col = match['ora'] if match else 'N/D'
                     meet_url = "https://meet.google.com/new"
-                    
-                    # Messaggio WhatsApp dinamico che include il link
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Partecipa qui: {meet_url}")
-                    link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     
                     st.markdown(f"""
                     <div class='saas-box'>
-                        <h4>👤 Candidato: {c['nome']}</h4>
-                        <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br><br>
-                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 Invia Dettagli WhatsApp</a>
-                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Nuova Riunione Meet</a>
+                        <h4>👤 {c['nome']}</h4>
+                        <b>Pianificazione:</b> {data_col} ore {ora_col}<br>
+                        <a href="https://wa.me/{c['telefono']}" target="_blank" class="whatsapp-btn">💬 WhatsApp</a>
+                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Meet</a>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    c1, c2 = st.columns(2)
-                    if c1.button("🎉 Promuovi ad Assunto", key=f"ass_{c['id']}"):
-                        supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
-                        st.rerun()
-                    if c2.button("❌ Rifiuta Profilo", key=f"rif_{c['id']}"):
-                        supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
-                        st.rerun()
+                    if st.button("📝 CHIUDI COLLOQUIO E SALVA SCHEDA", key=f"save_{c['id']}"):
+                        with st.spinner("L'IA sta sintetizzando il report..."):
+                            prompt = f"Sintetizza questo colloquio: {st.session_state.note_colloquio}. Crea un report professionale per {c['nome']}."
+                            report = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt).text
+                            # Aggiorniamo direttamente la tabella candidati senza creare tabelle nuove
+                            supabase.table("candidati").update({"orientamento": report}).eq("id", c['id']).execute()
+                            st.success("Scheda salvata nel profilo candidato!")
+                            st.session_state.note_colloquio = ""
+                            st.rerun()
 
-            # 3. Modulo di Chiusura e Salvataggio Scheda
             with col_nuovo:
-                st.markdown("### ✍️ Modulo Pianificazione e Chiusura")
+                st.markdown("### ✍️ Modulo Pianificazione")
                 if colloqui:
-                    candidato_sel = st.selectbox("Seleziona risorsa per chiusura", [c['nome'] for c in colloqui])
-                    
-                    if st.button("📝 CHIUDI E SALVA SCHEDA COLLOQUIO", use_container_width=True):
-                        if st.session_state.note_colloquio:
-                            with st.spinner("L'IA sta redigendo la scheda valutativa..."):
-                                prompt_fine = f"Sintetizza questo colloquio HR per {candidato_sel}: {st.session_state.note_colloquio}. Crea una scheda con: Punti di forza, Aree di miglioramento, Giudizio finale."
-                                risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_fine).text
-                                
-                                # Salvataggio su tabella dedicata
-                                supabase.table("schede_colloqui").insert({
-                                    "candidato": candidato_sel, 
-                                    "scheda": risposta_ia,
-                                    "data": str(date.today())
-                                }).execute()
-                                
-                                st.success("Scheda colloquio archiviata nel Cloud!")
-                                st.session_state.note_colloquio = "" # Reset
-                        else:
-                            st.warning("Inserisci prima le note nella Sidebar per generare la scheda.")
-                else:
-                    st.write("Abilitato quando ci sono candidati approvati.")
+                    c_nome = st.selectbox("Seleziona Candidato", [c['nome'] for c in colloqui])
+                    d = st.date_input("Data")
+                    o = st.time_input("Ora")
+                    if st.button("Salva Appuntamento"):
+                        payload = {"candidato": c_nome, "data": str(d), "ora": o.strftime("%H:%M"), "meet_link": "https://meet.google.com/new"}
+                        supabase.table("agenda").insert(payload).execute()
+                        st.success("Appuntamento salvato!")
+                        st.rerun()
 
         # --- SEZIONE 4: ASSUNZIONI ---
         elif st.session_state.current_menu == "Assunzioni":
