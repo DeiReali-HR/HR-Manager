@@ -189,10 +189,23 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
+        # --- SIDEBAR COMPLETA CON ASSISTENTE IA SEMPRE ATTIVO ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
             if ai_client: st.success("🤖 IA Gemini Attiva")
+            
+            st.markdown("---")
+            st.markdown("### 🤖 Assistente HR Live")
+            if "note_colloquio" not in st.session_state: 
+                st.session_state.note_colloquio = ""
+            
+            st.session_state.note_colloquio = st.text_area(
+                "Note colloquio in corso:", 
+                value=st.session_state.note_colloquio, 
+                height=220,
+                key="ia_global_notes"
+            )
             
             st.markdown("""
             <div class="sidebar-spec">
@@ -307,30 +320,11 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-# --- SEZIONE 3: COLLOQUI (Versione Enterprise con IA Live e Database Dedicato) ---
+        # --- SEZIONE 3: COLLOQUI (Versione Corretta e Allineata al DB) ---
         elif st.session_state.current_menu == "Colloqui":
-            st.subheader("🤝 Calendario, Agenda e Assistente IA Live")
-            
-            # --- Sidebar Assistente IA Live ---
-            with st.sidebar:
-                st.markdown("---")
-                st.markdown("### 🤖 Assistente HR Live")
-                if "note_colloquio" not in st.session_state: 
-                    st.session_state.note_colloquio = ""
-                
-                st.write("💡 **Linee guida colloquio:**")
-                st.info("• Approfondire esperienza tecnica\n• Verificare disponibilità\n• Chiedere aspettative RAL")
-                
-                st.session_state.note_colloquio = st.text_area(
-                    "Note colloquio in corso:", 
-                    value=st.session_state.note_colloquio, 
-                    height=250,
-                    key="ia_live_notes"
-                )
-
+            st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
-            # Recupero dati agenda e candidati approvati
             res_agenda_db = supabase.table("agenda").select("*").execute()
             agenda_list = res_agenda_db.data if res_agenda_db.data else []
             
@@ -346,19 +340,18 @@ else:
                     data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
                     
-                    # Link ufficiale di creazione istantanea per evitare errori
-                    meet_url = "https://meet.google.com/new"
+                    # CORREZIONE: Usa il link statico reale salvato a database per evitare l'errore del link universale /new
+                    meet_url = match_appuntamento['meet_link'] if match_appuntamento and match_appuntamento.get('meet_link') else genera_codice_meet_statico()
                     
-                    # Messaggio WhatsApp codificato con il link incluso
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Accedi alla stanza qui: {meet_url}")
+                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Avvia la riunione qui: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     
                     st.markdown(f"""
                     <div class='saas-box'>
                         <h4>👤 Candidato: {c['nome']}</h4>
                         <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br><br>
-                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 Invia Dettagli WhatsApp</a>
-                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Nuova Riunione Meet</a>
+                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 WhatsApp</a>
+                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Riunione Meet Dedicata</a>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -381,7 +374,12 @@ else:
                     
                     if st.button("Salva Data Schedulazione", use_container_width=True):
                         match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
-                        gen_meet = "https://meet.google.com/new"
+                        
+                        # Impedisce la sovrascrittura con il link generico '/new'
+                        if match_esistente and match_esistente.get('meet_link') and "new" not in match_esistente.get('meet_link'):
+                            gen_meet = match_esistente['meet_link']
+                        else:
+                            gen_meet = genera_codice_meet_statico()
                         
                         payload = {
                             "candidato": c_obj['nome'],
@@ -397,7 +395,7 @@ else:
                         else:
                             supabase.table("agenda").insert(payload).execute()
                         
-                        st.success("Appuntamento registrato nel Cloud!")
+                        st.success("Appuntamento registrato con link Meet statico e univoco!")
                         st.rerun()
                     
                     st.markdown("---")
@@ -405,10 +403,10 @@ else:
                     if st.button("💾 GENERA E SALVA REPORT COLLOQUIO", use_container_width=True, type="primary"):
                         if st.session_state.note_colloquio:
                             with st.spinner("L'IA sta redigendo la scheda valutativa..."):
-                                prompt_fine = f"Sintetizza questo colloquio HR per il candidato {candidato_sel}: {st.session_state.note_colloquio}. Struttura un report con Punti di forza, Aree di miglioramento e un Giudizio finale complessivo."
+                                prompt_fine = f"Sintetizza questo colloquio HR per il candidato {candidato_sel}: {st.session_state.note_colloquio}. Struttura un report dettagliato."
                                 risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_fine).text
                                 
-                                # Salvataggio sulla tabella SQL appena creata
+                                # Salvataggio sulla tabella dedicata nel database
                                 supabase.table("schede_colloqui").insert({
                                     "candidato": candidato_sel, 
                                     "scheda": risposta_ia,
@@ -416,7 +414,7 @@ else:
                                 }).execute()
                                 
                                 st.success(f"Report per {candidato_sel} archiviato con successo!")
-                                st.session_state.note_colloquio = "" # Pulisce la sidebar
+                                st.session_state.note_colloquio = "" 
                                 st.rerun()
                         else:
                             st.warning("Scrivi prima le note nella Sidebar dell'Assistente Live.")
@@ -424,10 +422,12 @@ else:
                     st.write("Abilitato quando ci sono candidati approvati.")
                     
             st.markdown("---")
-            st.markdown("### 📊 Riepilogo Cronologico Turni Cloud")
+            st.markdown("### 📊 Riepilogo Cronologico di tutti i Turni Cloud")
             if agenda_list:
                 df_agenda = pd.DataFrame(agenda_list)
                 st.dataframe(df_agenda[["candidato", "data", "ora", "operatore", "meet_link"]], use_container_width=True)
+            else:
+                st.info("Nessun turno registrato nello storico.")
 
         # --- SEZIONE 4: ASSUNZIONI ---
         elif st.session_state.current_menu == "Assunzioni":
