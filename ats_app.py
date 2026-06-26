@@ -78,6 +78,32 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     except:
         return "85%", "⭐⭐⭐⭐", "Profilo recepito. Analisi in differita."
 
+def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
+    if not ai_client:
+        return note_brevi if note_brevi else "Dettagli annuncio in fase di definizione professionale."
+    
+    prompt = f"""
+    Sei il Copywriter HR Senior ufficiale di Dei Reali Srl. 
+    Scrivi un annuncio di lavoro accattivante, altamente professionale, formale ed elegante basandoti su questi dati essenziali:
+    
+    - POSIZIONE: {titolo}
+    - SEDE DI LAVORO: {sede}
+    - INQUADRAMENTO: {inquadramento} ({importo} €)
+    - SPUNTI/NOTE INIZIALI: {note_breaks if note_breve else 'Nessuna nota aggiuntiva fornita'}
+    
+    Articola il testo in 3 sezioni chiare:
+    1. Chi Siamo ed Obiettivo del Ruolo (introduzione d'impatto per conto dei nostri clienti di alto livello).
+    2. Requisiti Chiave (competenze hard/soft desiderate).
+    3. Cosa Offriamo (benefit, crescita aziendale e pacchetto retributivo menzionato).
+    
+    Mantieni un tono d'élite, corporate ed istituzionale. Non inserire saluti finali generici o placeholder, restituisci solo il corpo dell'annuncio pronto per la pubblicazione.
+    """
+    try:
+        response = ai_client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Errore generazione IA: {str(e)}"
+
 # 3. CSS Custom Premium - Centratura e Struttura Globale App
 st.markdown("""
     <style>
@@ -121,9 +147,10 @@ OPERATORI = {
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso = None
 if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢 Annunci"
-# Memory state per la modifica degli annunci
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
+# Memorizzazione temporanea del testo IA nel form
+if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 
 buttons_nav = [
     ("📢 Annunci", "📢 Annunci"), ("📥 Screening CV", "📥 Screening CV"), 
@@ -139,7 +166,6 @@ if "job" in query_params:
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
     
     if annuncio_selezionato:
-        # Controllo se l'annuncio è sospeso
         if annuncio_selezionato.get('stato') == 'Sospeso':
             st.markdown('<div class="public-card" style="text-align:center; padding:60px 40px;">', unsafe_allow_html=True)
             st.markdown("## 🔒 Selezioni Momentaneamente Chiuse")
@@ -278,13 +304,12 @@ else:
         st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
 
         if st.session_state.current_menu == "📢 Annunci":
-            # Recupero preventivo di tutti gli annunci per popolare la memoria di modifica
             res_ann = supabase.table("annunci").select("*").execute()
             elenco_annunci = res_ann.data if res_ann.data else []
             
-            # Valori di default per i campi di inserimento/modifica
             def_pos, def_inq, def_imp, def_sede, def_foto, def_note = "", "RAL", "", "", "", ""
             
+            # Se siamo in modifica carica i dati esistenti, altrimenti usa l'eventuale testo generato dall'IA
             if st.session_state.edit_mode and st.session_state.edit_job_id:
                 job_da_modificare = next((a for a in elenco_annunci if a["id"] == st.session_state.edit_job_id), None)
                 if job_da_modificare:
@@ -294,6 +319,8 @@ else:
                     def_sede = job_da_modificare["sede"]
                     def_foto = job_da_modificare.get("immagine", "")
                     def_note = job_da_modificare["note"]
+            elif st.session_state.ai_generated_text:
+                def_note = st.session_state.ai_generated_text
 
             col_sx, col_centro, col_dx = st.columns([1, 1, 1.2])
             with col_sx:
@@ -306,8 +333,19 @@ else:
                 foto_job = st.text_input("🖼️ URL Immagine di Copertina (Opzionale)", value=def_foto, placeholder="https://images.unsplash.com/...")
             with col_centro:
                 st.markdown("### 🤖 Descrizione Offerta")
-                note_job = st.text_area("✍️ Note e Requisiti Iniziali", value=def_note, height=150)
+                note_job = st.text_area("✍️ Note, Requisiti o Testo Annuncio Completo", value=def_note, height=220)
                 
+                # Pulsante Copilot IA per scrivere automaticamente l'annuncio dai dati base
+                if st.button("🪄 Ottimizza e Completa con IA", use_container_width=True, type="secondary"):
+                    if titolo_job:
+                        with st.spinner("🧠 Scrittura dell'annuncio professionale in corso con Gemini..."):
+                            testo_creato = genera_testo_annuncio_ia(titolo_job, tipo_importo, valore_importo, indirizzo_job, note_job)
+                            st.session_state.ai_generated_text = testo_creato
+                            st.rerun()
+                    else:
+                        st.error("⚠️ Inserisci almeno il Titolo della Posizione prima di generare con l'IA.")
+
+                st.markdown("<br>", unsafe_allow_html=True)
                 if st.session_state.edit_mode:
                     c1, c2 = st.columns(2)
                     with c1:
@@ -320,11 +358,13 @@ else:
                                 }).eq("id", st.session_state.edit_job_id).execute()
                                 st.session_state.edit_mode = False
                                 st.session_state.edit_job_id = None
+                                st.session_state.ai_generated_text = ""
                                 st.success("Annuncio aggiornato con successo!"); st.rerun()
                     with c2:
                         if st.button("❌ ANNULLA", use_container_width=True):
                             st.session_state.edit_mode = False
                             st.session_state.edit_job_id = None
+                            st.session_state.ai_generated_text = ""
                             st.rerun()
                 else:
                     if st.button("🚀 PUBBLICA ED ABILITA PORTALE CARRIERE", use_container_width=True):
@@ -335,6 +375,7 @@ else:
                                 "importo": valore_importo, "sede": indirizzo_job, "note": note_job,
                                 "immagine": foto_job, "stato": "Attivo"
                             }).execute()
+                            st.session_state.ai_generated_text = ""
                             st.success("🎉 Annuncio Online con Grafica Premium!"); st.rerun()
             with col_dx:
                 st.markdown("### 📋 Elenco e Pannello Controllo Annunci")
@@ -346,7 +387,6 @@ else:
                     st.markdown(f"<b>📢 {ann['posizione']}</b> - 📍 {ann['sede']} | <small><b>{badge_stato}</b></small>", unsafe_allow_html=True)
                     st.markdown(f"<div class='link-box'>https://deireali-hr.streamlit.app/?job={ann['id']}</div>", unsafe_allow_html=True)
                     
-                    # Riquadro pulsanti di amministrazione per singolo annuncio
                     c_btn1, c_btn2, c_btn3 = st.columns(3)
                     with c_btn1:
                         if st.button("✍️ Modifica", key=f"edit_{ann['id']}", use_container_width=True):
@@ -357,7 +397,7 @@ else:
                         nuovo_stato = "Sospeso" if stato_corrente == "Attivo" else "Attivo"
                         label_sosp = "⏸️ Sospendi" if stato_corrente == "Attivo" else "▶️ Attiva"
                         if st.button(label_sosp, key=f"susp_{ann['id']}", use_container_width=True):
-                            supabase.table("annunci").update({"stato": nuevo_stato}).eq("id", ann['id']).execute()
+                            supabase.table("annunci").update({"stato": nuovo_stato}).eq("id", ann['id']).execute()
                             st.rerun()
                     with c_btn3:
                         if st.button("🗑️ Elimina", key=f"del_{ann['id']}", use_container_width=True):
