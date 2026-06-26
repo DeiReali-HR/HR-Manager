@@ -307,7 +307,7 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-        # --- SEZIONE 3: COLLOQUI ---
+# --- SEZIONE 3: COLLOQUI (Versione Corretta) ---
         elif st.session_state.current_menu == "Colloqui":
             st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
             col_agenda, col_nuovo = st.columns([2, 1.2])
@@ -326,26 +326,27 @@ else:
                     match_appuntamento = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
                     data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
-                    meet_url = match_appuntamento['meet_link'] if match_appuntamento else "https://meet.google.com/new"
                     
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link stanza virtuale: {meet_url}")
+                    # CORREZIONE: Usiamo il link ufficiale di creazione istantanea
+                    meet_url = "https://meet.google.com/new"
+                    
+                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Avvia la riunione qui: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     
                     st.markdown(f"""
                     <div class='saas-box'>
                         <h4>👤 Candidato: {c['nome']}</h4>
-                        <b>Ruolo:</b> {c['posizione']} <br>
-                        <b>Pianificazione:</b> 🗓️ Data: {data_col} | ⏰ Ora: {ora_col}<br><br>
-                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 WhatsApp Web</a>
-                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Google Meet</a>
+                        <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br><br>
+                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 WhatsApp</a>
+                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Nuova Riunione Meet</a>
                     </div>
                     """, unsafe_allow_html=True)
                     
                     c1, c2 = st.columns(2)
-                    if c1.button("🎉 Promuovi ad Assunto", key=f"ass_{c['id']}", use_container_width=True):
+                    if c1.button("🎉 Promuovi ad Assunto", key=f"ass_{c['id']}"):
                         supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
                         st.rerun()
-                    if c2.button("❌ Rifiuta Profilo", key=f"rif_{c['id']}", use_container_width=True):
+                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}"):
                         supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
                         st.rerun()
                         
