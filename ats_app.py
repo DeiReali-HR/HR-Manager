@@ -193,7 +193,7 @@ else:
                 • <b>AI Core:</b> Gemini 2.0 Flash<br>
                 • <b>Stato Canali:</b> WhatsApp / Meet integrati<br>
                 • <b>Sicurezza:</b> TLS 1.3 Enterprise<br>
-                • <b>Ambiente:</b> Production Ready v2.1
+                • <b>Ambiente:</b> Production Ready v2.2
             </div>
             """, unsafe_allow_html=True)
             
@@ -304,7 +304,6 @@ else:
             st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
-            # Recuperiamo i dati pianificati dalla tabella agenda per fare il match visivo
             res_agenda_db = supabase.table("agenda").select("*").execute()
             agenda_list = res_agenda_db.data if res_agenda_db.data else []
             
@@ -316,7 +315,6 @@ else:
                 if not colloqui:
                     st.info("Nessun colloquio pianificato in agenda.")
                 for c in colloqui:
-                    # Troviamo l'appuntamento corrispondente nella tabella agenda
                     match_appuntamento = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
                     data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
@@ -355,20 +353,36 @@ else:
                     if st.button("Salva Data Schedulazione", use_container_width=True):
                         gen_meet = f"https://meet.google.com/{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
                         
-                        # Salviamo correttamente all'interno della tabella "agenda" strutturata
-                        supabase.table("agenda").insert({
+                        # LOGICA CORRETTA: usa l'upsert sulla chiave primaria o logica di sovrascrittura pulita
+                        # Se il candidato ha già un record, lo aggiorna, altrimenti ne crea uno nuovo.
+                        match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
+                        
+                        payload = {
                             "candidato": c_obj['nome'],
                             "data": str(nuova_data),
                             "ora": nuova_ora.strftime("%H:%M"),
                             "operatore": st.session_state.utente_connesso['nome'],
                             "meet_link": gen_meet,
                             "telefono": c_obj.get('telefono', '')
-                        }).execute()
+                        }
                         
-                        st.success("Appuntamento inserito correttamente nel Cloud Agenda!")
+                        if match_esistente:
+                            supabase.table("agenda").update(payload).eq("id", match_esistente['id']).execute()
+                        else:
+                            supabase.table("agenda").insert(payload).execute()
+                        
+                        st.success("Appuntamento registrato correttamente nel Cloud!")
                         st.rerun()
                 else:
                     st.write("Abilitato quando ci sono candidati approvati.")
+                    
+            st.markdown("---")
+            st.markdown("### 📊 Riepilogo Cronologico di tutti i Turni Cloud")
+            if agenda_list:
+                df_agenda = pd.DataFrame(agenda_list)
+                st.dataframe(df_agenda[["candidato", "data", "ora", "operatore", "meet_link"]], use_container_width=True)
+            else:
+                st.info("Nessun turno registrato nello storico.")
 
         # --- SEZIONE 4: ASSUNZIONI ---
         elif st.session_state.current_menu == "Assunzioni":
