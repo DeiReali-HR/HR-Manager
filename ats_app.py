@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import random
+import string
 import urllib.parse
 import re
 from datetime import datetime, date, time
@@ -83,6 +84,13 @@ def mostra_logo_aziendale():
         st.image("1000376160.jpg")
     else:
         st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
+
+# Generatore di codici Google Meet validi (formato: aaa-bbbb-ccc)
+def genera_codice_meet_valido():
+    part1 = "".join(random.choices(string.ascii_lowercase, k=3))
+    part2 = "".join(random.choices(string.ascii_lowercase, k=4))
+    part3 = "".join(random.choices(string.ascii_lowercase, k=3))
+    return f"https://meet.google.com/{part1}-{part2}-{part3}"
 
 # 3. CSS Custom Premium
 st.markdown("""
@@ -193,7 +201,7 @@ else:
                 • <b>AI Core:</b> Gemini 2.0 Flash<br>
                 • <b>Stato Canali:</b> WhatsApp / Meet integrati<br>
                 • <b>Sicurezza:</b> TLS 1.3 Enterprise<br>
-                • <b>Ambiente:</b> Production Ready v2.2
+                • <b>Ambiente:</b> Production Ready v2.3
             </div>
             """, unsafe_allow_html=True)
             
@@ -320,7 +328,7 @@ else:
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
                     meet_url = match_appuntamento['meet_link'] if match_appuntamento else "https://meet.google.com/new"
                     
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link: {meet_url}")
+                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link della stanza virtuale: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     
                     st.markdown(f"""
@@ -351,10 +359,9 @@ else:
                     nuova_ora = st.time_input("Scegli l'Orario", time(15, 30))
                     
                     if st.button("Salva Data Schedulazione", use_container_width=True):
-                        gen_meet = f"https://meet.google.com/{random.randint(100,999)}-{random.randint(100,999)}-{random.randint(100,999)}"
+                        # Genera link corretto approvato da Google Meet (solo lettere minuscole)
+                        gen_meet = genera_codice_meet_valido()
                         
-                        # LOGICA CORRETTA: usa l'upsert sulla chiave primaria o logica di sovrascrittura pulita
-                        # Se il candidato ha già un record, lo aggiorna, altrimenti ne crea uno nuovo.
                         match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
                         
                         payload = {
