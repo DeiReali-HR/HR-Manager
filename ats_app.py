@@ -53,7 +53,7 @@ def estrai_testo_pdf(file_caricato):
 
 def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     if not testo_cv:
-        return "50%", "⭐⭐", "Il PDF non contiene testo estraibile."
+        return "50%", "⭐⭐", "Il PDF non contains testo estraibile."
         
     if not ai_client:
         return f"{random.randint(75, 96)}%", "⭐⭐⭐⭐", "Analisi standard effettuata."
@@ -76,6 +76,15 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
         return response.text.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
+
+# Funzione helper per trovare l'immagine del logo corretta
+def mostra_logo_aziendale():
+    if os.path.exists("1000376160.jpeg"):
+        st.image("1000376160.jpeg")
+    elif os.path.exists("1000376160.jpg"):
+        st.image("1000376160.jpg")
+    else:
+        st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
 
 # 3. CSS Custom Premium
 st.markdown("""
@@ -126,9 +135,9 @@ if "job" in st.query_params:
             st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
             st.markdown(f"""
                 <div class="umana-grid">
-                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede') if annuncio_selezionato.get('sede') else 'Dato non inserito'}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento') if annuncio_selezionato.get('inquadramento') else 'Dato non inserito'}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo') if annuncio_selezionato.get('importo') else 'Dato non inserito'} €</div></div>
                     <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
                 </div>
             """, unsafe_allow_html=True)
@@ -157,8 +166,7 @@ else:
         with col_centro:
             st.markdown("<br><br><br>", unsafe_allow_html=True)
             with st.form("login"):
-                if os.path.exists("1000376160.jpeg"): st.image("1000376160.jpeg")
-                else: st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
+                mostra_logo_aziendale()
                 login_mail = st.text_input("📧 E-mail Aziendale")
                 login_pw = st.text_input("🔑 Password", type="password")
                 if st.form_submit_button("ACCEDI AL SISTEMA", use_container_width=True):
@@ -169,7 +177,7 @@ else:
                     else: st.error("Credenziali errate.")
     else:
         with st.sidebar:
-            if os.path.exists("1000376160.jpeg"): st.image("1000376160.jpeg")
+            mostra_logo_aziendale()
             st.write(f"🟢 *{st.session_state.utente_connesso['nome']}*")
             if ai_client: st.success("🤖 IA Connessa")
             if st.button("🔒 Disconnetti"):
