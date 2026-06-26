@@ -131,14 +131,21 @@ if "job" in st.query_params:
         else:
             img_url = annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
             st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
+            
+            sede_val = annuncio_selezionato.get('sede') if annuncio_selezionato.get('sede') else 'Dato non inserito'
+            inq_val = annuncio_selezionato.get('inquadramento') if annuncio_selezionato.get('inquadramento') else 'Dato non inserito'
+            imp_val = annuncio_selezionato.get('importo') if annuncio_selezionato.get('importo') else 'Dato non inserito'
+            rif_val = f"DR-{annuncio_selezionato['id'].upper()[-4:]}"
+            
             st.markdown(f"""
                 <div class="umana-grid">
-                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','Dato non inserito')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','Dato non inserito')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{sede_val}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{inq_val}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{imp_val} €</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">{rif_val}</div></div>
                 </div>
             """, unsafe_allow_html=True)
+            
             st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
             with st.form("candidatura"):
                 c_nome = st.text_input("Nome e Cognome *")
@@ -176,10 +183,9 @@ else:
     else:
         with st.sidebar:
             mostra_logo_aziendale()
-            st.write(f"🟢 *{st.session_state.utente_connesso['nome']}* ({st.session_state.utente_connesso['ruolo']})")
+            st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
             if ai_client: st.success("🤖 IA Gemini Attiva")
             
-            # Specifiche di Gestione dell'Applicazione nella colonna sinistra
             st.markdown("""
             <div class="sidebar-spec">
                 <b>⚙️ Specifiche Gestione App:</b><br>
@@ -198,7 +204,6 @@ else:
 
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
         
-        # Menu di Navigazione Superiore Completo
         c_nav = st.columns(7)
         menu_items = [
             ("📢 Annunci", "Annunci"),
@@ -264,7 +269,6 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     c1, c2, c3 = st.columns(3)
-                    # Sostituite icone con testi chiari per le azioni
                     if c1.button("Modifica", key=f"e_{a['id']}", use_container_width=True): 
                         st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
                     
@@ -298,7 +302,6 @@ else:
         # --- SEZIONE 3: COLLOQUI ---
         elif st.session_state.current_menu == "Colloqui":
             st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
-            
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
             with col_agenda:
@@ -312,7 +315,6 @@ else:
                     data_col = c.get('data_colloquio', 'Da pianificare')
                     ora_col = c.get('ora_colloquio', 'N/D')
                     
-                    # Generazione dei link diretti WhatsApp e Meet per i moduli integrati
                     testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}.")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     link_meet = f"https://meet.google.com/new"
@@ -375,7 +377,6 @@ else:
         # --- SEZIONE 5: REPORT ---
         elif st.session_state.current_menu == "Report":
             st.subheader("📊 Reportistica ed Analytics Enterprise")
-            
             res_cand = supabase.table("candidati").select("*").execute()
             all_c = res_cand.data if res_cand.data else []
             
@@ -384,14 +385,13 @@ else:
             colloqui_count = len([x for x in all_c if x.get('stato') == 'Approvato per Colloquio'])
             assunti_count = len([x for x in all_c if x.get('stato') == 'Assunto'])
             
-            # KPI Cards grafiche
             st.markdown(f"""
-            <div class="umana-grid">
-                <div class="umana-kpi"><div class="umana-kpi-label">👥 Candidature Totali</div><div class="umana-kpi-value">{tot}</div></div>
-                <div class="umana-kpi"><div class="umana-kpi-label">📥 In Screening</div><div class="umana-kpi-value">{screening_count}</div></div>
-                <div class="umana-kpi"><div class="umana-kpi-label">🤝 Colloqui Attivi</div><div class="umana-kpi-value">{colloqui_count}</div></div>
-                <div class="umana-kpi"><div class="umana-kpi-label">🎉 Risorse Assunte</div><div class="umana-kpi-value">{assunti_count}</div></div>
-            </div>
+                <div class="umana-grid">
+                    <div class="umana-kpi"><div class="umana-kpi-label">👥 Candidature Totali</div><div class="umana-kpi-value">{tot}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">📥 In Screening</div><div class="umana-kpi-value">{screening_count}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🤝 Colloqui Attivi</div><div class="umana-kpi-value">{colloqui_count}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🎉 Risorse Assunte</div><div class="umana-kpi-value">{assunti_count}</div></div>
+                </div>
             """, unsafe_allow_html=True)
             
             st.markdown("### Distribuzione Grafica degli Stati dei Candidati")
@@ -407,7 +407,6 @@ else:
         # --- SEZIONE 6: CLIENTI ---
         elif st.session_state.current_menu == "Clienti":
             st.subheader("🏢 Gestione Anagrafica Clienti B2B")
-            
             col_form, col_lista = st.columns([1.1, 2])
             
             with col_form:
@@ -420,7 +419,6 @@ else:
                     
                     if st.form_submit_button("REGISTRA AZIENDA CLIENTE"):
                         if cl_ragione and cl_piva:
-                            # Inserimento anagrafica clienti su tabella dedicata o logica interna
                             supabase.table("clienti").insert({
                                 "ragione_sociale": cl_ragione,
                                 "partita_iva": cl_piva,
@@ -450,11 +448,20 @@ else:
 
         # --- SEZIONE 7: CANDIDATI ---
         elif st.session_state.current_menu == "Candidati":
-            st.subheader("👥 Database Storico Tutti i Candidati")
+            st.subheader("👥 Database Anagrafico Globale Candidati")
             res = supabase.table("candidati").select("*").execute()
             tutti = res.data if res.data else []
             
+            if not tutti:
+                st.info("Nessun candidato registrato nel sistema cloud.")
             for c in tutti:
                 st.markdown(f"""
                 <div class='saas-box'>
                     <b>{c['nome']}</b> — Posizione: <i>{c['posizione']}</i> (Stato attuale: <b>{c['stato']}</b>)
+                </div>
+                """, unsafe_allow_html=True)
+                nuovo = st.selectbox("Modifica Stato Candidato", ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"], index=["In Screening","Approvato per Colloquio","Assunto","Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"] else 0, key=f"st_{c['id']}")
+                if st.button("Salva Nuovo Stato", key=f"sv_{c['id']}"):
+                    supabase.table("candidati").update({"stato":nuovo}).eq("id",c['id']).execute()
+                    st.success("Stato aggiornato!")
+                    st.rerun()
