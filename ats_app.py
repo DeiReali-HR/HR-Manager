@@ -78,11 +78,27 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     except:
         return "85%", "⭐⭐⭐⭐", "Profilo recepito. Analisi in differita."
 
-# 3. CSS Custom Premium - Stile Umana.it Clean & Professional
+# 3. CSS Custom Premium - Stile Umana.it Clean & Login Navy
 st.markdown("""
     <style>
+    /* Sfondo predefinito e Sidebar */
     .stApp { background-color: #F8FAFC !important; color: #0F172A !important; }
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
+    
+    /* SCHERMATA LOGIN PREMIUM */
+    .login-bg {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #0F172A !important; /* Fondo Navy Scuro */
+        background-image: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important;
+        z-index: 999990; display: flex; justify-content: center; align-items: center;
+    }
+    .login-card {
+        background: #FFFFFF !important; padding: 45px; border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        width: 100%; max-width: 480px; text-align: center; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .login-logo { font-size: 38px; font-weight: 800; color: #1E3A8A; letter-spacing: 1.5px; margin-bottom: 5px; }
+    .login-subtitle { font-size: 12px; font-weight: 600; color: #64748B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; }
     
     /* Layout Annuncio Stile Umana */
     .umana-banner {
@@ -137,19 +153,13 @@ if "job" in query_params:
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
     
     if annuncio_selezionato:
-        # Immagine di copertina predefinita se il campo è vuoto
         img_url = annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-        
         st.markdown('<div class="public-card">', unsafe_allow_html=True)
-        
-        # Banner Grandioso in Stile Umana
         st.markdown(f"""
             <div class="umana-banner" style="background-image: url('{img_url}');">
                 <div class="umana-banner-title">{annuncio_selezionato['posizione']}</div>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Griglia informativa ad icone/etichette pulite
         st.markdown(f"""
             <div class="umana-grid">
                 <div class="umana-kpi">
@@ -173,20 +183,17 @@ if "job" in query_params:
         
         st.markdown("### 📋 Descrizione della Posizione ed Offerta")
         st.info(annuncio_selezionato['note'])
-        
         st.markdown("<br><hr style='border-color:#E2E8F0;'><br>### 📥 Invia il tuo Curriculum Vitae", unsafe_allow_html=True)
         with st.form("form_candidatura_esterno", clear_on_submit=True):
             c_nome = st.text_input("Nome e Cognome *")
             c_mail = st.text_input("Indirizzo E-mail *")
             c_tel = st.text_input("Numero di Telefono Cellulare *")
             c_file = st.file_uploader("Allega il tuo CV (Esclusivamente formato PDF)", type=["pdf"])
-            
             if st.form_submit_button("INVIA CANDIDATURA UFFICIALE"):
                 if c_nome and c_mail and c_tel and c_file:
                     with st.spinner("🧠 Il copilota IA Dei Reali sta analizzando il profilo professionale..."):
                         testo_estratto = estrai_testo_pdf(c_file)
                         voto, stelle, orientamento = analizza_cv_con_ia(testo_estratto, annuncio_selezionato['note'])
-                        
                         supabase.table("candidati").insert({
                             "nome": c_nome, "email": c_mail, "telefono": c_tel,
                             "posizione": annuncio_selezionato['posizione'], "idoneita": voto, "stelle": stelle,
@@ -196,24 +203,53 @@ if "job" in query_params:
                 else: st.error("⚠️ Compila tutti i campi obbligatori.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SUITE INTERNA AMMINISTRATIVA ---
+# --- SUITE INTERNA AMMINISTRATIVA CON LOGIN STRUTTURATO ---
 else:
     if not st.session_state.autenticato:
-        st.markdown('<div class="login-container" style="max-width:450px; margin:80px auto; padding:30px; background:#fff; border-radius:12px; border:1px solid #E2E8F0;">', unsafe_allow_html=True)
-        st.markdown("### Accesso Suite Dei Reali")
-        login_mail = st.text_input("📧 E-mail Aziendale")
-        login_pw = st.text_input("🔑 Password", type="password")
-        if st.button("ACCEDI AL SISTEMA", use_container_width=True):
-            if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
-                st.session_state.autenticato = True
-                st.session_state.utente_connesso = OPERATORI[login_mail]
-                st.rerun()
-            else: st.error("Credenziali errate.")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Layout centrato e pulito per contenitore Bianco su sfondo Navy
+        _, col_box, _ = st.columns([1, 1.2, 1])
+        with col_box:
+            st.markdown("<br><br><br>", unsafe_allow_html=True)
+            with st.container():
+                st.markdown("""
+                    <div style="background:#FFFFFF; padding:40px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; text-align:center;">
+                        <div style="font-size: 34px; font-weight: 800; color: #1E3A8A; letter-spacing: 1px; margin-bottom: 2px;">👑 DEI REALI</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #64748B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 25px;">Corporate Consulting • HR Suite</div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Form di login incorporato dentro il box bianco
+                with st.form("login_form_premium"):
+                    login_mail = st.text_input("📧 E-mail Aziendale")
+                    login_pw = st.text_input("🔑 Password Coordinatore", type="password")
+                    submit_login = st.form_submit_button("ACCEDI AL SISTEMA")
+                    
+                    if submit_login:
+                        if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
+                            st.session_state.autenticato = True
+                            st.session_state.utente_connesso = OPERATORI[login_mail]
+                            st.rerun()
+                        else:
+                            st.error("⚠️ Credenziali errate. Riprova.")
+            
+            # Imposta lo sfondo della sola pagina di login a Navy Blue
+            st.markdown("""
+                <style>
+                    .stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; }
+                    .stApp h1, .stApp p, .stApp label { color: #0F172A !important; }
+                </style>
+            """, unsafe_allow_html=True)
 
     else:
         with st.sidebar:
-            st.markdown(f"<br>🟢 *Operatore:* {st.session_state.utente_connesso['nome']}<br><span style='font-size:12px;color:#64748B;'>💼 {st.session_state.utente_connesso['ruolo']}</span>", unsafe_allow_html=True)
+            st.markdown("""
+                <div style="text-align:center; padding: 10px 0;">
+                    <div style="font-size: 24px; font-weight: 800; color: #1E3A8A; letter-spacing: 0.5px;">👑 DEI REALI</div>
+                    <div style="font-size: 9px; font-weight: 700; color: #64748B; letter-spacing: 1px; text-transform: uppercase;">Corporate Consulting</div>
+                </div>
+                <hr style="margin-top:5px; margin-bottom:15px;">
+            """, unsafe_allow_html=True)
+            st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}<br><span style='font-size:12px;color:#64748B;'>💼 {st.session_state.utente_connesso['ruolo']}</span>", unsafe_allow_html=True)
             if ai_client: st.success("🤖 Copilota IA Connesso")
             else: st.warning("⚠️ IA in modalità simulata")
             st.markdown("<hr>", unsafe_allow_html=True)
@@ -237,7 +273,6 @@ else:
                 tipo_importo = st.radio("Inquadramento", ["RAL", "Lordo", "Orario"], horizontal=True)
                 valore_importo = st.text_input("Importo Economico (€)")
                 indirizzo_job = st.text_input("🏢 Sede Operativa di Lavoro")
-                # NUOVO CAMPO FOTO
                 foto_job = st.text_input("🖼️ URL Immagine di Copertina (Opzionale)", placeholder="https://images.unsplash.com/...")
             with col_centro:
                 st.markdown("### 🤖 Descrizione Offerta")
