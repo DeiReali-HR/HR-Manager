@@ -78,27 +78,12 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     except:
         return "85%", "⭐⭐⭐⭐", "Profilo recepito. Analisi in differita."
 
-# 3. CSS Custom Premium - Stile Umana.it Clean & Login Navy
+# 3. CSS Custom Premium - Stile Umana.it Clean & Login Navy Corretto
 st.markdown("""
     <style>
     /* Sfondo predefinito e Sidebar */
     .stApp { background-color: #F8FAFC !important; color: #0F172A !important; }
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
-    
-    /* SCHERMATA LOGIN PREMIUM */
-    .login-bg {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background-color: #0F172A !important; /* Fondo Navy Scuro */
-        background-image: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important;
-        z-index: 999990; display: flex; justify-content: center; align-items: center;
-    }
-    .login-card {
-        background: #FFFFFF !important; padding: 45px; border-radius: 20px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-        width: 100%; max-width: 480px; text-align: center; border: 1px solid rgba(255,255,255,0.1);
-    }
-    .login-logo { font-size: 38px; font-weight: 800; color: #1E3A8A; letter-spacing: 1.5px; margin-bottom: 5px; }
-    .login-subtitle { font-size: 12px; font-weight: 600; color: #64748B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; }
     
     /* Layout Annuncio Stile Umana */
     .umana-banner {
@@ -206,19 +191,19 @@ if "job" in query_params:
 # --- SUITE INTERNA AMMINISTRATIVA CON LOGIN STRUTTURATO ---
 else:
     if not st.session_state.autenticato:
-        # Layout centrato e pulito per contenitore Bianco su sfondo Navy
+        # Layout centrato per il Box Bianco contenente il vostro logo reale
         _, col_box, _ = st.columns([1, 1.2, 1])
         with col_box:
             st.markdown("<br><br><br>", unsafe_allow_html=True)
             with st.container():
+                # Integrazione Box Bianco con Logo Ufficiale Dei Reali
                 st.markdown("""
-                    <div style="background:#FFFFFF; padding:40px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #E2E8F0; text-align:center;">
-                        <div style="font-size: 34px; font-weight: 800; color: #1E3A8A; letter-spacing: 1px; margin-bottom: 2px;">👑 DEI REALI</div>
-                        <div style="font-size: 11px; font-weight: 700; color: #64748B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 25px;">Corporate Consulting • HR Suite</div>
+                    <div style="background:#FFFFFF; padding:30px 40px 15px 40px; border-radius:16px 16px 0 0; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; text-align:center;">
+                        <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpg" style="max-width:210px; height:auto; margin-bottom:0px;">
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # Form di login incorporato dentro il box bianco
+                # Form di login incorporato con CSS modificato per scritte Bianche
                 with st.form("login_form_premium"):
                     login_mail = st.text_input("📧 E-mail Aziendale")
                     login_pw = st.text_input("🔑 Password Coordinatore", type="password")
@@ -232,11 +217,13 @@ else:
                         else:
                             st.error("⚠️ Credenziali errate. Riprova.")
             
-            # Imposta lo sfondo della sola pagina di login a Navy Blue
+            # CSS Iniezione Forzata per rendere ESCLUSIVAMENTE bianche le scritte email e password
             st.markdown("""
                 <style>
                     .stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; }
-                    .stApp h1, .stApp p, .stApp label { color: #0F172A !important; }
+                    /* Forza il colore bianco puro su tutte le label dei moduli di login */
+                    .stApp label, .stApp p { color: #FFFFFF !important; font-weight: 600 !important; text-shadow: 0px 1px 2px rgba(0,0,0,0.5); }
+                    div[data-testid="stForm"] { background: transparent !important; border: 1px solid #E2E8F0 !important; border-top: none !important; border-radius: 0 0 16px 16px !important; padding: 10px 40px 40px 40px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
                 </style>
             """, unsafe_allow_html=True)
 
@@ -244,8 +231,7 @@ else:
         with st.sidebar:
             st.markdown("""
                 <div style="text-align:center; padding: 10px 0;">
-                    <div style="font-size: 24px; font-weight: 800; color: #1E3A8A; letter-spacing: 0.5px;">👑 DEI REALI</div>
-                    <div style="font-size: 9px; font-weight: 700; color: #64748B; letter-spacing: 1px; text-transform: uppercase;">Corporate Consulting</div>
+                    <img src="https://raw.githubusercontent.com/DanieleAlgozzino/HR-Manager/main/1000376160.jpg" style="max-width:140px; height:auto; margin-bottom:10px;">
                 </div>
                 <hr style="margin-top:5px; margin-bottom:15px;">
             """, unsafe_allow_html=True)
