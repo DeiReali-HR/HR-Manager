@@ -85,13 +85,6 @@ def mostra_logo_aziendale():
     else:
         st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
 
-# Generatore di codici Google Meet validi (formato: aaa-bbbb-ccc)
-def genera_codice_meet_valido():
-    part1 = "".join(random.choices(string.ascii_lowercase, k=3))
-    part2 = "".join(random.choices(string.ascii_lowercase, k=4))
-    part3 = "".join(random.choices(string.ascii_lowercase, k=3))
-    return f"https://meet.google.com/{part1}-{part2}-{part3}"
-
 # 3. CSS Custom Premium
 st.markdown("""
     <style>
@@ -201,7 +194,7 @@ else:
                 • <b>AI Core:</b> Gemini 2.0 Flash<br>
                 • <b>Stato Canali:</b> WhatsApp / Meet integrati<br>
                 • <b>Sicurezza:</b> TLS 1.3 Enterprise<br>
-                • <b>Ambiente:</b> Production Ready v2.3
+                • <b>Ambiente:</b> Production Ready v2.4
             </div>
             """, unsafe_allow_html=True)
             
@@ -328,7 +321,7 @@ else:
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
                     meet_url = match_appuntamento['meet_link'] if match_appuntamento else "https://meet.google.com/new"
                     
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link della stanza virtuale: {meet_url}")
+                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Link stanza: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
                     
                     st.markdown(f"""
@@ -358,16 +351,16 @@ else:
                     nuova_data = st.date_input("Scegli la Data", date.today())
                     nuova_ora = st.time_input("Scegli l'Orario", time(15, 30))
                     
+                    # Usa il link nativo "new" per forzare Google a generare una stanza d'esame ufficiale e attiva
+                    gen_meet = "https://meet.google.com/new"
+                    
                     if st.button("Salva Data Schedulazione", use_container_width=True):
-                        # Genera link corretto approvato da Google Meet (solo lettere minuscole)
-                        gen_meet = genera_codice_meet_valido()
-                        
                         match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
                         
                         payload = {
                             "candidato": c_obj['nome'],
                             "data": str(nuova_data),
-                            "ora": nuova_ora.strftime("%H:%M"),
+                            "ora": nueva_ora.strftime("%H:%M"),
                             "operatore": st.session_state.utente_connesso['nome'],
                             "meet_link": gen_meet,
                             "telefono": c_obj.get('telefono', '')
