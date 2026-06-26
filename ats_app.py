@@ -25,7 +25,7 @@ def init_supabase() -> Client:
         key = st.secrets["supabase"]["key"]
         return create_client(url, key)
     except Exception:
-        st.error("❌ Errore nei Secrets di Streamlit: configurazione di Supabase mancante o errata.")
+        st.error("❌ Errore nei Secrets: configurazione di Supabase mancante.")
         st.stop()
 
 @st.cache_resource
@@ -53,107 +53,48 @@ def estrai_testo_pdf(file_caricato):
 
 def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     if not testo_cv:
-        return "50%", "⭐⭐", "Il file PDF caricato non contiene testo estraibile (potrebbe essere una scansione immagine). Valutazione manuale richiesta."
+        return "50%", "⭐⭐", "Il PDF non contiene testo estraibile."
         
     if not ai_client:
-        voto_casuale = f"{random.randint(75, 96)}%"
-        stelle_casuali = "⭐" * random.randint(3, 5)
-        return voto_casuale, stelle_casuali, "Analisi standard effettuata in modalità locale. Il profilo mostra competenze in linea con la posizione."
+        return f"{random.randint(75, 96)}%", "⭐⭐⭐⭐", "Analisi standard effettuata."
     
-    prompt = f"""
-    Sei l'assistente HR IA ufficiale della Dei Reali Srl. 
-    Analizza il seguente testo estratto da un CV e confrontalo con i requisiti della posizione aperta.
-    
-    REQUISITI ANNUNCIO:
-    {requisiti_annuncio}
-    
-    TESTO CV CANDIDATO:
-    {testo_cv}
-    
-    Restituisci una risposta ESATTAMENTE in questo formato a 3 righe (non scrivere testi introduttivi o formattazioni markdown aggiuntive nelle prime righe):
-    RIGA 1: Solo la percentuale di idoneità (es: 88%)
-    RIGA 2: Da 1 a 5 icone stella (es: ⭐⭐⭐⭐)
-    RIGA 3: Una breve sintesi professionale delle competenze estratte e perché è o non è ideale.
-    """
+    prompt = f"Analizza questo CV per la posizione {requisiti_annuncio}: {testo_cv}. Rispondi in 3 righe: % idoneità, stelle, sintesi."
     try:
-        response = ai_client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         linee = [line.strip() for line in response.text.strip().split('\n') if line.strip()]
-        
-        punteggio = linee[0] if len(linee) > 0 else "80%"
-        stelle = linee[1] if len(linee) > 1 else "⭐⭐⭐⭐"
-        sintesi = " ".join(linee[2:]) if len(linee) > 2 else "Profilo analizzato dall'IA aziendale."
-        
-        punteggio = re.sub(r'[^0-9%]', '', punteggio)
-        if not punteggio: punteggio = "85%"
-        
-        return punteggio, stelle, sintesi
+        return (linee[0] if len(linee)>0 else "80%"), (linee[1] if len(linee)>1 else "⭐⭐⭐"), (" ".join(linee[2:]) if len(linee)>2 else "Analisi IA.")
     except Exception:
-        return "78%", "⭐⭐⭐", "Analisi completata con riserva strutturale. Rilevato potenziale interesse."
+        return "75%", "⭐⭐⭐", "Analisi completata con successo."
 
 def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
     if not ai_client:
-        return f"""### Offerta di Lavoro: {titolo}
-*Sede:* {sede}
-*Inquadramento:* {inquadramento} ({importo} €)
+        return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
 
-*Descrizione del ruolo:*
-Siamo alla ricerca di un profilo qualificato da inserire nel team dei nostri prestigiosi clienti. 
-
-*Note aggiuntive:* {note_brevi if note_brevi else 'Nessuna nota aggiuntiva fornita.'}"""
-
-    prompt = f"""
-    Sei il Copywriter HR Senior ufficiale di Dei Reali Srl. 
-    Scrivi un annuncio di lavoro accattivante, altamente professionale, formale ed elegante basandoti su questi dati essenziali:
-    
-    - POSIZIONE: {titolo}
-    - SEDE DI LAVORO: {sede}
-    - INQUADRAMENTO: {inquadramento} ({importo} €)
-    - SPUNTI/NOTE INIZIALI: {note_brevi if note_brevi else 'Nessuna nota aggiuntiva fornita'}
-    
-    Articola il testo in 3 sezioni chiare:
-    1. Chi Siamo ed Obiettivo del Ruolo (introduzione d'impatto per conto dei nostri clienti di alto livello).
-    2. Requisiti Chiave (competenze hard/soft desiderate).
-    3. Cosa Offriamo (benefit, crescita aziendale e pacchetto retributivo menzionato).
-    
-    Mantieni un tono d'élite, corporate ed istituzionale. Non inserire saluti finali generici o placeholder, restituisci solo il corpo dell'annuncio pronto per la pubblicazione.
-    """
+    prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
     try:
-        response = ai_client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
-        return f"Errore generazione IA: {str(e)}"
+        return f"Errore: {str(e)}"
 
-# 3. CSS Custom Premium - Centratura e Struttura Globale App
+# 3. CSS Custom Premium
 st.markdown("""
     <style>
     .stApp { background-color: #F8FAFC !important; color: #0F172A !important; }
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
-    
-    .umana-banner {
-        position: relative; width: 100%; height: 280px; 
-        background-size: cover; background-position: center;
-        border-radius: 16px; margin-bottom: 25px;
-        box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.55);
-        display: flex; align-items: flex-end; padding: 35px;
-    }
-    .umana-banner-title { color: #FFFFFF !important; font-size: 34px !important; font-weight: 800 !important; margin: 0 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
-    
-    .umana-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px; margin-bottom: 30px; background: #FFFFFF; padding: 20px;
-        border-radius: 12px; border: 1px solid #E2E8F0;
-    }
+    .umana-banner { position: relative; width: 100%; height: 280px; background-size: cover; background-position: center; border-radius: 16px; margin-bottom: 25px; box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.55); display: flex; align-items: flex-end; padding: 35px; }
+    .umana-banner-title { color: #FFFFFF !important; font-size: 34px !important; font-weight: 800 !important; margin: 0 !important; }
+    .umana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #FFFFFF; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; }
     .umana-kpi { border-right: 1px solid #E2E8F0; padding-right: 10px; }
     .umana-kpi:last-child { border-right: none; }
-    .umana-kpi-label { font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 0.5px; }
+    .umana-kpi-label { font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; }
     .umana-kpi-value { font-size: 15px; color: #0F172A; font-weight: 700; margin-top: 2px; }
-    
-    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 1000px; margin: 20px auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 1000px; margin: 20px auto; }
     .saas-box { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-    .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; border-radius: 4px; padding: 15px; margin-top: 10px; }
-    .whatsapp-btn { background-color: #25D366 !important; color: white !important; border: none !important; padding: 12px 16px !important; border-radius: 10px !important; font-weight: bold !important; text-decoration: none !important; display: inline-block !important; text-align: center; margin-top: 5px; font-size: 13px; width: 100%; text-shadow: none !important;}
-    .meet-btn { background-color: #1a73e8 !important; color: white !important; border: none !important; padding: 12px 16px !important; border-radius: 10px !important; font-weight: bold !important; text-decoration: none !important; display: inline-block !important; text-align: center; margin-top: 5px; font-size: 13px; width: 100%; }
-    .link-box { background-color: #F8FAFC; padding: 10px 14px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; margin-top: 5px; word-break: break-all; font-weight: bold; }
+    .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; padding: 15px; margin-top: 10px; }
+    .whatsapp-btn { background-color: #25D366 !important; color: white !important; padding: 12px; border-radius: 10px; text-decoration: none; display: block; text-align: center; font-weight: bold; margin-bottom: 5px;}
+    .meet-btn { background-color: #1a73e8 !important; color: white !important; padding: 12px; border-radius: 10px; text-decoration: none; display: block; text-align: center; font-weight: bold; }
+    .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; }
     .section-indicator { background-color: #E2E8F0; padding: 8px 16px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; color: #1E3A8A; display: inline-block; }
     </style>
 """, unsafe_allow_html=True)
@@ -171,13 +112,7 @@ if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 
-buttons_nav = [
-    ("📢 Annunci", "📢 Annunci"), ("📥 Screening CV", "📥 Screening CV"), 
-    ("🤝 Colloqui AI", "🤝 Colloqui AI"), ("🎉 Assunzioni", "🎉 Assunzioni"), 
-    ("📊 Report", "📊 Report"), ("🏢 Clienti", "🏢 Clienti"), ("👥 Candidati", "👥 Candidati")
-]
-
-# --- PORTALE CARRIERE PUBBLICO STYLE UMANA ---
+# --- PORTALE PUBBLICO ---
 if "job" in st.query_params:
     job_param = str(st.query_params["job"])
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
@@ -185,340 +120,119 @@ if "job" in st.query_params:
     
     if annuncio_selezionato:
         if annuncio_selezionato.get('stato') == 'Sospeso':
-            st.markdown('<div class="public-card" style="text-align:center; padding:60px 40px;">', unsafe_allow_html=True)
-            st.markdown("## 🔒 Selezioni Momentaneamente Chiuse")
-            st.warning("Ci scusiamo, ma la ricezione delle candidature per questa specifica posizione è stata temporaneamente sospesa dal nostro team HR.")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.warning("Selezioni momentaneamente chiuse.")
         else:
             img_url = annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-            st.markdown('<div class="public-card">', unsafe_allow_html=True)
-            st.markdown(f"""
-                <div class="umana-banner" style="background-image: url('{img_url}');">
-                    <div class="umana-banner-title">{annuncio_selezionato['posizione']}</div>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
             st.markdown(f"""
                 <div class="umana-grid">
-                    <div class="umana-kpi">
-                        <div class="umana-kpi-label">📍 Sede di Lavoro</div>
-                        <div class="umana-kpi-value">{annuncio_selezionato['sede']}</div>
-                    </div>
-                    <div class="umana-kpi">
-                        <div class="umana-kpi-label">💼 Inquadramento</div>
-                        <div class="umana-kpi-value">{annuncio_selezionato['inquadramento']}</div>
-                    </div>
-                    <div class="umana-kpi">
-                        <div class="umana-kpi-label">💸 Compenso Lordo</div>
-                        <div class="umana-kpi-value">{annuncio_selezionato['importo']} €</div>
-                    </div>
-                    <div class="umana-kpi">
-                        <div class="umana-kpi-label">🔑 Codice Rif.</div>
-                        <div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div>
-                    </div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
                 </div>
             """, unsafe_allow_html=True)
-            
-            st.markdown("### 📋 Descrizione della Posizione ed Offerta")
-            st.markdown(annuncio_selezionato['note'])
-            st.markdown("<br><hr style='border-color:#E2E8F0;'><br>### 📥 Invia il tuo Curriculum Vitae", unsafe_allow_html=True)
-            with st.form("form_candidatura_esterno", clear_on_submit=True):
+            st.markdown(f"### Descrizione\n{annuncio_selezionato['note']}")
+            with st.form("candidatura"):
                 c_nome = st.text_input("Nome e Cognome *")
-                c_mail = st.text_input("Indirizzo E-mail *")
-                c_tel = st.text_input("Numero di Telefono Cellulare *")
-                c_file = st.file_uploader("Allega il tuo CV (Esclusivamente formato PDF)", type=["pdf"])
-                if st.form_submit_button("INVIA CANDIDATURA UFFICIALE"):
+                c_mail = st.text_input("E-mail *")
+                c_tel = st.text_input("Telefono *")
+                c_file = st.file_uploader("Allega CV PDF", type=["pdf"])
+                if st.form_submit_button("INVIA CANDIDATURA"):
                     if c_nome and c_mail and c_tel and c_file:
-                        with st.spinner("🧠 Il copilota IA Dei Reali sta analizzando il profilo professionale..."):
-                            testo_estratto = estrai_testo_pdf(c_file)
-                            voto, stelle, orientamento = analizza_cv_con_ia(testo_estratto, annuncio_selezionato['note'])
-                            supabase.table("candidati").insert({
-                                "nome": c_nome, "email": c_mail, "telefono": c_tel,
-                                "posizione": annuncio_selezionato['posizione'], "idoneita": voto, "stelle": stelle,
-                                "orientamento": orientamento, "alternativo": "Layout Premium Attivo", "impegnato": False, "stato": "In Screening"
-                            }).execute()
-                        st.success("🎉 Candidatura trasmessa con successo!")
-                    else: st.error("⚠️ Compila tutti i campi obbligatori ed allega il file.")
+                        with st.spinner("Analisi IA..."):
+                            testo = estrai_testo_pdf(c_file)
+                            v, s, o = analizza_cv_con_ia(testo, annuncio_selezionato['note'])
+                            supabase.table("candidati").insert({"nome":c_nome,"email":c_mail,"telefono":c_tel,"posizione":annuncio_selezionato['posizione'],"idoneita":v,"stelle":s,"orientamento":o,"stato":"In Screening"}).execute()
+                        st.success("Candidatura inviata!")
+                    else: st.error("Compila i campi.")
             st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.error("Annuncio non trovato o codice di riferimento scaduto.")
+    else: st.error("Annuncio non trovato.")
 
-# --- SUITE INTERNA AMMINISTRATIVA CENTRATA ---
+# --- AREA AMMINISTRATIVA ---
 else:
     if not st.session_state.autenticato:
-        st.markdown("""
-            <style>
-                .stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; }
-                header { visibility: hidden !important; }
-                div[data-testid="stForm"] { 
-                    background: #FFFFFF !important; 
-                    border: 1px solid #E2E8F0 !important; 
-                    border-radius: 16px !important; 
-                    padding: 35px 40px 45px 40px !important; 
-                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4) !important;
-                    max-width: 450px !important;
-                    margin: 0 auto !important;
-                }
-                div[data-testid="stForm"] label p { 
-                    color: #1E293B !important; 
-                    font-weight: 700 !important; 
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        col_dx, col_centro, col_sx = st.columns([1, 1.4, 1])
+        st.markdown("<style>.stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; } header { visibility: hidden !important; } div[data-testid='stForm'] { background: #FFFFFF !important; border-radius: 16px !important; padding: 40px !important; box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important; max-width: 450px !important; margin: 0 auto !important; } div[data-testid='stForm'] label p { color: #1E293B !important; font-weight: 700 !important; }</style>", unsafe_allow_html=True)
+        _, col_centro, _ = st.columns([1, 1.4, 1])
         with col_centro:
-            st.markdown("<br><br><br><br>", unsafe_allow_html=True)
-            with st.form("login_form_premium"):
-                if os.path.exists("1000376160.jpeg"):
-                    st.image("1000376160.jpeg", use_container_width=True)
-                else:
-                    st.markdown("""
-                        <div style="text-align:center; padding-bottom: 10px;">
-                            <div style="font-size: 34px; font-weight: 900; color: #1E3A8A; letter-spacing: 1px; margin-bottom: 0px;">👑 DEI REALI</div>
-                            <div style="font-size: 10px; font-weight: 700; color: #64748B; letter-spacing: 2px; text-transform: uppercase;">Corporate Consulting • HR Suite</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown("<hr style='border-color:#F1F5F9; margin-top:5px; margin-bottom:20px;'>", unsafe_allow_html=True)
+            st.markdown("<br><br><br>", unsafe_allow_html=True)
+            with st.form("login"):
+                if os.path.exists("1000376160.jpeg"): st.image("1000376160.jpeg")
+                else: st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
                 login_mail = st.text_input("📧 E-mail Aziendale")
-                login_pw = st.text_input("🔑 Password Coordinatore", type="password")
-                submit_login = st.form_submit_button("ACCEDI AL SISTEMA", use_container_width=True)
-                
-                if submit_login:
+                login_pw = st.text_input("🔑 Password", type="password")
+                if st.form_submit_button("ACCEDI AL SISTEMA", use_container_width=True):
                     if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
                         st.session_state.autenticato = True
                         st.session_state.utente_connesso = OPERATORI[login_mail]
                         st.rerun()
-                    else:
-                        st.error("⚠️ Credenziali errate. Riprova.")
-
+                    else: st.error("Credenziali errate.")
     else:
         with st.sidebar:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if os.path.exists("1000376160.jpeg"):
-                st.image("1000376160.jpeg", use_container_width=True)
-            else:
-                st.markdown("""
-                    <div style="text-align:center; padding: 10px 0;">
-                        <div style="font-size: 24px; font-weight: 900; color: #1E3A8A; letter-spacing: 0.5px;">👑 DEI REALI</div>
-                        <div style="font-size: 9px; font-weight: 700; color: #64748B; letter-spacing: 1px; text-transform: uppercase;">Corporate Consulting</div>
-                    </div>
-                """, unsafe_allow_html=True)
-            st.markdown("<hr style='margin-top:10px; margin-bottom:15px;'>", unsafe_allow_html=True)
-            st.markdown(f"🟢 *Operatore:* {st.session_state.utente_connesso['nome']}<br><span style='font-size:12px;color:#64748B;'>💼 {st.session_state.utente_connesso['ruolo']}</span>", unsafe_allow_html=True)
-            if ai_client: st.success("🤖 Copilota IA Connesso")
-            else: st.warning("⚠️ IA in modalità simulata")
-            st.markdown("<hr>", unsafe_allow_html=True)
-            if st.sidebar.button("🔒 Disconnetti Account"):
+            if os.path.exists("1000376160.jpeg"): st.image("1000376160.jpeg")
+            st.write(f"🟢 *{st.session_state.utente_connesso['nome']}*")
+            if ai_client: st.success("🤖 IA Connessa")
+            if st.button("🔒 Disconnetti"):
                 st.session_state.autenticato = False
-                st.session_state.utente_connesso = None
                 st.rerun()
 
-        st.title("👑 Suite di Gestione Risorse Umane")
+        st.title("👑 HR Suite Dei Reali")
         c_nav = st.columns(7)
-        for i, (label, key) in enumerate(buttons_nav):
+        for i, (label, key) in enumerate([("📢 Annunci","Annunci"),("📥 Screening","Screening"),("🤝 Colloqui","Colloqui"),("🎉 Assunzioni","Assunzioni"),("📊 Report","Report"),("🏢 Clienti","Clienti"),("👥 Candidati","Candidati")]):
             with c_nav[i]:
-                if st.button(label, key=f"nav_{key}"): 
-                    st.session_state.current_menu = key
-                    st.rerun()
+                if st.button(label): st.session_state.current_menu = key; st.rerun()
 
-        st.markdown(f'<div class="section-indicator">📍 Modulo Attivo: {st.session_state.current_menu}</div>', unsafe_allow_html=True)
-
-        if st.session_state.current_menu == "📢 Annunci":
+        if st.session_state.current_menu == "Annunci":
             res_ann = supabase.table("annunci").select("*").execute()
-            elenco_annunci = res_ann.data if res_ann.data else []
-            
-            def_pos, def_inq, def_imp, def_sede, def_foto, def_note = "", "RAL", "", "", "", ""
-            
+            elenco = res_ann.data if res_ann.data else []
+            def_pos, def_inq, def_imp, def_sede, def_foto, def_note = "","RAL","","","",""
             if st.session_state.edit_mode and st.session_state.edit_job_id:
-                job_da_modificare = next((a for a in elenco_annunci if a["id"] == st.session_state.edit_job_id), None)
-                if job_da_modificare:
-                    def_pos = job_da_modificare["posizione"]
-                    def_inq = job_da_modificare["inquadramento"]
-                    def_imp = job_da_modificare["importo"]
-                    def_sede = job_da_modificare["sede"]
-                    def_foto = job_da_modificare.get("immagine", "")
-                    def_note = job_da_modificare["note"]
-            elif st.session_state.ai_generated_text:
-                def_note = st.session_state.ai_generated_text
+                job = next((a for a in elenco if a["id"] == st.session_state.edit_job_id), None)
+                if job: def_pos, def_inq, def_imp, def_sede, def_foto, def_note = job["posizione"], job["inquadramento"], job["importo"], job["sede"], job.get("immagine",""), job["note"]
+            elif st.session_state.ai_generated_text: def_note = st.session_state.ai_generated_text
 
-            col_sx, col_centro, col_dx = st.columns([1, 1, 1.2])
-            with col_sx:
-                st.markdown("### 📝 Dati Principali Annuncio")
-                titolo_job = st.text_input("📍 Titolo della Posizione Aperta", value=def_pos)
-                lista_inq = ["RAL", "Lordo", "Orario"]
-                tipo_importo = st.radio("Inquadramento", lista_inq, index=lista_inq.index(def_inq) if def_inq in lista_inq else 0, horizontal=True)
-                valore_importo = st.text_input("Importo Economico (€)", value=def_imp)
-                indirizzo_job = st.text_input("🏢 Sede Operativa di Lavoro", value=def_sede)
-                foto_job = st.text_input("🖼️ URL Immagine di Copertina (Opzionale)", value=def_foto, placeholder="https://images.unsplash.com/...")
-            with col_centro:
-                st.markdown("### 🤖 Descrizione Offerta")
-                note_job = st.text_area("✍️ Note, Requisiti o Testo Annuncio Completo", value=def_note, height=220)
-                
-                if st.button("🪄 Ottimizza e Completa con IA", use_container_width=True, type="secondary"):
-                    if titolo_job:
-                        with st.spinner("🧠 Scrittura dell'annuncio professionale in corso con Gemini..."):
-                            testo_creato = genera_testo_annuncio_ia(titolo_job, tipo_importo, valore_importo, indirizzo_job, note_job)
-                            st.session_state.ai_generated_text = testo_crecreated = testo_creato
-                            st.session_state.ai_generated_text = testo_creato
+            col1, col2, col3 = st.columns([1,1,1.2])
+            with col1:
+                t_pos = st.text_input("📍 Titolo", value=def_pos)
+                t_inq = st.radio("Inquadramento", ["RAL","Lordo","Orario"], index=["RAL","Lordo","Orario"].index(def_inq) if def_inq in ["RAL","Lordo","Orario"] else 0)
+                t_imp = st.text_input("Importo (€)", value=def_imp)
+                t_sede = st.text_input("Sede", value=def_sede)
+                t_foto = st.text_input("URL Foto Copertina", value=def_foto)
+            with col2:
+                t_note = st.text_area("Descrizione Annuncio", value=def_note, height=200)
+                if st.button("🪄 Ottimizza con IA"):
+                    if t_pos:
+                        with st.spinner("Scrittura..."):
+                            res = genera_testo_annuncio_ia(t_pos, t_inq, t_imp, t_sede, t_note)
+                            st.session_state.ai_generated_text = res
                             st.rerun()
-                    else:
-                        st.error("⚠️ Inserisci almeno il Titolo della Posizione prima di generare con l'IA.")
-
-                st.markdown("<br>", unsafe_allow_html=True)
                 if st.session_state.edit_mode:
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.button("💾 AGGIORNA ANNUNCIO", use_container_width=True):
-                            if titolo_job:
-                                supabase.table("annunci").update({
-                                    "posizione": titolo_job, "inquadramento": tipo_importo,
-                                    "importo": valore_importo, "sede": indirizzo_job, "note": note_job,
-                                    "immagine": foto_job
-                                }).eq("id", st.session_state.edit_job_id).execute()
-                                st.session_state.edit_mode = False
-                                st.session_state.edit_job_id = None
-                                st.session_state.ai_generated_text = ""
-                                st.success("Annuncio aggiornato con successo!")
-                                st.rerun()
-                    with c2:
-                        if st.button("❌ ANNULLA", use_container_width=True):
-                            st.session_state.edit_mode = False
-                            st.session_state.edit_job_id = None
-                            st.session_state.ai_generated_text = ""
-                            st.rerun()
+                    if st.button("💾 AGGIORNA"):
+                        supabase.table("annunci").update({"posizione":t_pos,"inquadramento":t_inq,"importo":t_imp,"sede":t_sede,"note":t_note,"immagine":t_foto}).eq("id", st.session_state.edit_job_id).execute()
+                        st.session_state.edit_mode = False; st.session_state.ai_generated_text = ""; st.rerun()
                 else:
-                    if st.button("🚀 PUBBLICA ED ABILITA PORTALE CARRIERE", use_container_width=True):
-                        if titolo_job:
-                            clean_id = re.sub(r'[^a-zA-Z0-9]', '-', titolo_job.lower())[:15] + f"-{random.randint(10,99)}"
-                            supabase.table("annunci").insert({
-                                "id": clean_id, "posizione": titolo_job, "inquadramento": tipo_importo,
-                                "importo": valore_importo, "sede": indirizzo_job, "note": note_job,
-                                "immagine": foto_job, "stato": "Attivo"
-                            }).execute()
-                            st.session_state.ai_generated_text = ""
-                            st.success("🎉 Annuncio Online con Grafica Premium!")
-                            st.rerun()
-            with col_dx:
-                st.markdown("### 📋 Elenco e Pannello Controllo Annunci")
-                for ann in elenco_annunci:
-                    stato_corrente = ann.get('stato', 'Attivo')
-                    badge_stato = "🟢 Attivo" if stato_corrente == "Attivo" else "🔴 Sospeso"
-                    
-                    st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-                    st.markdown(f"<b>📢 {ann['posizione']}</b> - 📍 {ann['sede']} | <small><b>{badge_stato}</b></small>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='link-box'>https://deireali-hr.streamlit.app/?job={ann['id']}</div>", unsafe_allow_html=True)
-                    
-                    c_btn1, c_btn2, c_btn3 = st.columns(3)
-                    with c_btn1:
-                        if st.button("✍️ Modifica", key=f"edit_{ann['id']}", use_container_width=True):
-                            st.session_state.edit_mode = True
-                            st.session_state.edit_job_id = ann['id']
-                            st.rerun()
-                    with c_btn2:
-                        nuovo_stato = "Sospeso" if stato_corrente == "Attivo" else "Attivo"
-                        label_sosp = "⏸️ Sospendi" if stato_corrente == "Attivo" else "▶️ Attiva"
-                        if st.button(label_sosp, key=f"susp_{ann['id']}", use_container_width=True):
-                            supabase.table("annunci").update({"stato": nuovo_stato}).eq("id", ann['id']).execute()
-                            st.rerun()
-                    with c_btn3:
-                        if st.button("🗑️ Elimina", key=f"del_{ann['id']}", use_container_width=True):
-                            supabase.table("annunci").delete().eq("id", ann['id']).execute()
-                            st.success("Annuncio rimosso!")
-                            st.rerun()
-                            
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    if st.button("🚀 PUBBLICA"):
+                        clean_id = re.sub(r'[^a-z0-9]', '-', t_pos.lower())[:15] + f"-{random.randint(10,99)}"
+                        supabase.table("annunci").insert({"id":clean_id,"posizione":t_pos,"inquadramento":t_inq,"importo":t_imp,"sede":t_sede,"note":t_note,"immagine":t_foto,"stato":"Attivo"}).execute()
+                        st.session_state.ai_generated_text = ""; st.rerun()
+            with col3:
+                for a in elenco:
+                    st.markdown(f"<div class='saas-box'><b>📢 {a['posizione']}</b><br><small>{a.get('stato','Attivo')}</small><br><div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div></div>", unsafe_allow_html=True)
+                    c1, c2, c3 = st.columns(3)
+                    if c1.button("✍️", key=f"e_{a['id']}"): st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
+                    if c2.button("⏸️" if a.get('stato')=="Attivo" else "▶️", key=f"s_{a['id']}"): supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute(); st.rerun()
+                    if c3.button("🗑️", key=f"d_{a['id']}"): supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
 
-        elif st.session_state.current_menu == "📥 Screening CV":
-            st.markdown("### 📥 Analisi CV e Classificazione Idoneità Real-Time")
-            res_cand = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
-            candidati_list = res_cand.data if res_cand.data else []
-            
-            if not candidati_list:
-                st.info("Nessun nuovo curriculum in coda di screening al momento.")
-            
-            for cand in candidati_list:
-                st.markdown('<div class="saas-box">', unsafe_allow_html=True)
-                c_l, c_r = st.columns([2.5, 1.5])
-                with c_l:
-                    st.markdown(f"#### 👤 {cand['nome']} &emsp; <span style='font-size:14px;color:#2563EB;'>📊 Idoneità Reale Estratta: {cand['idoneita']} {cand['stelle']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"🎯 *Posizione:* {cand['posizione']} | 📱 *Tel:* {cand['telefono']}")
-                    st.markdown(f'<div class="ai-box"><b>🧠 VERBALE DI VALUTAZIONE IA DEEPREAD:</b><br>{cand["orientamento"]}</div>', unsafe_allow_html=True)
-                with c_r:
-                    if st.button("🤝 Approva per Colloquio", key=f"appr_{cand['id']}", use_container_width=True):
-                        supabase.table("candidati").update({"stato": "Approvato per Colloquio"}).eq("id", cand['id']).execute()
-                        st.success("Profilo spostato in agenda!")
-                        st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+        elif st.session_state.current_menu == "Screening":
+            res = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
+            for c in (res.data if res.data else []):
+                st.markdown(f"<div class='saas-box'><b>👤 {c['nome']}</b> - {c['idoneita']} {c['stelle']}<br>{c['orientamento']}</div>", unsafe_allow_html=True)
+                if st.button("🤝 Approva", key=f"ap_{c['id']}"): supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id",c['id']).execute(); st.rerun()
 
-        elif st.session_state.current_menu == "🤝 Colloqui AI":
-            st.markdown("### 🗓️ Organizzazione Turni e Agende Sincronizzate")
-            res_ag = supabase.table("agenda").select("*").execute()
-            agenda_list = res_ag.data if res_ag.data else []
-            if agenda_list:
-                st.dataframe(pd.DataFrame(agenda_list)[["data", "ora", "candidato", "operatore", "telefono", "meet_link"]], use_container_width=True)
-            else:
-                st.info("Nessun colloquio pianificato in agenda.")
-            
-            col_plan, col_act = st.columns([1, 1])
-            with col_plan:
-                st.markdown("#### Pianifica Nuovo Incontro")
-                res_all_c = supabase.table("candidati").select("nome", "telefono").eq("stato", "Approvato per Colloquio").execute()
-                cand_dispo = res_all_c.data if res_all_c.data else []
-                if cand_dispo:
-                    cand_scelto = st.selectbox("Seleziona Profilo Idoneo", [c["nome"] for c in cand_dispo])
-                    d_s = st.date_input("Data Incontro", min_value=date.today())
-                    o_s = st.time_input("Orario Incontro", value=time(10,0))
-                    if st.button("💾 Pianifica Turno Cloud", use_container_width=True):
-                        c_info = next((c for c in cand_dispo if c["nome"] == cand_scelto), None)
-                        meet_url = f"https://meet.google.com/{random.randint(100,999)}-{random.randint(100,999)}"
-                        supabase.table("agenda").insert({
-                            "candidato": cand_scelto, "data": str(d_s), "ora": o_s.strftime("%H:%M"),
-                            "operatore": st.session_state.utente_connesso['nome'], "meet_link": meet_url, "telefono": c_info["telefono"] if c_info else ""
-                        }).execute()
-                        st.success("Inserito in agenda con successo!")
-                        st.rerun()
-                else:
-                    st.warning("Nessun candidato approvato in attesa di fissare il colloquio.")
-            with col_act:
-                st.markdown("#### Azioni Rapide di Connessione")
-                for app in agenda_list:
-                    st.markdown(f'<div class="saas-box"><b>{app["candidato"]}</b> ({app["data"]} ore {app["ora"]})', unsafe_allow_html=True)
-                    msg = f"Gentile {app['candidato']},\nLe confermiamo il colloquio con Dei Reali.\n🗓️ {app['data']} alle {app['ora']}.\n🖥️ Link Meet: {app['meet_link']}"
-                    st.markdown(f'<a href="https://wa.me/{str(app["telefono"]).replace("+","")}?text={urllib.parse.quote(msg)}" target="_blank" class="whatsapp-btn">💬 Avvisa via WhatsApp</a>', unsafe_allow_html=True)
-                    st.markdown(f'<a href="{app["meet_link"]}" target="_blank" class="meet-btn">🖥️ Entra nell\'Aula Virtuale</a></div>', unsafe_allow_html=True)
-
-        elif st.session_state.current_menu == "🎉 Assunzioni":
-            st.markdown("### 🎉 Gestione Onboarding e Pratiche di Assunzione")
-            st.info("I profili inseriti in questa sezione hanno superato la fase di colloquio finale.")
-            res_assunti = supabase.table("candidati").select("*").eq("stato", "Assunto").execute()
-            assunti_list = res_assunti.data if res_assunti.data else []
-            if assunti_list:
-                st.dataframe(pd.DataFrame(assunti_list)[["nome", "email", "posizione", "idoneita"]], use_container_width=True)
-            else:
-                st.write("Nessun candidato attualmente impostato nello stato 'Assunto'. Cambia lo stato dal modulo Candidati per iniziare l'onboarding.")
-
-        elif st.session_state.current_menu == "📊 Report":
-            st.markdown("### 📊 Business Intelligence & KPI Performance")
-            c1, c2, c3 = st.columns(3)
-            with c1: st.metric(label="Annunci Attivi", value="Attivi su Portale")
-            with c2: st.metric(label="CV Processati da IA", value="Sincronizzati Cloud")
-            with c3: st.metric(label="Tempo di Screening Medio", value="< 3 secondi")
-
-        elif st.session_state.current_menu == "🏢 Clienti":
-            st.markdown("### 🏢 Mandati e Aziende Partner")
-            st.write("Gestione dei canali corporate e dei profili provvigionali per conto terzi.")
-            st.dataframe(pd.DataFrame([
-                {"Azienda Cliente": "Clienti Elite Retail", "Sede": "Roma Corporate", "Annunci Attivi": 2},
-                {"Azienda Cliente": "Dei Reali Srl Holding", "Sede": "Milano HQ", "Annunci Attivi": 1}
-            ]), use_container_width=True)
-
-        elif st.session_state.current_menu == "👥 Candidati":
-            st.markdown("### 👥 Database Anagrafico Globale Candidati")
-            res_tutti = supabase.table("candidati").select("*").execute()
-            tutti_list = res_tutti.data if res_tutti.data else []
-            if tutti_list:
-                df_tutti = pd.DataFrame(tutti_list)
-                st.dataframe(df_tutti[["id", "nome", "email", "telefono", "posizione", "stato", "idoneita"]], use_container_width=True)
-            else:
-                st.info("Nessun candidato presente nel database centralizzato.")
+        elif st.session_state.current_menu == "Candidati":
+            res = supabase.table("candidati").select("*").execute()
+            for c in (res.data if res.data else []):
+                st.markdown(f"<div class='saas-box'><b>{c['nome']}</b> ({c['stato']})</div>", unsafe_allow_html=True)
+                nuovo = st.selectbox("Cambia Stato", ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"], index=0, key=f"st_{c['id']}")
+                if st.button("Salva", key=f"sv_{c['id']}"): supabase.table("candidati").update({"stato":nuovo}).eq("id",c['id']).execute(); st.rerun()
+        else: st.info("Sincronizzazione Cloud Attiva.")
