@@ -122,7 +122,6 @@ OPERATORI = {
 
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
 if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso = None
-if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢 Annunci"
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
@@ -199,11 +198,9 @@ else:
             st.markdown("---")
             st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            # Inizializzazione cronologia locale
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
             
-            # --- MOTORE GRAFICO AVATAR (BASE64) ---
             img_talking_base64 = ""
             img_idle_base64 = ""
             
@@ -214,7 +211,6 @@ else:
                 with open("1000334218.png", "rb") as f2:
                     img_talking_base64 = base64.b64encode(f2.read()).decode()
             
-            # Stato di risposta per l'animazione visiva
             is_speaking = st.session_state.get("sta_rispondendo", False)
             
             if img_idle_base64 and img_talking_base64:
@@ -251,19 +247,15 @@ else:
             else:
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
-            # Reset dello stato per il ciclo successivo
             st.session_state.sta_rispondendo = False
-            
             st.caption("<div style='text-align: center;'>Chat di test diretta • Risposte istantanee</div>", unsafe_allow_html=True)
             
-            # --- BOX CHAT STILE WHATSAPP ---
             container_chat = st.container(height=260)
             with container_chat:
                 for msg in st.session_state.chat_history:
                     with st.chat_message(msg["role"]):
                         st.markdown(msg["text"])
             
-            # Input utente
             user_query = st.chat_input("Invia un messaggio a ChatGPT...")
             
             if user_query:
@@ -271,46 +263,23 @@ else:
                     with st.chat_message("user"):
                         st.markdown(user_query)
                 st.session_state.chat_history.append({"role": "user", "text": user_query})
-                
-                # Attiva l'animazione dell'avatar
                 st.session_state.sta_rispondendo = True
                 
-                # --- CERVELLO LOCALE DI CHATGPT (Simulatore Intelligente Avanzato) ---
                 q = user_query.lower()
-                
                 if "stipendio" in q or "facchino" in q or "netto" in q or "roma" in q:
-                    risposta_ia = (
-                        "Un facchino inquadrato a 40 ore settimanali a Roma (solitamente sotto CCNL Multiservizi o Logistica, livello iniziale) "
-                        "ha uno stipendio lordo mensile di circa 1.300€ - 1.400€. Al netto delle tasse, la busta paga finale si aggira intorno ai **1.100€ - 1.180€ netti al mese**, "
-                        "escluse eventuali ore di straordinario o indennità di turno notturno."
-                    )
+                    risposta_ia = "Un facchino inquadrato a 40 ore settimanali a Roma (solitamente sotto CCNL Multiservizi o Logistica, livello iniziale) ha uno stipendio lordo mensile di circa 1.300€ - 1.400€. Al netto delle tasse, la busta paga finale si aggira intorno ai **1.100€ - 1.180€ netti al mese**, escluse eventuali ore di straordinario o indennità di turno notturno."
                 elif "ccnl" in q or "contratto" in q or "commercio" in q:
-                    risposta_ia = (
-                        "Il CCNL Commercio e Terziario è uno dei più diffusi. Prevede 14 mensilità, un orario di lavoro standard di 40 ore settimanali "
-                        "e la maturazione di ferie (26 giorni all'anno) e ROL. Gli scatti di anzianità scattano ogni 3 anni di servizio continuo."
-                    )
+                    risposta_ia = "Il CCNL Commercio e Terziario è uno dei più diffusi. Prevede 14 mensilità, un orario di lavoro standard di 40 ore settimanali e la maturazione di ferie (26 giorni all'anno) e ROL. Gli scatti di anzianità scattano ogni 3 anni di servizio continuo."
                 elif "costo" in q or "dipendente" in q or "ral" in q:
-                    risposta_ia = (
-                        "Per calcolare il costo reale di un dipendente, bisogna aggiungere alla RAL i contributi INPS a carico azienda (circa il 30%), "
-                        "il tasso INAIL per gli infortuni e la quota TFR (circa il 7.41%). In totale, un dipendente costa all'azienda circa il **35% in più** rispetto alla sua RAL scritta in contratto."
-                    )
+                    risposta_ia = "Per calcolare il costo reale di un dipendente, bisogna aggiungere alla RAL i contributi INPS a carico azienda (circa il 30%), il tasso INAIL per gli infortuni e la quota TFR (circa il 7.41%). In totale, un dipendente costa all'azienda circa il **35% in più** rispetto alla sua RAL scritta in contratto."
                 elif "sei attiva" in q or "funzioni" in q or "ciao" in q or "buongiorno" in q:
-                    risposta_ia = (
-                        "Buongiorno! Sono l'assistente HR virtuale basata sul modello simulato di ChatGPT. "
-                        "Sono completamente attiva e pronta per mostrarti il funzionamento della chat. Chiedimi pure informazioni su stipendi netti, costi del personale o dettagli sui contratti!"
-                    )
+                    risposta_ia = "Buongiorno! Sono l'assistente HR virtuale basata sul modello simulato di ChatGPT. Sono completamente attiva e pronta per mostrarti il funzionamento della chat. Chiedimi pure informazioni su stipendi netti, costi del personale o dettagli sui contratti!"
                 else:
-                    # Risposta Jolly HR generica e realistica se l'utente digita una domanda fuori traccia
-                    risposta_ia = (
-                        f"In merito alla tua richiesta su '{user_query}', ti informo che i parametri variano in base al livello di inquadramento "
-                        "e all'accordo integrativo aziendale del Gruppo Dei Reali. Posso effettuare un'estrazione dei costi medi o verificare i minimi tabellari del CCNL di riferimento se mi specifichi il livello."
-                    )
+                    risposta_ia = f"In merito alla tua richiesta su '{user_query}', ti informo che i parametri variano in base al livello di inquadramento e all'accordo integrativo aziendale del Gruppo Dei Reali. Posso effettuare un'estrazione dei costi medi o verificare i minimi tabellari del CCNL di riferimento se mi specifichi il livello."
                 
-                # Mostra la risposta simulata
                 with container_chat:
                     with st.chat_message("assistant"):
                         st.markdown(risposta_ia)
-                
                 st.session_state.chat_history.append({"role": "assistant", "text": risposta_ia})
                 st.rerun()
 
@@ -330,75 +299,58 @@ else:
 
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
         
-        c_nav = st.columns(7)
-        menu_items = [
-            ("📢 Annunci", "Annunci"),
-            ("📥 Screening", "Screening"),
-            ("🤝 Colloqui", "Colloqui"),
-            ("🎉 Assunzioni", "Assunzioni"),
-            ("📊 Report", "Report"),
-            ("🏢 Clienti", "Clienti"),
-            ("👥 Candidati", "Candidati")
-        ]
-        for i, (label, key) in enumerate(menu_items):
-            with c_nav[i]:
-                if st.button(label, use_container_width=True): 
-                    st.session_state.current_menu = key
-                    st.rerun()
+        # --- SISTEMA DI NAVIGAZIONE COMPONENTI NATIVO (ST.TABS) ---
+        # Questo risolve istantaneamente i bottoni bloccati forzando la stabilità di Streamlit
+        tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "📥 Screening", "🤝 Colloqui", "🎉 Assunzioni", "📊 Report", "🏢 Clienti", "👥 Candidati"]
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(tab_nomi)
 
-        st.markdown("---")
+        # --- TAB 1: HOME (IL CRUSCOTTO ED I FEED NOTIZIE) ---
+        with tab1:
+            st.subheader("📊 Cruscotto Attività Risorse Umane")
+            
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            with col_m1:
+                st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
+            with col_m2:
+                st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
+            with col_m3:
+                st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
+            with col_m4:
+                st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
+                
+            st.markdown("---")
+            
+            st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
+            col_news1, col_news2 = st.columns(2)
+            
+            with col_news1:
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
+                    <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🏛️ Circolari INPS & INAIL</h4>
+                    <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
+                        <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
+                        <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
+                        <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
+                        <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+                
+            with col_news2:
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
+                    <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🔥 Ultim'ora Lavoro & Economia</h4>
+                    <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
+                        <li><b>[Adnkronos]</b> Occupazione in crescita: i contratti a tempo indeterminato trainano il mercato a Roma e provincia.</li>
+                        <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
+                        <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
+                        <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
-        # =====================================================================
-        # POSIZIONAMENTO CORRETTO: PLANCIA CENTRALE INFORMATIVA DELLE ATTIVITÀ
-        # Questo blocco ora riempie lo spazio bianco sotto i bottoni principali
-        # =====================================================================
-        st.subheader("📊 Cruscotto Attività Risorse Umane")
-        
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        with col_m1:
-            st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
-        with col_m2:
-            st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
-        with col_m3:
-            st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
-        with col_m4:
-            st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
-            
-        st.markdown("---")
-        
-        st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
-        col_news1, col_news2 = st.columns(2)
-        
-        with col_news1:
-            st.markdown("""
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
-                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🏛️ Circolari INPS & INAIL</h4>
-                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                    <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
-                    <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
-                    <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
-                    <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with col_news2:
-            st.markdown("""
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
-                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🔥 Ultim'ora Lavoro & Economia</h4>
-                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                    <li><b>[Adnkronos]</b> Occupazione in crescita: i contratti a tempo indeterminato trainano il mercato a Roma e provincia.</li>
-                    <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
-                    <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
-                    <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        st.markdown("---")
-
-        # --- SEZIONE 1: ANNUNCI ---
-        if st.session_state.current_menu == "Annunci":
+        # --- TAB 2: ANNUNCI ---
+        with tab2:
             st.subheader("📢 Gestione Annunci di Lavoro")
             res_ann = supabase.table("annunci").select("*").execute()
             elenco = res_ann.data if res_ann.data else []
@@ -453,8 +405,8 @@ else:
                     if c3.button("Elimina", key=f"d_{a['id']}", use_container_width=True): 
                         supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
 
-        # --- SEZIONE 2: SCREENING ---
-        elif st.session_state.current_menu == "Screening":
+        # --- TAB 3: SCREENING ---
+        with tab3:
             st.subheader("📥 Candidature Ricevute da Esaminare (In Screening)")
             res = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
             candidati = res.data if res.data else []
@@ -474,8 +426,8 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-        # --- SEZIONE 3: COLLOQUI (CORRETTA CON FUNZIONE DI COLLEGAMENTO INTERFACCIA MEET NATIVA) ---
-        elif st.session_state.current_menu == "Colloqui":
+        # --- TAB 4: COLLOQUI ---
+        with tab4:
             st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
@@ -506,7 +458,6 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Pulsanti Nativi Streamlit per evitare ricaricamenti di pagina
                     col_b_wa, col_b_meet = st.columns(2)
                     with col_b_wa:
                         st.link_button("💬 Invia WhatsApp", link_wa, use_container_width=True)
@@ -620,8 +571,8 @@ else:
             else:
                 st.info("Nessun turno registrato nello storico.")
 
-        # --- SEZIONE 4: ASSUNZIONI ---
-        elif st.session_state.current_menu == "Assunzioni":
+        # --- TAB 5: ASSUNZIONI ---
+        with tab5:
             st.subheader("🎉 Registro Ufficiale Nuove Assunzioni")
             res = supabase.table("candidati").select("*").eq("stato", "Assunto").execute()
             assunti = res.data if res.data else []
@@ -638,8 +589,8 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # --- SEZIONE 5: REPORT ---
-        elif st.session_state.current_menu == "Report":
+        # --- TAB 6: REPORT ---
+        with tab6:
             st.subheader("📊 Reportistica ed Analytics Enterprise")
             res_cand = supabase.table("candidati").select("*").execute()
             all_c = res_cand.data if res_cand.data else []
@@ -668,8 +619,8 @@ else:
             else:
                 st.info("Nessun dato disponibile per elaborare grafici.")
 
-        # --- SEZIONE 6: CLIENTI ---
-        elif st.session_state.current_menu == "Clienti":
+        # --- TAB 7: CLIENTI ---
+        with tab7:
             st.subheader("🏢 Gestione Anagrafica Clienti B2B")
             col_form, col_lista = st.columns([1.1, 2])
             
@@ -710,8 +661,8 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
 
-        # --- SEZIONE 7: CANDIDATI ---
-        elif st.session_state.current_menu == "Candidati":
+        # --- TAB 8: CANDIDATI ---
+        with tab8:
             st.subheader("👥 Database Anagrafico Globale Candidati")
             res = supabase.table("candidati").select("*").execute()
             tutti = res.data if res.data else []
