@@ -238,7 +238,15 @@ else:
             is_speaking = st.session_state.get("sta_rispondendo", False)
             if img_idle_base64 and img_talking_base64:
                 active_img = img_talking_base64 if is_speaking else img_idle_base64
-                st.markdown(f'<div style="display: flex; justify-content: center; margin: 15px 0;"><div style="background-image: url(\'data:image/png;base64,{active_img}\'); width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid {\'#10B981\' if is_speaking else \'#EC4899\'};"></div></div>', unsafe_allow_html=True)
+                
+                # Semplifichiamo il calcolo del colore qui per evitare l'errore di sintassi
+                colore_bordo = "#10B981" if is_speaking else "#EC4899"
+                
+                st.markdown(f"""
+                    <div style="display: flex; justify-content: center; margin: 15px 0;">
+                        <div style="background-image: url('data:image/png;base64,{active_img}'); width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid {colore_bordo};"></div>
+                    </div>
+                """, unsafe_allow_html=True)
             else:
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
