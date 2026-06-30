@@ -320,7 +320,7 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-       # --- SEZIONE 3: COLLOQUI (Analisi Avanzata Intervista & Orientamento) ---
+       # --- SEZIONE 3: COLLOQUI (Con funzione di Annullamento e Pulizia Agenda) ---
         elif st.session_state.current_menu == "Colloqui":
             st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
@@ -354,13 +354,21 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    c1, c2 = st.columns(2)
-                    if c1.button("🎉 Promuovi ad Assunto", key=f"ass_{c['id']}"):
+                    # Dividiamo in 3 colonne per fare spazio al tasto Annulla dell'agenda attiva
+                    c1, c2, c3 = st.columns(3)
+                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True):
                         supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
                         st.rerun()
-                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}"):
+                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True):
                         supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
                         st.rerun()
+                    if c3.button("🗑️ Annulla Turno", key=f"cncl_{c['id']}", use_container_width=True):
+                        if match_appuntamento:
+                            supabase.table("agenda").delete().eq("id", match_appuntamento['id']).execute()
+                            st.success("Appuntamento rimosso dall'agenda cloud!")
+                            st.rerun()
+                        else:
+                            st.warning("Nessuna data ancora salvata per questo candidato.")
                         
             with col_nuovo:
                 st.markdown("### ✍️ Modulo Pianificazione e Chiusura")
@@ -398,8 +406,6 @@ else:
                     
                     st.markdown("---")
                     st.markdown("### 📝 Trascrizione Integrale Intervista (Domande/Risposte)")
-                    
-                    # Box ampio per contenere l'intera trascrizione del colloquio ascoltato dall'estensione
                     testo_intervista = st.text_area(
                         "Incolla qui il testo catturato dall'ascolto dell'estensione:", 
                         height=180, 
@@ -410,41 +416,49 @@ else:
                         sorgente_testo = testo_intervista if testo_intervista else st.session_state.note_colloquio
                         
                         if sorgente_testo:
-                            with st.spinner("L'IA sta analizzando la conversazione e riclassificando il profilo..."):
-                                # Prompt ingegnerizzato per estrarre la vocazione e il settore reale del candidato dalle risposte
+                            with st.spinner("L'IA sta analizzando la conversazione..."):
                                 prompt_orientamento = f"""
                                 Sei un esperto HR Senior e un Career Coach del Gruppo Dei Reali. 
-                                Analizza attentamente questo dialogo intercorso durante il colloquio con il candidato {candidato_sel}:
-                                
-                                {sorgente_testo}
-                                
-                                Genera una scheda di valutazione approfondita e strutturata esattamente con questi punti:
-                                🧠 CLASSIFICAZIONE E GIUDIZIO SUL PROFILO: (Valutazione attitudinale e comportamentale emersa dalle risposte)
-                                🎯 VERO SETTORE OPERATIVO DI DESTINAZIONE: (Identifica il settore di mercato o aziendale in cui il candidato esprimerà il massimo potenziale, motivando se differisce dalla posizione originaria)
-                                📈 PERCORSO DI ORIENTAMENTO CONSIGLIATO: (Linee guida per l'inserimento o la formazione ideale della risorsa)
+                                Analizza questo colloquio per {candidato_sel}: {sorgente_testo}.
+                                Estrai:
+                                🧠 CLASSIFICAZIONE E GIUDIZIO SUL PROFILO
+                                🎯 VERO SETTORE OPERATIVO DI DESTINAZIONE
+                                📈 PERCORSO DI ORIENTAMENTO CONSIGLIATO
                                 """
                                 risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_orientamento).text
                                 
-                                # Salvataggio su database Supabase
                                 supabase.table("schede_colloqui").insert({
                                     "candidato": candidato_sel, 
                                     "scheda": risposta_ia,
                                     "data": str(date.today())
                                 }).execute()
                                 
-                                st.session_state["ultimo_verdetto"] = risposta_ia
-                                st.success(f"Scheda aggiuntiva di orientamento per {candidato_sel} salvata nel Cloud!")
+                                st.success(f"Scheda di orientamento per {candidato_sel} salvata nel Cloud!")
                                 st.rerun()
                         else:
-                            st.warning("Incolla prima il testo dell'intervista registrato.")
+                            st.warning("Incolla prima il testo dell'intervista.")
                 else:
                     st.write("Abilitato quando ci sono candidati approvati.")
                     
             st.markdown("---")
             st.markdown("### 📊 Riepilogo Cronologico di tutti i Turni Cloud")
+            
+            # TOOL DI PULIZIA GLOBALE: permette di cancellare qualsiasi riga dal database agenda
             if agenda_list:
+                col_del_selettore, col_del_bottone = st.columns([2.5, 1])
+                with col_del_selettore:
+                    opzioni_cancellazione = [f"{a['id']} | {a['candidato']} ({a.get('data', 'No Data')})" for a in agenda_list]
+                    turno_da_eliminare = st.selectbox("🎯 Seleziona un appuntamento specifico da cancellare dal database:", opzioni_cancellazione)
+                with col_del_bottone:
+                    st.write("<br>", unsafe_allow_html=True) # Allinea il bottone al selettore
+                    if st.button("🗑️ Rimuovi dal Cloud", use_container_width=True):
+                        id_target = int(turno_da_eliminare.split(" | ")[0])
+                        supabase.table("agenda").delete().eq("id", id_target).execute()
+                        st.success("Riga eliminata!")
+                        st.rerun()
+                
                 df_agenda = pd.DataFrame(agenda_list)
-                st.dataframe(df_agenda[["candidato", "data", "ora", "operatore", "meet_link"]], use_container_width=True)
+                st.dataframe(df_agenda[["id", "candidato", "data", "ora", "operatore", "meet_link"]], use_container_width=True)
             else:
                 st.info("Nessun turno registrato nello storico.")
 
