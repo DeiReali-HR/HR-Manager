@@ -85,12 +85,10 @@ def mostra_logo_aziendale():
     else:
         st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
 
-# Generatore di codici d'invito Google Meet formattati correttamente (lettere minuscole a-z)
+# Generatore di stanze video reali istantanee (Valide sia per HR che per il Candidato)
 def genera_codice_meet_statico():
-    p1 = "".join(random.choices(string.ascii_lowercase, k=3))
-    p2 = "".join(random.choices(string.ascii_lowercase, k=4))
-    p3 = "".join(random.choices(string.ascii_lowercase, k=3))
-    return f"https://meet.google.com/{p1}-{p2}-{p3}"
+    codice_unico = "".join(random.choices(string.ascii_lowercase, k=10))
+    return f"https://meet.jit.si/DeiReali-HR-{codice_unico}"
 
 # 3. CSS Custom Premium
 st.markdown("""
