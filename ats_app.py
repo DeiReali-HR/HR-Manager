@@ -320,9 +320,9 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-        # --- SEZIONE 3: COLLOQUI (Versione Corretta e Allineata al DB) ---
+       # --- SEZIONE 3: COLLOQUI (Analisi Avanzata Intervista & Orientamento) ---
         elif st.session_state.current_menu == "Colloqui":
-            st.subheader("🤝 Calendario, Agenda e Moduli di Contatto")
+            st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
             
             res_agenda_db = supabase.table("agenda").select("*").execute()
@@ -393,32 +393,50 @@ else:
                         else:
                             supabase.table("agenda").insert(payload).execute()
                         
-                        st.success("Appuntamento registrato con link Meet statico e univoco!")
+                        st.success("Appuntamento registrato con link Meet statico!")
                         st.rerun()
                     
                     st.markdown("---")
-                    st.markdown("### 📝 Chiusura Automatica con Trascrizione Meet")
-                    testo_trascritto = st.text_area("Incolla qui la trascrizione registrata dall'estensione:", height=150, placeholder="Incolla qui il testo copiato...")
+                    st.markdown("### 📝 Trascrizione Integrale Intervista (Domande/Risposte)")
+                    
+                    # Box ampio per contenere l'intera trascrizione del colloquio ascoltato dall'estensione
+                    testo_intervista = st.text_area(
+                        "Incolla qui il testo catturato dall'ascolto dell'estensione:", 
+                        height=180, 
+                        placeholder="Incolla l'intero dialogo domande/risposte qui..."
+                    )
 
-                    if st.button("💾 GENERA E SALVA REPORT COLLOQUIO", use_container_width=True, type="primary"):
-                        sorgente_testo = testo_trascritto if testo_trascritto else st.session_state.note_colloquio
+                    if st.button("💾 ELABORA SCHEDA DI ORIENTAMENTO", use_container_width=True, type="primary"):
+                        sorgente_testo = testo_intervista if testo_intervista else st.session_state.note_colloquio
                         
                         if sorgente_testo:
-                            with st.spinner("L'IA sta analizzando la trascrizione del colloquio..."):
-                                prompt_fine = f"Sei un HR Director. Analizza questa trascrizione/nota di colloquio per il candidato {candidato_sel}: {sorgente_testo}. Struttura un report aziendale con: Punti di forza, Aree di miglioramento, Aspettative contrattuali e un Giudizio finale."
-                                risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_fine).text
+                            with st.spinner("L'IA sta analizzando la conversazione e riclassificando il profilo..."):
+                                # Prompt ingegnerizzato per estrarre la vocazione e il settore reale del candidato dalle risposte
+                                prompt_orientamento = f"""
+                                Sei un esperto HR Senior e un Career Coach del Gruppo Dei Reali. 
+                                Analizza attentamente questo dialogo intercorso durante il colloquio con il candidato {candidato_sel}:
                                 
+                                {sorgente_testo}
+                                
+                                Genera una scheda di valutazione approfondita e strutturata esattamente con questi punti:
+                                🧠 CLASSIFICAZIONE E GIUDIZIO SUL PROFILO: (Valutazione attitudinale e comportamentale emersa dalle risposte)
+                                🎯 VERO SETTORE OPERATIVO DI DESTINAZIONE: (Identifica il settore di mercato o aziendale in cui il candidato esprimerà il massimo potenziale, motivando se differisce dalla posizione originaria)
+                                📈 PERCORSO DI ORIENTAMENTO CONSIGLIATO: (Linee guida per l'inserimento o la formazione ideale della risorsa)
+                                """
+                                risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_orientamento).text
+                                
+                                # Salvataggio su database Supabase
                                 supabase.table("schede_colloqui").insert({
                                     "candidato": candidato_sel, 
                                     "scheda": risposta_ia,
                                     "data": str(date.today())
                                 }).execute()
                                 
-                                st.success(f"Report per {candidato_sel} generato e archiviato con successo!")
-                                st.session_state.note_colloquio = "" 
+                                st.session_state["ultimo_verdetto"] = risposta_ia
+                                st.success(f"Scheda aggiuntiva di orientamento per {candidato_sel} salvata nel Cloud!")
                                 st.rerun()
                         else:
-                            st.warning("Incolla la trascrizione o scrivi le note nella Sidebar.")
+                            st.warning("Incolla prima il testo dell'intervista registrato.")
                 else:
                     st.write("Abilitato quando ci sono candidati approvati.")
                     
