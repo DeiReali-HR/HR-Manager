@@ -272,24 +272,23 @@ else:
                     try:
                         system_instruction = (
                             "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
-                            "Usa sempre lo strumento di ricerca Google Search integrato per trovare informazioni aggiornate su contratti, CCNL italiani e leggi sul lavoro. "
-                            "Fornisci risposte professionali, precise ma molto concise."
+                            "Usa lo strumento di ricerca Google Search per rispondere in modo preciso, aggiornato e professionale a qualsiasi domanda "
+                            "su contratti, leggi sul lavoro italiane e CCNL. Sii esaustiva ma mantieni il testo leggibile."
                         )
                         
-                        # Configurazione corretta e aggiornata per forzare il Web Grounding di Gemini 2.0
+                        # Utilizziamo gemini-1.5-pro per la chat di ricerca: ha limiti di token per il web grounding più tolleranti nel free tier
                         response = ai_client.models.generate_content(
-                            model='gemini-2.0-flash',
+                            model='gemini-1.5-pro',
                             contents=user_query,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
-                                # Attivazione nativa dello strumento di ricerca Google
                                 tools=[{"google_search": {}}],
-                                max_output_tokens=400
+                                max_output_tokens=500
                             )
                         )
                         risposta_ia = response.text
                     except Exception as e:
-                        # Intercettazione elegante dei blocchi di quota (429) o errori di rete
+                        # Se intercetta il blocco della quota (429) o qualsiasi problema di rete
                         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                             risposta_ia = "Scusami, ci sono troppe richieste nel sistema, attendi un minuto. O in alternativa utilizza la mia collega Chat GPT."
                         else:
