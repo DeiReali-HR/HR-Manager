@@ -157,18 +157,28 @@ if "job" in st.query_params:
                 
                 if st.form_submit_button("INVIA CANDIDATURA"):
                     if c_nome and c_mail and c_tel and c_file:
-                        with st.spinner("Elaborazione dati e salvataggio cloud..."):
-                            # Estrazione testo ed esecuzione IA protetta contro i crash
+                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
                             try:
                                 v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
                             except Exception:
                                 v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
                             
-                            # Leggiamo i byte del PDF per incorporarli nel database Supabase
-                            pdf_bytes = c_file.read()
+                            # --- CARICAMENTO FILE PDF SU SUPABASE STORAGE ---
+                            # Creiamo un nome unico pulito per il file per evitare sovrascritture
+                            pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
+                            nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
                             
-                            # Inserimento corretto ed esplicito per evitare disallineamenti di colonne
+                            c_file.seek(0)
+                            file_bytes = c_file.read()
+                            
+                            # Carichiamo i veri byte del PDF nel bucket "curriculum"
+                            supabase.storage.from_("curriculum").upload(nome_file_storage, file_bytes, {"file-type": "application/pdf"})
+                            
+                            # Otteniamo l'URL pubblico di download diretto del file
+                            url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
+                            
+                            # Inserimento record nel Database Cloud
                             payload_candidato = {
                                 "nome": c_nome,
                                 "email": c_mail,
@@ -178,12 +188,12 @@ if "job" in st.query_params:
                                 "stelle": str(s),
                                 "orientamento": str(o),
                                 "stato": "In Screening",
-                                "testo_cv": testo_pdf
+                                "testo_cv": testo_pdf,
+                                "immagine": url_download_pdf # Riutilizziamo la colonna immagine per memorizzare il link del PDF
                             }
                             
-                            # Eseguiamo il salvataggio sul Cloud
                             supabase.table("candidati").insert(payload_candidato).execute()
-                            st.success("🎉 Candidatura inviata correttamente! Il team HR esaminerà il tuo profilo.")
+                            st.success("🎉 Candidatura inviata correttamente! Il tuo CV originale è stato acquisito nel Cloud.")
                     else:
                         st.error("Compila tutti i campi obbligatori ed allega il tuo CV in formato PDF.")
             st.markdown('</div>', unsafe_allow_html=True)
@@ -207,7 +217,7 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR: SIMULATORE CHATGPT STYLE WHATSAPP INTERNO ---
+        # --- SIDEBAR: SIMULATORE CHATGPT ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -216,8 +226,7 @@ else:
             st.markdown("---")
             st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            if "chat_history" not in st.session_state:
-                st.session_state.chat_history = []
+            if "chat_history" not in st.session_state: st.session_state.chat_history = []
             
             img_talking_base64 = ""
             img_idle_base64 = ""
@@ -229,11 +238,7 @@ else:
             is_speaking = st.session_state.get("sta_rispondendo", False)
             if img_idle_base64 and img_talking_base64:
                 active_img = img_talking_base64 if is_speaking else img_idle_base64
-                st.markdown(f"""
-                    <div style="display: flex; justify-content: center; margin: 15px 0;">
-                        <div class="avatar-dynamic-frame" style="background-image: url('data:image/png;base64,{active_img}'); border-color: {'#10B981' if is_speaking else '#EC4899'}; width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid;"></div>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f'<div style="display: flex; justify-content: center; margin: 15px 0;"><div style="background-image: url(\'data:image/png;base64,{active_img}\'); width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid {\'#10B981\' if is_speaking else \'#EC4899\'};"></div></div>', unsafe_allow_html=True)
             else:
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
@@ -252,9 +257,9 @@ else:
                 
                 q = user_query.lower()
                 if "stipendio" in q or "facchino" in q or "netto" in q:
-                    risposta_ia = "Un facchino a 40 ore settimanali a Roma percepisce circa **1.100€ - 1.180€ netti al mese**."
+                    risposta_ia = "Un facchino a Roma sotto contratto standard percepisce all'incirca **1.100€ - 1.180€ netti al mese**."
                 else:
-                    risposta_ia = f"Ricevuto. Parametri allineati con i profili aziendali del Gruppo Dei Reali."
+                    risposta_ia = f"Dati agganciati correttamente con i sistemi del Gruppo Dei Reali."
                 
                 with container_chat:
                     with st.chat_message("assistant"): st.markdown(risposta_ia)
@@ -267,7 +272,7 @@ else:
 
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
         
-        # --- TAB MANAGEMENT NATIVO ---
+        # --- TAB MANAGEMENT ---
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "📥 Screening", "🤝 Colloqui", "🎉 Assunzioni", "📊 Report", "🏢 Clienti", "👥 Candidati"]
         scelta_tab = st.tabs(tab_nomi)
 
@@ -283,9 +288,9 @@ else:
             st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
             col_news1, col_news2 = st.columns(2)
             with col_news1:
-                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981;"><h4>🏛️ Circolari INPS & INAIL</h4><ul><li><b>[INPS]</b> Linee guida esonero contributivo Under 35.</li><li><b>[INAIL]</b> Tariffe premi aggiornate per Logistica e Facchinaggio.</li></ul></div>', unsafe_allow_html=True)
+                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981;"><h4>🏛️ Circolari INPS & INAIL</h4><ul><li><b>[INPS]</b> Linee guida esonero contributivo Under 35.</li><li><b>[INAIL]</b> Tariffe premi per Logistica e Facchinaggio.</li></ul></div>', unsafe_allow_html=True)
             with col_news2:
-                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6;"><h4>🔥 Ultim\'ora Lavoro</h4><ul><li><b>[ANSA]</b> Approvate le semplificazioni Smart Working.</li><li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali.</li></ul></div>', unsafe_allow_html=True)
+                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6;"><h4>🔥 Ultim\'ora Lavoro</h4><ul><li><b>[ANSA]</b> Smart Working semplificato.</li><li><b>[Sole 24 Ore]</b> Fringe benefit aziendali.</li></ul></div>', unsafe_allow_html=True)
 
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
@@ -387,7 +392,7 @@ else:
                     nuova_data = st.date_input("Data", date.today())
                     nuova_ora = st.time_input("Orario", time(15, 45))
                     if st.button("Salva Appuntamento", use_container_width=True):
-                        match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
+                        match_ex = next((a for a in agenda_list if a.get('candidato'] == c_obj['nome']), None)
                         payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
                         if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
                         else: supabase.table("agenda").insert(payload).execute()
@@ -416,7 +421,7 @@ else:
             for cl in lista_clienti:
                 st.markdown(f"<div class='saas-box'><b>🏢 {cl['ragione_sociale']}</b> — P.IVA: {cl['partita_iva']}</div>", unsafe_allow_html=True)
 
-        # --- TAB 8: CANDIDATI (VERSIONE AVANZATA SPECIFICA CON TABELLA REALE E TASTO DOWNLOAD DEL CV) ---
+        # --- TAB 8: CANDIDATI (VERSIONE FINALE CON DOWNLOAD PDF ORIGINALE) ---
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
             res_tutti = supabase.table("candidati").select("*").order('id', desc=True).execute()
@@ -426,8 +431,8 @@ else:
                 st.info("Nessun candidato registrato nel database cloud.")
             else:
                 for c in tutti:
-                    # Generazione card strutturata del profilo candidato con scheda basica ed estrazione testo
                     testo_pulito_cv = c.get('testo_cv', 'Nessun testo estratto dal file PDF.')
+                    url_pdf_originale = c.get('immagine', '') # Il link del file nel bucket è salvato qui
                     
                     st.markdown(f"""
                     <div class='saas-box' style='border-left: 5px solid #2563EB;'>
@@ -443,7 +448,6 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Sezione comandi interattivi allineati sotto la card
                     col_sel, col_btn_stato, col_btn_dl = st.columns([2, 1.5, 1.5])
                     
                     with col_sel:
@@ -454,20 +458,16 @@ else:
                             key=f"global_st_{c['id']}"
                         )
                     with col_btn_stato:
-                        st.write("<br>", unsafe_allow_html=True) # Allineamento verticale
+                        st.write("<br>", unsafe_allow_html=True)
                         if st.button("💾 Applica Stato", key=f"global_sv_{c['id']}", use_container_width=True):
                             supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
                             st.success("Stato aggiornato sul cloud!")
                             st.rerun()
                     with col_btn_dl:
                         st.write("<br>", unsafe_allow_html=True)
-                        # Tasto nativo di scaricamento del file di testo del CV
-                        st.download_button(
-                            label="📥 Scarica Testo CV",
-                            data=testo_pulito_cv,
-                            file_name=f"CV_{c['nome'].replace(' ', '_')}.txt",
-                            mime="text/plain",
-                            key=f"dl_{c['id']}",
-                            use_container_width=True
-                        )
+                        # Se l'URL del PDF esiste ed è memorizzato, mostriamo il pulsante di download nativo del file originale
+                        if url_pdf_originale and url_pdf_originale.startswith("http"):
+                            st.link_button("📥 Scarica PDF Originale", url_pdf_originale, use_container_width=True)
+                        else:
+                            st.info("PDF non presente nel Cloud.")
                     st.markdown("<br>", unsafe_allow_html=True)
