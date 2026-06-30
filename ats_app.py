@@ -270,10 +270,9 @@ else:
                 
                 with st.spinner("Sto verificando per te..."):
                     try:
-                        # Rimosso il tool di ricerca web per evitare il blocco della quota gratuita (429)
                         system_instruction = (
                             "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
-                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL basandoti sulle tue conoscenze."
+                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL usando internet."
                         )
                         
                         response = ai_client.models.generate_content(
@@ -281,13 +280,17 @@ else:
                             contents=user_query,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
-                                # TOOLS RIMOSSI PER I TEST: nessuna ricerca web = zero blocchi di quote
+                                tools=[types.Tool(google_search=types.GoogleSearch())],
                                 max_output_tokens=300
                             )
                         )
                         risposta_ia = response.text
                     except Exception as e:
-                        risposta_ia = f"Scusami, ho riscontrato un rallentamento tecnico: {str(e)}"
+                        # Se intercetta il blocco della quota (429) o qualsiasi altro errore IA, personalizza la risposta
+                        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                            risposta_ia = "Scusami, ci sono troppe richieste nel sistema, attendi un minuto. O in alternativa utilizza la mia collega Chat GPT."
+                        else:
+                            risposta_ia = "Scusami, ho riscontrato un piccolo rallentamento tecnico, riprova tra un momento!"
                 
                 with container_chat:
                     with st.chat_message("assistant"):
