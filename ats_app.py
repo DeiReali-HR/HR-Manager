@@ -301,7 +301,7 @@ else:
                             
                         except Exception as e:
                             # 2. Se Gemini è bloccato dalla quota (429), passa all'istante a ChatGPT
-                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and openai_client:
+                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and 'openai_client' in globals() and openai_client is not None:
                                 try:
                                     completions = openai_client.chat.completions.create(
                                         model="gpt-4o-mini",
