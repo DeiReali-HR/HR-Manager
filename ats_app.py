@@ -276,19 +276,18 @@ else:
                 # Attiva lo stato grafico di risposta dell'avatar
                 st.session_state.sta_rispondendo = True
                 
-                # --- LOGICA DI RISPOSTA FAILSAFE ---
+                # --- INTERCETTORE INTEGRATO (Bypassa i server saturi per i test locali) ---
                 q_lower = user_query.lower()
                 risposta_ia = ""
                 
-                # Risposte locali immediate per i test (Zero chiamate server, zero errori 429)
-                if "sei attiva" in q_lower or "funzioni" in q_lower:
+                if "sei attiva" in q_lower or "funzioni" in q_lower or "attivo" in q_lower:
                     risposta_ia = "Certamente! Sono attiva e configurata in modalità WhatsApp Chat. Posso darti supporto sulla navigazione del portale, contratti di lavoro o dettagli sui CCNL."
                 elif "ccnl" in q_lower or "contratto" in q_lower or "commercio" in q_lower:
                     risposta_ia = "Il CCNL Commercio e Terziario prevede 14 mensilità, un monte ore ordinario di 40 ore settimanali e scatti di anzianità biennali. I livelli vanno dall'inquadramento Quadri fino al settimo livello."
-                elif "costo" in q_lower or "dipendente" in q_lower:
-                    risposta_ia = "Il costo complessivo aziendale di una risorsa si calcola sommando alla Retribuzione Annua Lorda (RAL) i contributi previdenziali I N P S a carico ditta (circa il 30%), i premi I N A I L e l'accantonamento del TFR."
+                elif "costo" in q_lower or "dipendente" in q_lower or "personale" in q_lower:
+                    risposta_ia = "Il costo complessivo aziendale di una risorsa si calcola sommando alla Retribuzione Annua Lorda (RAL) i contributi previdenziali a carico ditta (circa il 30%), i premi INAIL e la quota di accantonamento del TFR."
                 
-                # Se non è una domanda di test preimpostata, interroga Gemini
+                # Se non è una domanda di test preimpostata, prova a interrogare Gemini Cloud
                 if not risposta_ia:
                     with st.spinner("L'assistente sta scrivendo..."):
                         try:
@@ -303,7 +302,6 @@ else:
                             )
                             risposta_ia = response.text
                         except Exception as e:
-                            # Gestione pulita dell'errore di quota senza bloccare l'interfaccia scritta
                             if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                                 risposta_ia = "Scusami, ci sono troppe richieste nel sistema in questo momento. Attendi un minuto o, in alternativa, puoi consultare la mia collega Chat GPT."
                             else:
