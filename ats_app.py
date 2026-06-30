@@ -340,7 +340,6 @@ else:
                     data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
                     
-                    # CORREZIONE: Usa il link statico reale salvato a database per evitare l'errore del link universale /new
                     meet_url = match_appuntamento['meet_link'] if match_appuntamento and match_appuntamento.get('meet_link') else genera_codice_meet_statico()
                     
                     testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Avvia la riunione qui: {meet_url}")
@@ -363,7 +362,7 @@ else:
                         supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
                         st.rerun()
                         
-           with col_nuovo:
+            with col_nuovo:
                 st.markdown("### ✍️ Modulo Pianificazione e Chiusura")
                 if colloqui:
                     candidato_sel = st.selectbox("Seleziona risorsa da schedulare", [c['nome'] for c in colloqui])
@@ -399,7 +398,6 @@ else:
                     
                     st.markdown("---")
                     st.markdown("### 📝 Chiusura Automatica con Trascrizione Meet")
-                    # Box strategico per l'ascolto passivo (copia e incolla dall'estensione)
                     testo_trascritto = st.text_area("Incolla qui la trascrizione registrata dall'estensione:", height=150, placeholder="Incolla qui il testo copiato...")
 
                     if st.button("💾 GENERA E SALVA REPORT COLLOQUIO", use_container_width=True, type="primary"):
@@ -410,7 +408,6 @@ else:
                                 prompt_fine = f"Sei un HR Director. Analizza questa trascrizione/nota di colloquio per il candidato {candidato_sel}: {sorgente_testo}. Struttura un report aziendale con: Punti di forza, Aree di miglioramento, Aspettative contrattuali e un Giudizio finale."
                                 risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_fine).text
                                 
-                                # Salvataggio sulla tabella dedicata nel database
                                 supabase.table("schede_colloqui").insert({
                                     "candidato": candidato_sel, 
                                     "scheda": risposta_ia,
