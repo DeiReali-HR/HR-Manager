@@ -126,7 +126,8 @@ if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
-
+if 'riproduci_voce' not in st.session_state: st.session_state.riproduci_voce = None
+    
 # --- PORTALE PUBBLICO ---
 if "job" in st.query_params:
     job_param = str(st.query_params["job"])
@@ -198,11 +199,16 @@ else:
             st.markdown("---")
             st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
+            # Garanzia di inizializzazione locale antirottura
+            if "riproduci_voce" not in st.session_state:
+                st.session_state.riproduci_voce = None
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+            
             # --- MOTORE GRAFICO MIMICA FACCIALE (BASE64 MULTI-ASSET) ---
             img_talking_base64 = ""
             img_idle_base64 = ""
             
-            # Carichiamo entrambe le immagini per lo switch in tempo reale
             if os.path.exists("1000334217.png") and os.path.exists("1000334218.png"):
                 import base64
                 with open("1000334217.png", "rb") as f1:
@@ -211,7 +217,6 @@ else:
                     img_talking_base64 = base64.b64encode(f2.read()).decode()
             
             if img_idle_base64 and img_talking_base64:
-                # Se l'assistente deve parlare, la fisionomia di partenza si imposta sulla seconda immagine (talking)
                 is_speaking = st.session_state.riproduci_voce is not None
                 active_img = img_talking_base64 if is_speaking else img_idle_base64
                 animation_style = "avatar-talking 0.8s infinite alternate ease-in-out" if is_speaking else "avatar-idle 3s infinite ease-in-out"
@@ -244,16 +249,9 @@ else:
                     </style>
                 """, unsafe_allow_html=True)
             else:
-                # Fallback se le immagini mancano
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
             st.caption("<div style='text-align: center;'>Chiedimi supporto, info sui CCNL o costi dipendenti</div>", unsafe_allow_html=True)
-            
-            # Inizializzazione cronologia chat
-            if "chat_history" not in st.session_state:
-                st.session_state.chat_history = []
-            if "riproduci_voce" not in st.session_state:
-                st.session_state.riproduci_voce = None
             
             # Trascrizione chat
             container_chat = st.container(height=220)
@@ -297,12 +295,10 @@ else:
                 st.session_state.riproduci_voce = risposta_ia
                 st.rerun()
 
-            # --- SINTESI VOCALE + SCRIPT DI RESET MIMICA JAVASCRIPT ---
+            # --- SINTESI VOCALE + RESET ANIMAZIONE ---
             if st.session_state.riproduci_voce:
                 testo_da_leggere = st.session_state.riproduci_voce.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
                 
-                # Il codice JS fa parlare il browser e, nel momento esatto in cui la voce finisce (onend),
-                # ripristina la fisionomia a riposo e i colori standard modificando il DOM HTML
                 componente_audio = f"""
                 <script>
                     var msg = new SpeechSynthesisUtterance("{testo_da_leggere}");
@@ -317,14 +313,11 @@ else:
                     msg.volume = 1; 
                     msg.rate = 1.0; 
                     
-                    // Al termine della riproduzione vocale, resetta la mimica facciale all'immagine di riposo 17
                     msg.onend = function(event) {{
                         var avatar = window.parent.document.getElementById('live-avatar');
                         if(avatar) {{
                             avatar.style.animation = 'avatar-idle 3s infinite ease-in-out';
                             avatar.style.borderColor = '#EC4899';
-                            // Ricarica l'immagine 17 (idle) estraendola dall'attributo background originario se necessario, 
-                            // o semplicemente lasciando che il ciclo streamlit si riassesti al click successivo.
                         }}
                     }};
                     
