@@ -283,7 +283,7 @@ else:
                 elif "ccnl" in q_lower or "contratto" in q_lower or "commercio" in q_lower:
                     risposta_ia = "Il CCNL Commercio e Terziario prevede 14 mensilità, un monte ore ordinario di 40 ore settimanali e scatti di anzianità biennali. I livelli vanno dall'inquadramento Quadri fino al settimo livello."
                 
-                # --- DOPPIO MOTORE INTEGRATO (CON INIZIALIZZAZIONE DI SICUREZZA) ---
+                # --- DOPPIO MOTORE INTEGRATO (SENZA VARIABILI GLOBALI VOLANTI) ---
                 if not risposta_ia:
                     with st.spinner("L'assistente sta scrivendo..."):
                         try:
@@ -300,29 +300,29 @@ else:
                             risposta_ia = response.text
                             
                         except Exception as e:
-                            # 2. Se Gemini fallisce, assicuriamo la visibilità globale di OpenAI al volo
-                            global openai_client
-                            if 'openai_client' not in globals() or openai_client is None:
-                                from openai import OpenAI
+                            # 2. Se Gemini fallisce per quota esaurita, istanziamo OpenAI localmente al volo
+                            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                                 if "OPENAI_API_KEY" in st.secrets:
-                                    openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
-                            # Controllo errore di quota (429) o esaurimento per attivare ChatGPT
-                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and openai_client:
-                                try:
-                                    completions = openai_client.chat.completions.create(
-                                        model="gpt-4o-mini",
-                                        max_tokens=300,
-                                        messages=[
-                                            {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come modulo di backup di emergenza."},
-                                            {"role": "user", "content": user_query}
-                                        ]
-                                    )
-                                    risposta_ia = completions.choices[0].message.content
-                                except Exception:
-                                    risposta_ia = "Scusami, i sistemi di intelligenza artificiale sono temporaneamente carichi. Riprova tra un minuto."
+                                    try:
+                                        from openai import OpenAI
+                                        # Inizializzazione locale immediata
+                                        local_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+                                        
+                                        completions = local_openai.chat.completions.create(
+                                            model="gpt-4o-mini",
+                                            max_tokens=300,
+                                            messages=[
+                                                {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come modulo di backup di emergenza."},
+                                                {"role": "user", "content": user_query}
+                                            ]
+                                        )
+                                        risposta_ia = completions.choices[0].message.content
+                                    except Exception:
+                                        risposta_ia = "Scusami, i sistemi di intelligenza artificiale sono temporaneamente carichi. Riprova tra un minuto."
+                                else:
+                                    risposta_ia = "Scusami, ci sono troppe richieste nel sistema. Attendi un minuto o consulta temporaneamente la mia collega Chat GPT."
                             else:
-                                # Fallback se l'errore non era un 429 o se manca la chiave OpenAI
+                                # Fallback per altri tipi di errore non legati alla quota
                                 risposta_ia = "Scusami, ho riscontrato un rallentamento tecnico. Riprova tra pochissimi istanti!"
                 
                 with container_chat:
