@@ -403,27 +403,31 @@ else:
                     if c3.button("Elimina", key=f"d_{a['id']}", use_container_width=True): 
                         supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
 
-        # --- TAB 3: SCREENING ---
+        # --- TAB 3: SCREENING (VERSIONE AGGIORNATA) ---
         with tab3:
             st.subheader("📥 Candidature Ricevute da Esaminare (In Screening)")
+            
+            # Forziamo una query fresca sul database Cloud
             res = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
             candidati = res.data if res.data else []
+            
             if not candidati:
                 st.info("Nessun nuovo candidato da valutare al momento.")
-            for c in candidati:
-                st.markdown(f"""
-                <div class='saas-box'>
-                    <h4>👤 {c['nome']}</h4>
-                    <b>Posizione desiderata:</b> {c['posizione']}<br>
-                    <b>Punteggio IA Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span> | Valutazione: {c['stelle']}<br>
-                    <div class='ai-box'><b>Sintesi IA Profilo:</b> {c['orientamento']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"🤝 Approva Profilo per Colloquio", key=f"ap_{c['id']}"):
-                    supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute()
-                    st.success(f"{c['nome']} spostato in sezione Colloqui!")
-                    st.rerun()
-
+            else:
+                for c in candidati:
+                    st.markdown(f"""
+                    <div class='saas-box'>
+                        <h4>👤 {c['nome']}</h4>
+                        <b>Posizione desiderata:</b> {c['posizione']}<br>
+                        <b>Punteggio IA Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span> | Valutazione: {c['stelle']}<br>
+                        <div class='ai-box'><b>Sintesi IA Profilo:</b> {c['orientamento']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button(f"🤝 Approva Profilo per Colloquio", key=f"ap_{c['id']}", use_container_width=True):
+                        supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute()
+                        st.success(f"{c['nome']} spostato in sezione Colloqui!")
+                        st.rerun()
         # --- TAB 4: COLLOQUI (FIX REALE PER LINK MEET COERENTE) ---
         with tab4:
             st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
