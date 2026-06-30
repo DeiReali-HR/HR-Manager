@@ -400,7 +400,7 @@ else:
                     nuova_data = st.date_input("Data", date.today())
                     nuova_ora = st.time_input("Orario", time(15, 45))
                     if st.button("Salva Appuntamento", use_container_width=True):
-                        match_ex = next((a for a in agenda_list if a.get('candidato'] == c_obj['nome']), None)
+                        match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
                         payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
                         if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
                         else: supabase.table("agenda").insert(payload).execute()
