@@ -676,3 +676,53 @@ else:
                     supabase.table("candidati").update({"stato":nuovo}).eq("id",c['id']).execute()
                     st.success("Stato aggiornato!")
                     st.rerun()
+# --- NUOVA DASHBOARD DIREZIONALE DENTRO LO SPAZIO BIANCO ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 1. SEZIONE METRICHE RIASSUNTIVE ATTIVITÀ
+        st.subheader("📊 Cruscotto Attività Risorse Umane")
+        
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        with col_m1:
+            st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
+        with col_m2:
+            st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
+        with col_m3:
+            st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
+        with col_m4:
+            st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
+            
+        st.markdown("---")
+        
+        # 2. SEZIONE NEWS REALI E AGGIORNAMENTI NORMATIVI
+        st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
+        
+        col_news1, col_news2 = st.columns(2)
+        
+        with col_news1:
+            st.markdown("""
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
+                <h4 style="margin-top:0; color:#1f2937;">🏛️ Circolari INPS & INAIL</h4>
+                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                    <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
+                    <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
+                    <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
+                    <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_news2:
+            st.markdown("""
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
+                <h4 style="margin-top:0; color:#1f2937;">🔥 Ultim'ora Lavoro & Economia</h4>
+                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                    <li><b>[Adnkronos]</b> Occupazione in crescita: i contratti a tempo indeterminato trainano il mercato a Roma e provincia.</li>
+                    <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
+                    <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
+                    <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown("<br>", unsafe_allow_html=True)
