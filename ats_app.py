@@ -270,15 +270,18 @@ else:
                 
                 with st.spinner("Sto verificando per te..."):
                     try:
-                        # Ottimizzato e alleggerito per evitare errori di quota (429) sul piano gratuito
-                        system_instruction = "Sei l'Assistente HR del Gruppo Dei Reali. Rispondi in modo ultra-conciso e usa la ricerca web solo se strettamente necessario."
+                        # Rimosso il tool di ricerca web per evitare il blocco della quota gratuita (429)
+                        system_instruction = (
+                            "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
+                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL basandoti sulle tue conoscenze."
+                        )
                         
                         response = ai_client.models.generate_content(
                             model='gemini-2.0-flash',
                             contents=user_query,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
-                                tools=[types.Tool(google_search=types.GoogleSearch())],
+                                # TOOLS RIMOSSI PER I TEST: nessuna ricerca web = zero blocchi di quote
                                 max_output_tokens=300
                             )
                         )
