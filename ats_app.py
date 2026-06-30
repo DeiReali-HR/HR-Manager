@@ -189,32 +189,157 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR COMPLETA CON ASSISTENTE IA SEMPRE ATTIVO ---
+        # --- SIDEBAR: ASSISTENTE CON MIMICA FACCIALE DINAMICA E VOCE FEMMINILE ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
-            if ai_client: st.success("🤖 IA Gemini Attiva")
+            if ai_client: st.success("🤖 IA Gemini Enterprise + Web Attiva")
             
             st.markdown("---")
-            st.markdown("### 🤖 Assistente HR Live")
-            if "note_colloquio" not in st.session_state: 
-                st.session_state.note_colloquio = ""
+            st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            st.session_state.note_colloquio = st.text_area(
-                "Note colloquio in corso:", 
-                value=st.session_state.note_colloquio, 
-                height=220,
-                key="ia_global_notes"
-            )
+            # --- MOTORE GRAFICO MIMICA FACCIALE (BASE64 MULTI-ASSET) ---
+            img_talking_base64 = ""
+            img_idle_base64 = ""
             
+            # Carichiamo entrambe le immagini per lo switch in tempo reale
+            if os.path.exists("1000334217.png") and os.path.exists("1000334218.png"):
+                import base64
+                with open("1000334217.png", "rb") as f1:
+                    img_idle_base64 = base64.b64encode(f1.read()).decode()
+                with open("1000334218.png", "rb") as f2:
+                    img_talking_base64 = base64.b64encode(f2.read()).decode()
+            
+            if img_idle_base64 and img_talking_base64:
+                # Se l'assistente deve parlare, la fisionomia di partenza si imposta sulla seconda immagine (talking)
+                is_speaking = st.session_state.riproduci_voce is not None
+                active_img = img_talking_base64 if is_speaking else img_idle_base64
+                animation_style = "avatar-talking 0.8s infinite alternate ease-in-out" if is_speaking else "avatar-idle 3s infinite ease-in-out"
+                border_color = "#10B981" if is_speaking else "#EC4899"
+                
+                st.markdown(f"""
+                    <div style="display: flex; justify-content: center; margin: 15px 0;">
+                        <div id="live-avatar" class="avatar-dynamic-frame" style="background-image: url('data:image/png;base64,{active_img}'); border-color: {border_color}; animation: {animation_style};">
+                        </div>
+                    </div>
+                    <style>
+                    .avatar-dynamic-frame {{
+                        width: 105px; height: 105px;
+                        border-radius: 50%;
+                        background-size: cover;
+                        background-position: center 20%;
+                        border: 3px solid;
+                        box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
+                        transition: all 0.3s ease;
+                    }}
+                    @keyframes avatar-idle {{
+                        0% {{ transform: scale(1); filter: brightness(1); }}
+                        50% {{ transform: scale(1.02); filter: brightness(1.03); }}
+                        100% {{ transform: scale(1); filter: brightness(1); }}
+                    }}
+                    @keyframes avatar-talking {{
+                        0% {{ transform: scale(1.02) rotate(-1deg); box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }}
+                        100% {{ transform: scale(1.05) rotate(1deg); box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }}
+                    }}
+                    </style>
+                """, unsafe_allow_html=True)
+            else:
+                # Fallback se le immagini mancano
+                st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
+            
+            st.caption("<div style='text-align: center;'>Chiedimi supporto, info sui CCNL o costi dipendenti</div>", unsafe_allow_html=True)
+            
+            # Inizializzazione cronologia chat
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+            if "riproduci_voce" not in st.session_state:
+                st.session_state.riproduci_voce = None
+            
+            # Trascrizione chat
+            container_chat = st.container(height=220)
+            with container_chat:
+                for msg in st.session_state.chat_history:
+                    with st.chat_message(msg["role"]):
+                        st.markdown(msg["text"])
+            
+            user_query = st.chat_input("Scrivi qui la tua domanda...")
+            
+            if user_query:
+                with container_chat:
+                    with st.chat_message("user"):
+                        st.markdown(user_query)
+                st.session_state.chat_history.append({"role": "user", "text": user_query})
+                
+                with st.spinner("Sto verificando per te..."):
+                    try:
+                        system_instruction = (
+                            "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
+                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL usando internet."
+                        )
+                        
+                        response = ai_client.models.generate_content(
+                            model='gemini-2.0-flash',
+                            contents=user_query,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_instruction,
+                                tools=[types.Tool(google_search=types.GoogleSearch())]
+                            )
+                        )
+                        risposta_ia = response.text
+                    except Exception as e:
+                        risposta_ia = f"Scusami, ho riscontrato un rallentamento tecnico: {str(e)}"
+                
+                with container_chat:
+                    with st.chat_message("assistant"):
+                        st.markdown(risposta_ia)
+                
+                st.session_state.chat_history.append({"role": "assistant", "text": risposta_ia})
+                st.session_state.riproduci_voce = risposta_ia
+                st.rerun()
+
+            # --- SINTESI VOCALE + SCRIPT DI RESET MIMICA JAVASCRIPT ---
+            if st.session_state.riproduci_voce:
+                testo_da_leggere = st.session_state.riproduci_voce.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+                
+                # Il codice JS fa parlare il browser e, nel momento esatto in cui la voce finisce (onend),
+                # ripristina la fisionomia a riposo e i colori standard modificando il DOM HTML
+                componente_audio = f"""
+                <script>
+                    var msg = new SpeechSynthesisUtterance("{testo_da_leggere}");
+                    msg.lang = 'it-IT';
+                    
+                    var voices = window.speechSynthesis.getVoices();
+                    var voceFemminile = voices.find(function(voice) {{
+                        return voice.lang.includes('it') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('elsa') || voice.name.toLowerCase().includes('cosmo') || voice.name.toLowerCase().includes('alice') || voice.name.toLowerCase().includes('google'));
+                    }});
+                    if (voceFemminile) {{ msg.voice = voceFemminile; }}
+                    
+                    msg.volume = 1; 
+                    msg.rate = 1.0; 
+                    
+                    // Al termine della riproduzione vocale, resetta la mimica facciale all'immagine di riposo 17
+                    msg.onend = function(event) {{
+                        var avatar = window.parent.document.getElementById('live-avatar');
+                        if(avatar) {{
+                            avatar.style.animation = 'avatar-idle 3s infinite ease-in-out';
+                            avatar.style.borderColor = '#EC4899';
+                            // Ricarica l'immagine 17 (idle) estraendola dall'attributo background originario se necessario, 
+                            // o semplicemente lasciando che il ciclo streamlit si riassesti al click successivo.
+                        }}
+                    }};
+                    
+                    window.speechSynthesis.speak(msg);
+                </script>
+                """
+                st.components.v1.html(componente_audio, height=0)
+                st.session_state.riproduci_voce = None
+
             st.markdown("""
             <div class="sidebar-spec">
                 <b>⚙️ Specifiche Gestione App:</b><br>
-                • <b>Provider Cloud:</b> Supabase DB<br>
-                • <b>AI Core:</b> Gemini 2.0 Flash<br>
-                • <b>Stato Canali:</b> WhatsApp / Meet integrati<br>
-                • <b>Sicurezza:</b> TLS 1.3 Enterprise<br>
-                • <b>Ambiente:</b> Production Ready v2.5
+                • <b>Mimica Facciale:</b> Dynamic Asset Switch v2.9<br>
+                • <b>Sintesi Vocale:</b> Voce Femminile Nativa<br>
+                • <b>Trascrizione Chat:</b> Attiva e Persistente
             </div>
             """, unsafe_allow_html=True)
             
