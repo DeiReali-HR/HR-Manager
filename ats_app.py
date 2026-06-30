@@ -300,14 +300,20 @@ else:
                             risposta_ia = response.text
                             
                         except Exception as e:
-                            # 2. Se Gemini è bloccato dalla quota (429), passa all'istante a ChatGPT
-                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and 'openai_client' in globals() and openai_client is not None:
+                            # 2. Se Gemini è bloccato, inizializziamo al volo OpenAI se non presente
+                            global openai_client
+                            if 'openai_client' not in globals() or openai_client is None:
+                                from openai import OpenAI
+                                if "OPENAI_API_KEY" in st.secrets:
+                                    openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and openai_client:
                                 try:
                                     completions = openai_client.chat.completions.create(
                                         model="gpt-4o-mini",
                                         max_tokens=300,
                                         messages=[
-                                            {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modalità chat di testo, in modo cordiale, chiaro e coinciso. Ti sei attivata automaticamente come backup."},
+                                            {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come backup."},
                                             {"role": "user", "content": user_query}
                                         ]
                                     )
