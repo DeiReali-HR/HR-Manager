@@ -363,7 +363,7 @@ else:
                         supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
                         st.rerun()
                         
-            with col_nuovo:
+           with col_nuovo:
                 st.markdown("### ✍️ Modulo Pianificazione e Chiusura")
                 if colloqui:
                     candidato_sel = st.selectbox("Seleziona risorsa da schedulare", [c['nome'] for c in colloqui])
@@ -375,7 +375,6 @@ else:
                     if st.button("Salva Data Schedulazione", use_container_width=True):
                         match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
                         
-                        # Impedisce la sovrascrittura con il link generico '/new'
                         if match_esistente and match_esistente.get('meet_link') and "new" not in match_esistente.get('meet_link'):
                             gen_meet = match_esistente['meet_link']
                         else:
@@ -399,11 +398,16 @@ else:
                         st.rerun()
                     
                     st.markdown("---")
-                    st.markdown("### 📝 Chiusura Verbale Colloquio")
+                    st.markdown("### 📝 Chiusura Automatica con Trascrizione Meet")
+                    # Box strategico per l'ascolto passivo (copia e incolla dall'estensione)
+                    testo_trascritto = st.text_area("Incolla qui la trascrizione registrata dall'estensione:", height=150, placeholder="Incolla qui il testo copiato...")
+
                     if st.button("💾 GENERA E SALVA REPORT COLLOQUIO", use_container_width=True, type="primary"):
-                        if st.session_state.note_colloquio:
-                            with st.spinner("L'IA sta redigendo la scheda valutativa..."):
-                                prompt_fine = f"Sintetizza questo colloquio HR per il candidato {candidato_sel}: {st.session_state.note_colloquio}. Struttura un report dettagliato."
+                        sorgente_testo = testo_trascritto if testo_trascritto else st.session_state.note_colloquio
+                        
+                        if sorgente_testo:
+                            with st.spinner("L'IA sta analizzando la trascrizione del colloquio..."):
+                                prompt_fine = f"Sei un HR Director. Analizza questa trascrizione/nota di colloquio per il candidato {candidato_sel}: {sorgente_testo}. Struttura un report aziendale con: Punti di forza, Aree di miglioramento, Aspettative contrattuali e un Giudizio finale."
                                 risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_fine).text
                                 
                                 # Salvataggio sulla tabella dedicata nel database
@@ -413,11 +417,11 @@ else:
                                     "data": str(date.today())
                                 }).execute()
                                 
-                                st.success(f"Report per {candidato_sel} archiviato con successo!")
+                                st.success(f"Report per {candidato_sel} generato e archiviato con successo!")
                                 st.session_state.note_colloquio = "" 
                                 st.rerun()
                         else:
-                            st.warning("Scrivi prima le note nella Sidebar dell'Assistente Live.")
+                            st.warning("Incolla la trascrizione o scrivi le note nella Sidebar.")
                 else:
                     st.write("Abilitato quando ci sono candidati approvati.")
                     
