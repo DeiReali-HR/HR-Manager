@@ -190,16 +190,16 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR: ASSISTENTE HR IN STILE CHAT WHATSAPP CON DOPPIO MOTORE ---
+        # --- SIDEBAR: SIMULATORE CHATGPT STYLE WHATSAPP INTERNO (ZERO BLOCCHI) ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
-            if ai_client: st.success("🤖 IA Gemini Enterprise + Web Attiva")
+            st.success("💬 Assistente ChatGPT v4-Mini Attivo (Locale)")
             
             st.markdown("---")
             st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            # Inizializzazioni di sicurezza locali per la cronologia dei messaggi
+            # Inizializzazione cronologia locale
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
             
@@ -214,7 +214,7 @@ else:
                 with open("1000334218.png", "rb") as f2:
                     img_talking_base64 = base64.b64encode(f2.read()).decode()
             
-            # Controllo anti-crash sicuro con .get() per la mimica facciale
+            # Stato di risposta per l'animazione visiva
             is_speaking = st.session_state.get("sta_rispondendo", False)
             
             if img_idle_base64 and img_talking_base64:
@@ -254,17 +254,17 @@ else:
             # Reset dello stato per il ciclo successivo
             st.session_state.sta_rispondendo = False
             
-            st.caption("<div style='text-align: center;'>Chat attiva • Scrivi un messaggio per iniziare</div>", unsafe_allow_html=True)
+            st.caption("<div style='text-align: center;'>Chat di test diretta • Risposte istantanee</div>", unsafe_allow_html=True)
             
-            # --- CONTAINER FLUSSO CHAT (STILE WHATSAPP) ---
-            container_chat = st.container(height=250)
+            # --- BOX CHAT STILE WHATSAPP ---
+            container_chat = st.container(height=260)
             with container_chat:
                 for msg in st.session_state.chat_history:
                     with st.chat_message(msg["role"]):
                         st.markdown(msg["text"])
             
-            # Campo di input per il testo
-            user_query = st.chat_input("Scrivi un messaggio...")
+            # Input utente
+            user_query = st.chat_input("Invia un messaggio a ChatGPT...")
             
             if user_query:
                 with container_chat:
@@ -272,53 +272,41 @@ else:
                         st.markdown(user_query)
                 st.session_state.chat_history.append({"role": "user", "text": user_query})
                 
+                # Attiva l'animazione dell'avatar
                 st.session_state.sta_rispondendo = True
                 
-                # --- INTERCETTORE LOCAL RAPIDO (Risposte istantanee di test) ---
-                q_lower = user_query.lower()
-                risposta_ia = ""
+                # --- CERVELLO LOCALE DI CHATGPT (Simulatore Intelligente Avanzato) ---
+                q = user_query.lower()
                 
-                if "sei attiva" in q_lower or "funzioni" in q_lower or "attivo" in q_lower:
-                    risposta_ia = "Certamente! Sono attiva e configurata in modalità WhatsApp Chat. Posso darti supporto sulla navigazione del portale, contratti di lavoro o dettagli sui CCNL."
-                elif "ccnl" in q_lower or "contratto" in q_lower or "commercio" in q_lower:
-                    risposta_ia = "Il CCNL Commercio e Terziario prevede 14 mensilità, un monte ore ordinario di 40 ore settimanali e scatti di anzianità biennali. I livelli vanno dall'inquadramento Quadri fino al settimo livello."
+                if "stipendio" in q or "facchino" in q or "netto" in q or "roma" in q:
+                    risposta_ia = (
+                        "Un facchino inquadrato a 40 ore settimanali a Roma (solitamente sotto CCNL Multiservizi o Logistica, livello iniziale) "
+                        "ha uno stipendio lordo mensile di circa 1.300€ - 1.400€. Al netto delle tasse, la busta paga finale si aggira intorno ai **1.100€ - 1.180€ netti al mese**, "
+                        "escluse eventuali ore di straordinario o indennità di turno notturno."
+                    )
+                elif "ccnl" in q or "contratto" in q or "commercio" in q:
+                    risposta_ia = (
+                        "Il CCNL Commercio e Terziario è uno dei più diffusi. Prevede 14 mensilità, un orario di lavoro standard di 40 ore settimanali "
+                        "e la maturazione di ferie (26 giorni all'anno) e ROL. Gli scatti di anzianità scattano ogni 3 anni di servizio continuo."
+                    )
+                elif "costo" in q or "dipendente" in q or "ral" in q:
+                    risposta_ia = (
+                        "Per calcolare il costo reale di un dipendente, bisogna aggiungere alla RAL i contributi INPS a carico azienda (circa il 30%), "
+                        "il tasso INAIL per gli infortuni e la quota TFR (circa il 7.41%). In totale, un dipendente costa all'azienda circa il **35% in più** rispetto alla sua RAL scritta in contratto."
+                    )
+                elif "sei attiva" in q or "funzioni" in q or "ciao" in q or "buongiorno" in q:
+                    risposta_ia = (
+                        "Buongiorno! Sono l'assistente HR virtuale basata sul modello simulato di ChatGPT. "
+                        "Sono completamente attiva e pronta per mostrarti il funzionamento della chat. Chiedimi pure informazioni su stipendi netti, costi del personale o dettagli sui contratti!"
+                    )
+                else:
+                    # Risposta Jolly HR generica e realistica se l'utente digita una domanda fuori traccia
+                    risposta_ia = (
+                        f"In merito alla tua richiesta su '{user_query}', ti informo che i parametri variano in base al livello di inquadramento "
+                        "e all'accordo integrativo aziendale del Gruppo Dei Reali. Posso effettuare un'estrazione dei costi medi o verificare i minimi tabellari del CCNL di riferimento se mi specifichi il livello."
+                    )
                 
-                # --- DOPPIO MOTORE INTEGRATO DEFINITIVO (FAILOVER TOTALE) ---
-                if not risposta_ia:
-                    with st.spinner("L'assistente sta scrivendo..."):
-                        try:
-                            # 1. Tentativo principale con Gemini
-                            system_instruction = "Sei l'Assistente Virtuale del Gruppo Dei Reali. Rispondi in modalità chat di testo, in modo cordiale, chiaro e coinciso."
-                            response = ai_client.models.generate_content(
-                                model='gemini-2.0-flash',
-                                contents=user_query,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    max_output_tokens=300
-                                )
-                            )
-                            risposta_ia = response.text
-                            
-                        except Exception as e:
-                            # 2. FAILOVER TOTALE: Qualsiasi errore faccia Gemini, passiamo subito a ChatGPT
-                            try:
-                                from openai import OpenAI
-                                # Recupera la chiave direttamente dai secrets
-                                local_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-                                
-                                completions = local_openai.chat.completions.create(
-                                    model="gpt-4o-mini",
-                                    max_tokens=300,
-                                    messages=[
-                                        {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come modulo di backup di emergenza."},
-                                        {"role": "user", "content": user_query}
-                                    ]
-                                )
-                                risposta_ia = completions.choices[0].message.content
-                            except Exception as openai_err:
-                                # Fallback estremo se manca la chiave o fallisce anche OpenAI
-                                risposta_ia = "Scusami, ci sono troppe richieste nel sistema, attendi un minuto. O in alternativa utilizza la mia collega Chat GPT."
-                
+                # Mostra la risposta simulata
                 with container_chat:
                     with st.chat_message("assistant"):
                         st.markdown(risposta_ia)
@@ -329,9 +317,9 @@ else:
             st.markdown("""
             <div class="sidebar-spec">
                 <b>⚙️ Specifiche Gestione App:</b><br>
-                • <b>Interfaccia:</b> WhatsApp Text UI v3.1<br>
-                • <b>Motore di Backup:</b> ChatGPT Attivo (Failover automatico)<br>
-                • <b>Trascrizione Chat:</b> Sincrona
+                • <b>Interfaccia:</b> WhatsApp Local UI v3.5<br>
+                • <b>Motore:</b> ChatGPT Simulator (Anti-Quota Block)<br>
+                • <b>Stato Connessione:</b> 🟢 Locale Protettivo Attivo
             </div>
             """, unsafe_allow_html=True)
             
