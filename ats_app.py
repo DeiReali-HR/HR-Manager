@@ -172,8 +172,12 @@ if "job" in st.query_params:
                             c_file.seek(0)
                             file_bytes = c_file.read()
                             
-                            # Carichiamo i veri byte del PDF nel bucket "curriculum"
-                            supabase.storage.from_("curriculum").upload(nome_file_storage, file_bytes, {"file-type": "application/pdf"})
+                            # Carichiamo i byte forzando il Content-Type corretto per il PDF
+                            supabase.storage.from_("curriculum").upload(
+                                path=nome_file_storage,
+                                file=file_bytes,
+                                file_options={"content-type": "application/pdf"}
+                            )
                             
                             # Otteniamo l'URL pubblico di download diretto del file
                             url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
