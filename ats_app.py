@@ -76,7 +76,6 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
     except Exception as e:
         return f"Errore: {str(e)}"
 
-# Funzione helper per trovare l'immagine del logo corretta
 def mostra_logo_aziendale():
     if os.path.exists("1000376160.jpeg"):
         st.image("1000376160.jpeg")
@@ -85,10 +84,9 @@ def mostra_logo_aziendale():
     else:
         st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
 
-# Generatore di stanze video reali istantanee (Valide sia per HR che per il Candidato)
 def genera_codice_meet_statico():
     codice_unico = "".join(random.choices(string.ascii_lowercase, k=10))
-    return f"https://meet.jit.si/DeiReali-HR-{codice_unico}"
+    return f"https://meet.google.com/{codice_unico[:3]}-{codice_unico[3:7]}-{codice_unico[7:]}"
 
 # 3. CSS Custom Premium
 st.markdown("""
@@ -124,6 +122,7 @@ if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 if 'sta_rispondendo' not in st.session_state: st.session_state.sta_rispondendo = False
+if 'indice_tab_attivo' not in st.session_state: st.session_state.indice_tab_attivo = 0
     
 # --- PORTALE PUBBLICO ---
 if "job" in st.query_params:
@@ -187,7 +186,7 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR: SIMULATORE CHATGPT STYLE WHATSAPP INTERNO (ZERO BLOCCHI) ---
+        # --- SIDEBAR: SIMULATORE CHATGPT STYLE WHATSAPP INTERNO ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -201,154 +200,86 @@ else:
             
             img_talking_base64 = ""
             img_idle_base64 = ""
-            
             if os.path.exists("1000334217.png") and os.path.exists("1000334218.png"):
                 import base64
-                with open("1000334217.png", "rb") as f1:
-                    img_idle_base64 = base64.b64encode(f1.read()).decode()
-                with open("1000334218.png", "rb") as f2:
-                    img_talking_base64 = base64.b64encode(f2.read()).decode()
+                with open("1000334217.png", "rb") as f1: img_idle_base64 = base64.b64encode(f1.read()).decode()
+                with open("1000334218.png", "rb") as f2: img_talking_base64 = base64.b64encode(f2.read()).decode()
             
             is_speaking = st.session_state.get("sta_rispondendo", False)
-            
             if img_idle_base64 and img_talking_base64:
                 active_img = img_talking_base64 if is_speaking else img_idle_base64
                 animation_style = "avatar-typing 0.8s infinite alternate ease-in-out" if is_speaking else "avatar-idle 3s infinite ease-in-out"
                 border_color = "#10B981" if is_speaking else "#EC4899"
-                
                 st.markdown(f"""
                     <div style="display: flex; justify-content: center; margin: 15px 0;">
-                        <div class="avatar-dynamic-frame" style="background-image: url('data:image/png;base64,{active_img}'); border-color: {border_color}; animation: {animation_style};">
-                        </div>
+                        <div class="avatar-dynamic-frame" style="background-image: url('data:image/png;base64,{active_img}'); border-color: {border_color}; animation: {animation_style};"></div>
                     </div>
                     <style>
-                    .avatar-dynamic-frame {{
-                        width: 105px; height: 105px;
-                        border-radius: 50%;
-                        background-size: cover;
-                        background-position: center 20%;
-                        border: 3px solid;
-                        box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
-                        transition: all 0.3s ease;
-                    }}
-                    @keyframes avatar-idle {{
-                        0% {{ transform: scale(1); filter: brightness(1); }}
-                        50% {{ transform: scale(1.02); filter: brightness(1.03); }}
-                        100% {{ transform: scale(1); filter: brightness(1); }}
-                    }}
-                    @keyframes avatar-typing {{
-                        0% {{ transform: scale(1.02) rotate(-1deg); box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }}
-                        100% {{ transform: scale(1.05) rotate(1deg); box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }}
-                    }}
+                    .avatar-dynamic-frame {{ width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid; box-shadow: 0 0 15px rgba(236, 72, 153, 0.3); transition: all 0.3s ease; }}
+                    @keyframes avatar-idle {{ 0% {{ transform: scale(1); }} 50% {{ transform: scale(1.02); }} 100% {{ transform: scale(1); }} }}
+                    @keyframes avatar-typing {{ 0% {{ transform: scale(1.02) rotate(-1deg); }} 100% {{ transform: scale(1.05) rotate(1deg); }} }}
                     </style>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
             st.session_state.sta_rispondendo = False
-            st.caption("<div style='text-align: center;'>Chat di test diretta • Risposte istantanee</div>", unsafe_allow_html=True)
-            
             container_chat = st.container(height=260)
             with container_chat:
                 for msg in st.session_state.chat_history:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["text"])
+                    with st.chat_message(msg["role"]): st.markdown(msg["text"])
             
             user_query = st.chat_input("Invia un messaggio a ChatGPT...")
-            
             if user_query:
                 with container_chat:
-                    with st.chat_message("user"):
-                        st.markdown(user_query)
+                    with st.chat_message("user"): st.markdown(user_query)
                 st.session_state.chat_history.append({"role": "user", "text": user_query})
                 st.session_state.sta_rispondendo = True
                 
                 q = user_query.lower()
                 if "stipendio" in q or "facchino" in q or "netto" in q or "roma" in q:
-                    risposta_ia = "Un facchino inquadrato a 40 ore settimanali a Roma (solitamente sotto CCNL Multiservizi o Logistica, livello iniziale) ha uno stipendio lordo mensile di circa 1.300€ - 1.400€. Al netto delle tasse, la busta paga finale si aggira intorno ai **1.100€ - 1.180€ netti al mese**, escluse eventuali ore di straordinario o indennità di turno notturno."
-                elif "ccnl" in q or "contratto" in q or "commercio" in q:
-                    risposta_ia = "Il CCNL Commercio e Terziario è uno dei più diffusi. Prevede 14 mensilità, un orario di lavoro standard di 40 ore settimanali e la maturazione di ferie (26 giorni all'anno) e ROL. Gli scatti di anzianità scattano ogni 3 anni di servizio continuo."
-                elif "costo" in q or "dipendente" in q or "ral" in q:
-                    risposta_ia = "Per calcolare il costo reale di un dipendente, bisogna aggiungere alla RAL i contributi INPS a carico azienda (circa il 30%), il tasso INAIL per gli infortuni e la quota TFR (circa il 7.41%). In totale, un dipendente costa all'azienda circa il **35% in più** rispetto alla sua RAL scritta in contratto."
-                elif "sei attiva" in q or "funzioni" in q or "ciao" in q or "buongiorno" in q:
-                    risposta_ia = "Buongiorno! Sono l'assistente HR virtuale basata sul modello simulato di ChatGPT. Sono completamente attiva e pronta per mostrarti il funzionamento della chat. Chiedimi pure informazioni su stipendi netti, costi del personale o dettagli sui contratti!"
+                    risposta_ia = "Un facchino inquadrato a 40 ore settimanali a Roma (solitamente sotto CCNL Multiservizi o Logistica) guadagna circa **1.100€ - 1.180€ netti al mese**."
+                elif "ccnl" in q or "contratto" in q:
+                    risposta_ia = "Il CCNL Commercio prevede 14 mensilità, 40 ore settimanali e scatti di anzianità ogni 3 anni continui."
                 else:
-                    risposta_ia = f"In merito alla tua richiesta su '{user_query}', ti informo che i parametri variano in base al livello di inquadramento e all'accordo integrativo aziendale del Gruppo Dei Reali. Posso effettuare un'estrazione dei costi medi o verificare i minimi tabellari del CCNL di riferimento se mi specifichi il livello."
+                    risposta_ia = f"In merito a '{user_query}', i dati dipendono dal livello contrattuale concordato nel Gruppo Dei Reali."
                 
                 with container_chat:
-                    with st.chat_message("assistant"):
-                        st.markdown(risposta_ia)
+                    with st.chat_message("assistant"): st.markdown(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "text": risposta_ia})
                 st.rerun()
 
-            st.markdown("""
-            <div class="sidebar-spec">
-                <b>⚙️ Specifiche Gestione App:</b><br>
-                • <b>Interfaccia:</b> WhatsApp Local UI v3.5<br>
-                • <b>Motore:</b> ChatGPT Simulator (Anti-Quota Block)<br>
-                • <b>Stato Connessione:</b> 🟢 Locale Protettivo Attivo
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown('<div class="sidebar-spec"><b>⚙️ UI v3.5 Active</b></div>', unsafe_allow_html=True)
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
 
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
         
-        # --- SISTEMA DI NAVIGAZIONE COMPONENTI NATIVO (ST.TABS) ---
-        # Questo risolve istantaneamente i bottoni bloccati forzando la stabilità di Streamlit
+        # --- AGGANCIO INDICE STABILE PER I TAB ---
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "📥 Screening", "🤝 Colloqui", "🎉 Assunzioni", "📊 Report", "🏢 Clienti", "👥 Candidati"]
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(tab_nomi)
+        
+        # Controlliamo quale tab deve essere mostrato di default dopo i refresh delle azioni
+        scelta_tab = st.tabs(tab_nomi)
 
-        # --- TAB 1: HOME (IL CRUSCOTTO ED I FEED NOTIZIE) ---
-        with tab1:
+        # --- TAB 1: HOME ---
+        with scelta_tab[0]:
             st.subheader("📊 Cruscotto Attività Risorse Umane")
-            
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            with col_m1:
-                st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
-            with col_m2:
-                st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
-            with col_m3:
-                st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
-            with col_m4:
-                st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
-                
+            col_m1.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
+            col_m2.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
+            col_m3.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
+            col_m4.metric(label="✅ Assunzioni Perfezionate", value="24", delta="82%")
             st.markdown("---")
-            
             st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
             col_news1, col_news2 = st.columns(2)
-            
             with col_news1:
-                st.markdown("""
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
-                    <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🏛️ Circolari INPS & INAIL</h4>
-                    <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                        <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
-                        <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
-                        <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
-                        <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-                
+                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981;"><h4>🏛️ Circolari INPS & INAIL</h4><ul><li><b>[INPS]</b> Linee guida esonero contributivo Under 35.</li><li><b>[INAIL]</b> Tariffe premi aggiornate per Logistica e Facchinaggio.</li></ul></div>', unsafe_allow_html=True)
             with col_news2:
-                st.markdown("""
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
-                    <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🔥 Ultim'ora Lavoro & Economia</h4>
-                    <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                        <li><b>[Adnkronos]</b> Occupazione in crescita: i contratti a tempo indeterminato trainano il mercato a Roma e provincia.</li>
-                        <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
-                        <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
-                        <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6;"><h4>🔥 Ultim\'ora Lavoro</h4><ul><li><b>[ANSA]</b> Approvate le semplificazioni Smart Working.</li><li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali.</li></ul></div>', unsafe_allow_html=True)
 
         # --- TAB 2: ANNUNCI ---
-        with tab2:
+        with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
             res_ann = supabase.table("annunci").select("*").execute()
             elenco = res_ann.data if res_ann.data else []
@@ -365,15 +296,14 @@ else:
                 t_inq = st.radio("Inquadramento", ["RAL","Lordo","Orario"], index=["RAL","Lordo","Orario"].index(def_inq) if def_inq in ["RAL","Lordo","Orario"] else 0)
                 t_imp = st.text_input("Budget Importo (€)", value=def_imp)
                 t_sede = st.text_input("Sede di Lavoro", value=def_sede)
-                t_foto = st.text_input("URL Foto Copertina Annuncio", value=def_foto)
+                t_foto = st.text_input("URL Foto Copertina", value=def_foto)
             with col2:
-                t_note = st.text_area("Descrizione Estesa Annuncio", value=def_note, height=220)
-                if st.button("🪄 Genera ed Ottimizza con IA"):
+                t_note = st.text_area("Descrizione Estesa", value=def_note, height=220)
+                if st.button("🪄 Genera con IA"):
                     if t_pos:
-                        with st.spinner("Scrittura annuncio professionale con IA..."):
-                            res = genera_testo_annuncio_ia(t_pos, t_inq, t_imp, t_sede, t_note)
-                            st.session_state.ai_generated_text = res
-                            st.rerun()
+                        res = genera_testo_annuncio_ia(t_pos, t_inq, t_imp, t_sede, t_note)
+                        st.session_state.ai_generated_text = res
+                        st.rerun()
                 if st.session_state.edit_mode:
                     if st.button("💾 AGGIORNA ANNUNCIO", use_container_width=True):
                         supabase.table("annunci").update({"posizione":t_pos,"inquadramento":t_inq,"importo":t_imp,"sede":t_sede,"note":t_note,"immagine":t_foto}).eq("id", st.session_state.edit_job_id).execute()
@@ -386,304 +316,105 @@ else:
             with col3:
                 st.markdown("### Elenco Annunci Pubblicati")
                 for a in elenco:
-                    st.markdown(f"""
-                    <div class='saas-box'>
-                        <b>📢 {a['posizione']}</b> ({a.get('stato','Attivo')})<br>
-                        Sede: {a.get('sede','N/D')} - Budget: {a.get('importo','0')}€<br>
-                        <div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div class='saas-box'><b>📢 {a['posizione']}</b><div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div></div>", unsafe_allow_html=True)
                     c1, c2, c3 = st.columns(3)
-                    if c1.button("Modifica", key=f"e_{a['id']}", use_container_width=True): 
-                        st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
-                    
-                    stato_label = "Sospendi" if a.get('stato')=="Attivo" else "Attiva"
-                    if c2.button(stato_label, key=f"s_{a['id']}", use_container_width=True): 
-                        supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute(); st.rerun()
-                    if c3.button("Elimina", key=f"d_{a['id']}", use_container_width=True): 
-                        supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
+                    if c1.button("Modifica", key=f"e_{a['id']}"): st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
+                    if c2.button("Sospendi/Attiva", key=f"s_{a['id']}"): supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute(); st.rerun()
+                    if c3.button("Elimina", key=f"d_{a['id']}"): supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
 
-        # --- TAB 3: SCREENING (VERSIONE AGGIORNATA) ---
-        with tab3:
+        # --- TAB 3: SCREENING ---
+        with scelta_tab[2]:
             st.subheader("📥 Candidature Ricevute da Esaminare (In Screening)")
-            
-            # Forziamo una query fresca sul database Cloud
             res = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
             candidati = res.data if res.data else []
-            
             if not candidati:
                 st.info("Nessun nuovo candidato da valutare al momento.")
-            else:
-                for c in candidati:
-                    st.markdown(f"""
-                    <div class='saas-box'>
-                        <h4>👤 {c['nome']}</h4>
-                        <b>Posizione desiderata:</b> {c['posizione']}<br>
-                        <b>Punteggio IA Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span> | Valutazione: {c['stelle']}<br>
-                        <div class='ai-box'><b>Sintesi IA Profilo:</b> {c['orientamento']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button(f"🤝 Approva Profilo per Colloquio", key=f"ap_{c['id']}", use_container_width=True):
-                        supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute()
-                        st.success(f"{c['nome']} spostato in sezione Colloqui!")
-                        st.rerun()
-        # --- TAB 4: COLLOQUI (FIX REALE PER LINK MEET COERENTE) ---
-        with tab4:
-            st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
+            for c in candidati:
+                st.markdown(f"""
+                <div class='saas-box'>
+                    <h4>👤 {c['nome']}</h4>
+                    <b>Posizione:</b> {c['posizione']}<br>
+                    <b>Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span> | {c['stelle']}<br>
+                    <div class='ai-box'><b>Sintesi IA:</b> {c['orientamento']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"🤝 Approva {c['nome']} per Colloquio", key=f"ap_{c['id']}", use_container_width=True):
+                    supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute()
+                    st.rerun()
+
+        # --- TAB 4: COLLOQUI ---
+        with scelta_tab[3]:
+            st.subheader("🤝 Calendario e Agenda Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
-            
             res_agenda_db = supabase.table("agenda").select("*").execute()
             agenda_list = res_agenda_db.data if res_agenda_db.data else []
             
             with col_agenda:
-                st.markdown("### 📅 Agenda Appuntamenti Fissati")
                 res_col = supabase.table("candidati").select("*").eq("stato", "Approvato per Colloquio").execute()
                 colloqui = res_col.data if res_col.data else []
-                
-                if not colloqui:
-                    st.info("Nessun colloquio pianificato in agenda.")
+                if not colloqui: st.info("Nessun colloquio pianificato.")
                 for c in colloqui:
-                    match_appuntamento = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
-                    data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
-                    ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
+                    match_app = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
+                    d_c = match_app['data'] if match_app else 'Da pianificare'
+                    o_c = match_app['ora'] if match_app else 'N/D'
+                    meet_url = match_app['meet_link'] if match_app and match_app.get('meet_link') else "https://meet.google.com/new"
                     
-                    # Definiamo l'URL una volta sola per tutta la card del candidato
-                    if match_appuntamento and match_appuntamento.get('meet_link'):
-                        meet_url = match_appuntamento['meet_link']
-                    else:
-                        meet_url = "https://meet.google.com/new"
-                    
-                    testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Avvia la riunione qui: {meet_url}")
-                    link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
-                    
-                    st.markdown(f"""
-                    <div class='saas-box'>
-                        <h4>👤 Candidato: {c['nome']}</h4>
-                        <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br>
-                        <b>Link Stanza:</b> <small style='color:#2563EB;'>{meet_url}</small><br><br>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    col_b_wa, col_b_meet = st.columns(2)
-                    with col_b_wa:
-                        st.link_button("💬 Invia WhatsApp", link_wa, use_container_width=True)
-                    with col_b_meet:
-                        st.link_button("📹 Videochiamata Meet", meet_url, use_container_width=True, type="primary")
+                    st.markdown(f"<div class='saas-box'><h4>👤 {c['nome']}</h4>🗓️ {d_c} | ⏰ {o_c}</div>", unsafe_allow_html=True)
+                    cb1, cb2 = st.columns(2)
+                    cb1.link_button("💬 WhatsApp", f"https://wa.me/{c['telefono']}", use_container_width=True)
+                    cb2.link_button("📹 Videochiamata", meet_url, use_container_width=True, type="primary")
                     
                     st.write("")
                     c1, c2, c3 = st.columns(3)
-                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True):
-                        supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
-                        st.rerun()
-                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True):
-                        supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
-                        st.rerun()
+                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute(); st.rerun()
+                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute(); st.rerun()
                     if c3.button("🗑️ Annulla Turno", key=f"cncl_{c['id']}", use_container_width=True):
-                        if match_appuntamento:
-                            supabase.table("agenda").delete().eq("id", match_appuntamento['id']).execute()
-                            st.success("Appuntamento rimosso dall'agenda cloud!")
-                            st.rerun()
-                        else:
-                            st.warning("Nessuna data ancora salvata per questo candidato.")
-                        
-            with col_nuovo:
-                st.markdown("### ✍️ Modulo Pianificazione e Chiusura")
-                if colloqui:
-                    candidato_sel = st.selectbox("Seleziona risorsa da schedulare", [c['nome'] for c in colloqui])
-                    c_obj = next(c for c in colloqui if c['nome'] == candidato_sel)
-                    
-                    nuova_data = st.date_input("Scegli la Data", date.today())
-                    nuova_ora = st.time_input("Scegli l'Orario", time(15, 45))
-                    
-                    if st.button("Salva Data Schedulazione", use_container_width=True):
-                        match_esistente = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
-                        
-                        if match_esistente and match_esistente.get('meet_link') and "new" not in match_esistente.get('meet_link'):
-                            gen_meet = match_esistente['meet_link']
-                        else:
-                            gen_meet = genera_codice_meet_statico()
-                        
-                        payload = {
-                            "candidato": c_obj['nome'],
-                            "data": str(nuova_data),
-                            "ora": nuova_ora.strftime("%H:%M"),
-                            "operatore": st.session_state.utente_connesso['nome'] if st.session_state.utente_connesso else 'HR Admin',
-                            "meet_link": gen_meet,
-                            "telefono": c_obj.get('telefono', '')
-                        }
-                        
-                        if match_esistente:
-                            supabase.table("agenda").update(payload).eq("id", match_esistente['id']).execute()
-                        else:
-                            supabase.table("agenda").insert(payload).execute()
-                        
-                        st.success("Appuntamento registrato con link Meet statico!")
-                        st.rerun()
-                    
-                    st.markdown("---")
-                    st.markdown("### 📝 Trascrizione Integrale Intervista (Domande/Risposte)")
-                    testo_intervista = st.text_area(
-                        "Incolla qui il testo catturato dall'ascolto dell'estensione:", 
-                        height=180, 
-                        placeholder="Incolla l'intero dialogo domande/risposte hier..."
-                    )
-
-                    if st.button("💾 ELABORA SCHEDA DI ORIENTAMENTO", use_container_width=True, type="primary"):
-                        sorgente_testo = testo_intervista if testo_intervista else st.session_state.note_colloquio
-                        
-                        if sorgente_testo:
-                            with st.spinner("L'IA sta analizzando la conversazione..."):
-                                prompt_orientamento = f"""
-                                Sei un esperto HR Senior e un Career Coach del Gruppo Dei Reali. 
-                                Analizza questo colloquio per {candidato_sel}: {sorgente_testo}.
-                                Estrai:
-                                🧠 CLASSIFICAZIONE E GIUDIZIO SUL PROFILO
-                                🎯 VERO SETTORE OPERATIVO DI DESTINAZIONE
-                                📈 PERCORSO DI ORIENTAMENTO CONSIGLIATO
-                                """
-                                risposta_ia = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt_orientamento).text
-                                
-                                supabase.table("schede_colloqui").insert({
-                                    "candidato": candidato_sel, 
-                                    "scheda": risposta_ia,
-                                    "data": str(date.today())
-                                }).execute()
-                                
-                                st.success(f"Scheda di orientamento per {candidato_sel} salvata nel Cloud!")
-                                st.rerun()
-                        else:
-                            st.warning("Incolla prima il testo dell'intervista.")
-                else:
-                    st.write("Abilitato quando ci sono candidati approvati.")
-                    
-            st.markdown("---")
-            st.markdown("### 📊 Riepilogo Cronologico di tutti i Turni Cloud")
+                        if match_app: supabase.table("agenda").delete().eq("id", match_app['id']).execute(); st.rerun()
             
-            if agenda_list:
-                col_del_selettore, col_del_bottone = st.columns([2.5, 1])
-                with col_del_selettore:
-                    opzioni_cancellazione = [f"{a['id']} | {a['candidato']} ({a.get('data', 'No Data')})" for a in agenda_list]
-                    turno_da_eliminare = st.selectbox("🎯 Seleziona un appuntamento specifico da cancellare dal database:", opzioni_cancellazione)
-                with col_del_bottone:
-                    st.write("<br>", unsafe_allow_html=True)
-                    if st.button("🗑️ Rimuovi dal Cloud", use_container_width=True):
-                        id_target = int(turno_da_eliminare.split(" | ")[0])
-                        supabase.table("agenda").delete().eq("id", id_target).execute()
-                        st.success("Riga eliminata!")
+            with col_nuovo:
+                if colloqui:
+                    candidato_sel = st.selectbox("Schedula risorsa", [c['nome'] for c in colloqui])
+                    c_obj = next(c for c in colloqui if c['nome'] == candidato_sel)
+                    nuova_data = st.date_input("Data", date.today())
+                    nuova_ora = st.time_input("Orario", time(15, 45))
+                    if st.button("Salva Appuntamento", use_container_width=True):
+                        match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
+                        payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
+                        if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
+                        else: supabase.table("agenda").insert(payload).execute()
                         st.rerun()
-                
-                df_agenda = pd.DataFrame(agenda_list)
-                st.dataframe(df_agenda[["id", "candidato", "data", "ora", "operatore", "meet_link"]], use_container_width=True)
-            else:
-                st.info("Nessun turno registrato nello storico.")
 
         # --- TAB 5: ASSUNZIONI ---
-        with tab5:
+        with scelta_tab[4]:
             st.subheader("🎉 Registro Ufficiale Nuove Assunzioni")
             res = supabase.table("candidati").select("*").eq("stato", "Assunto").execute()
             assunti = res.data if res.data else []
-            
-            if not assunti:
-                st.info("Nessuna risorsa contrattualizzata di recente.")
             for a in assunti:
-                st.markdown(f"""
-                <div class='saas-box' style='border-left: 4px solid #10B981;'>
-                    <h3 style='color:#10B981; margin:0;'>✅ {a['nome']}</h3>
-                    <b>Ruolo Aziendale d'Ingresso:</b> {a['posizione']}<br>
-                    <b>E-mail:</b> {a['email']} | <b>Telefono:</b> {a['telefono']}<br>
-                    <span style='background-color:#D1FAE5; color:#065F46; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold;'>CONTRATTO ATTIVO</span>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"<div class='saas-box' style='border-left:4px solid #10B981;'><h3>✅ {a['nome']}</h3>Ruolo: {a['posizione']}</div>", unsafe_allow_html=True)
 
         # --- TAB 6: REPORT ---
-        with tab6:
-            st.subheader("📊 Reportistica ed Analytics Enterprise")
+        with scelta_tab[5]:
+            st.subheader("📊 Analytics")
             res_cand = supabase.table("candidati").select("*").execute()
             all_c = res_cand.data if res_cand.data else []
-            
-            tot = len(all_c)
-            screening_count = len([x for x in all_c if x.get('stato') == 'In Screening'])
-            colloqui_count = len([x for x in all_c if x.get('stato') == 'Approvato per Colloquio'])
-            assunti_count = len([x for x in all_c if x.get('stato') == 'Assunto'])
-            
-            st.markdown(f"""
-                <div class="umana-grid">
-                    <div class="umana-kpi"><div class="umana-kpi-label">👥 Candidature Totali</div><div class="umana-kpi-value">{tot}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">📥 In Screening</div><div class="umana-kpi-value">{screening_count}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">🤝 Colloqui Attivi</div><div class="umana-kpi-value">{colloqui_count}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">🎉 Risorse Assunte</div><div class="umana-kpi-value">{assunti_count}</div></div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("### Distribuzione Grafica degli Stati dei Candidati")
-            if tot > 0:
-                data_chart = pd.DataFrame({
-                    'Stato Candidatura': ['Screening', 'Colloqui', 'Assunti'],
-                    'Numero Risorse': [screening_count, colloqui_count, assunti_count]
-                }).set_index('Stato Candidatura')
-                st.bar_chart(data_chart)
-            else:
-                st.info("Nessun dato disponibile per elaborare grafici.")
+            st.metric(label="Totale Candidature Cloud", value=len(all_c))
 
         # --- TAB 7: CLIENTI ---
-        with tab7:
-            st.subheader("🏢 Gestione Anagrafica Clienti B2B")
-            col_form, col_lista = st.columns([1.1, 2])
-            
-            with col_form:
-                st.markdown("### ➕ Nuovo Inserimento Cliente")
-                with st.form("nuovo_cliente_form"):
-                    cl_ragione = st.text_input("Ragione Sociale / Azienda *")
-                    cl_piva = st.text_input("Partita IVA / Codice Fiscale *")
-                    cl_contatto = st.text_input("Persona di Contatto / Referente")
-                    cl_note = st.text_area("Note e Accordi Commerciali")
-                    
-                    if st.form_submit_button("REGISTRA AZIENDA CLIENTE"):
-                        if cl_ragione and cl_piva:
-                            supabase.table("clienti").insert({
-                                "ragione_sociale": cl_ragione,
-                                "partita_iva": cl_piva,
-                                "referente": cl_contatto,
-                                "note": cl_note
-                            }).execute()
-                            st.success(f"Azienda {cl_ragione} censita con successo!")
-                            st.rerun()
-                        else:
-                            st.error("Ragione Sociale e Partita IVA sono campi obbligatori.")
-                            
-            with col_lista:
-                st.markdown("### 📋 Clienti Partner Registrati")
-                res_cl = supabase.table("clienti").select("*").execute()
-                lista_clienti = res_cl.data if res_cl.data else []
-                
-                if not lista_clienti:
-                    st.info("Nessun cliente inserito a sistema.")
-                for cl in lista_clienti:
-                    st.markdown(f"""
-                    <div class='saas-box'>
-                        <b>🏢 {cl['ragione_sociale']}</b><br>
-                        P.IVA: {cl['partita_iva']} | Referente: {cl.get('referente','N/D')}<br>
-                        <small style='color:#64748B;'>Note commerciali: {cl.get('note','Nessuna')}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
+        with scelta_tab[6]:
+            st.subheader("🏢 Anagrafica Clienti B2B")
+            res_cl = supabase.table("clienti").select("*").execute()
+            lista_clienti = res_cl.data if res_cl.data else []
+            for cl in lista_clienti:
+                st.markdown(f"<div class='saas-box'><b>🏢 {cl['ragione_sociale']}</b> — P.IVA: {cl['partita_iva']}</div>", unsafe_allow_html=True)
 
         # --- TAB 8: CANDIDATI ---
-        with tab8:
+        with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
-            res = supabase.table("candidati").select("*").execute()
-            tutti = res.data if res.data else []
-            
-            if not tutti:
-                st.info("Nessun candidato registrato nel sistema cloud.")
+            res_tutti = supabase.table("candidati").select("*").execute()
+            tutti = res_tutti.data if res_tutti.data else []
             for c in tutti:
-                st.markdown(f"""
-                <div class='saas-box'>
-                    <b>{c['nome']}</b> — Posizione: <i>{c['posizione']}</i> (Stato attuale: <b>{c['stato']}</b>)
-                </div>
-                """, unsafe_allow_html=True)
-                nuovo = st.selectbox("Modifica Stato Candidato", ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"], index=["In Screening","Approvato per Colloquio","Assunto","Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"] else 0, key=f"st_{c['id']}")
-                if st.button("Salva Nuovo Stato", key=f"sv_{c['id']}"):
-                    supabase.table("candidati").update({"stato":nuovo}).eq("id",c['id']).execute()
-                    st.success("Stato aggiornato!")
+                st.markdown(f"<div class='saas-box'><b>{c['nome']}</b> — Posizione: {c['posizione']} (Stato attuale: <b>{c['stato']}</b>)</div>", unsafe_allow_html=True)
+                nuovo_stato = st.selectbox("Cambia Stato", ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"], index=["In Screening","Approvato per Colloquio","Assunto","Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening","Approvato per Colloquio","Assunto","Rifiutato"] else 0, key=f"global_st_{c['id']}")
+                if st.button("Salva Nuovo Stato", key=f"global_sv_{c['id']}", use_container_width=True):
+                    supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
                     st.rerun()
