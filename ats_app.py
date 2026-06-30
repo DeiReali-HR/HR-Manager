@@ -190,7 +190,7 @@ else:
                         st.rerun()
                     else: st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR: ASSISTENTE HR IN STILE CHAT WHATSAPP ---
+        # --- SIDEBAR: ASSISTENTE HR IN STILE CHAT WHATSAPP CON DOPPIO MOTORE ---
         with st.sidebar:
             mostra_logo_aziendale()
             st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -202,8 +202,6 @@ else:
             # Inizializzazioni di sicurezza locali per la cronologia dei messaggi
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-            if "sta_rispondendo" not in st.session_state:
-                st.session_state.sta_rispondendo = False
             
             # --- MOTORE GRAFICO AVATAR (BASE64) ---
             img_talking_base64 = ""
@@ -216,11 +214,13 @@ else:
                 with open("1000334218.png", "rb") as f2:
                     img_talking_base64 = base64.b64encode(f2.read()).decode()
             
+            # Controllo anti-crash sicuro con .get() per la mimica facciale
+            is_speaking = st.session_state.get("sta_rispondendo", False)
+            
             if img_idle_base64 and img_talking_base64:
-                # Cambia espressione visiva se l'app ha appena elaborato un messaggio (simula l'interazione)
-                active_img = img_talking_base64 if st.session_state.sta_rispondendo else img_idle_base64
-                animation_style = "avatar-typing 0.8s infinite alternate ease-in-out" if st.session_state.sta_rispondendo else "avatar-idle 3s infinite ease-in-out"
-                border_color = "#10B981" if st.session_state.sta_rispondendo else "#EC4899"
+                active_img = img_talking_base64 if is_speaking else img_idle_base64
+                animation_style = "avatar-typing 0.8s infinite alternate ease-in-out" if is_speaking else "avatar-idle 3s infinite ease-in-out"
+                border_color = "#10B981" if is_speaking else "#EC4899"
                 
                 st.markdown(f"""
                     <div style="display: flex; justify-content: center; margin: 15px 0;">
@@ -251,12 +251,12 @@ else:
             else:
                 st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
             
-            # Reset dello stato di interazione visiva per il ciclo successivo
+            # Reset dello stato per il ciclo successivo
             st.session_state.sta_rispondendo = False
             
             st.caption("<div style='text-align: center;'>Chat attiva • Scrivi un messaggio per iniziare</div>", unsafe_allow_html=True)
             
-            # --- FLUSSO DELLA TRASCRIZIONE CHAT (STILE WHATSAPP) ---
+            # --- CONTAINER FLUSSO CHAT (STILE WHATSAPP) ---
             container_chat = st.container(height=250)
             with container_chat:
                 for msg in st.session_state.chat_history:
@@ -267,16 +267,14 @@ else:
             user_query = st.chat_input("Scrivi un messaggio...")
             
             if user_query:
-                # Mostra immediatamente il messaggio inviato dall'utente nella chat
                 with container_chat:
                     with st.chat_message("user"):
                         st.markdown(user_query)
                 st.session_state.chat_history.append({"role": "user", "text": user_query})
                 
-                # Attiva lo stato grafico di risposta dell'avatar
                 st.session_state.sta_rispondendo = True
                 
-                # --- INTERCETTORE INTEGRATO (Bypassa i server saturi per i test locali) ---
+                # --- INTERCETTORE LOCAL RAPIDO (Risposte istantanee di test) ---
                 q_lower = user_query.lower()
                 risposta_ia = ""
                 
@@ -284,13 +282,12 @@ else:
                     risposta_ia = "Certamente! Sono attiva e configurata in modalità WhatsApp Chat. Posso darti supporto sulla navigazione del portale, contratti di lavoro o dettagli sui CCNL."
                 elif "ccnl" in q_lower or "contratto" in q_lower or "commercio" in q_lower:
                     risposta_ia = "Il CCNL Commercio e Terziario prevede 14 mensilità, un monte ore ordinario di 40 ore settimanali e scatti di anzianità biennali. I livelli vanno dall'inquadramento Quadri fino al settimo livello."
-                elif "costo" in q_lower or "dipendente" in q_lower or "personale" in q_lower:
-                    risposta_ia = "Il costo complessivo aziendale di una risorsa si calcola sommando alla Retribuzione Annua Lorda (RAL) i contributi previdenziali a carico ditta (circa il 30%), i premi INAIL e la quota di accantonamento del TFR."
                 
-                # Se non è una domanda di test preimpostata, prova a interrogare Gemini Cloud
+                # --- DOPPIO MOTORE INTEGRATO (FAILOVER IN CASO DI ERRORE 429) ---
                 if not risposta_ia:
                     with st.spinner("L'assistente sta scrivendo..."):
                         try:
+                            # 1. Prova con il motore principale (Gemini)
                             system_instruction = "Sei l'Assistente Virtuale del Gruppo Dei Reali. Rispondi in modalità chat di testo, in modo cordiale, chiaro e coinciso."
                             response = ai_client.models.generate_content(
                                 model='gemini-2.0-flash',
@@ -301,13 +298,25 @@ else:
                                 )
                             )
                             risposta_ia = response.text
+                            
                         except Exception as e:
-                            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                                risposta_ia = "Scusami, ci sono troppe richieste nel sistema in questo momento. Attendi un minuto o, in alternativa, puoi consultare la mia collega Chat GPT."
+                            # 2. Se Gemini è bloccato dalla quota (429), passa all'istante a ChatGPT
+                            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and openai_client:
+                                try:
+                                    completions = openai_client.chat.completions.create(
+                                        model="gpt-4o-mini",
+                                        max_tokens=300,
+                                        messages=[
+                                            {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modalità chat di testo, in modo cordiale, chiaro e coinciso. Ti sei attivata automaticamente come backup."},
+                                            {"role": "user", "content": user_query}
+                                        ]
+                                    )
+                                    risposta_ia = completions.choices[0].message.content
+                                except Exception:
+                                    risposta_ia = "Scusami, i sistemi di intelligenza artificiale sono temporaneamente carichi. Riprova tra un minuto."
                             else:
-                                risposta_ia = "Servizio momentaneamente occupato. Ti invito a riprovare tra pochissimi istanti o a fare riferimento temporaneamente a Chat GPT."
+                                risposta_ia = "Scusami, ho riscontrato un rallentamento tecnico. Riprova tra pochissimi istanti!"
                 
-                # Mostra la risposta nel flusso della chat
                 with container_chat:
                     with st.chat_message("assistant"):
                         st.markdown(risposta_ia)
@@ -318,9 +327,9 @@ else:
             st.markdown("""
             <div class="sidebar-spec">
                 <b>⚙️ Specifiche Gestione App:</b><br>
-                • <b>Modalità:</b> WhatsApp Text UI v3.0<br>
-                • <b>Sintesi Vocale:</b> Disattivata<br>
-                • <b>Trascrizione Chat:</b> Sincrona e Persistente
+                • <b>Interfaccia:</b> WhatsApp Text UI v3.1<br>
+                • <b>Motore di Backup:</b> ChatGPT Attivo (Failover automatico)<br>
+                • <b>Trascrizione Chat:</b> Sincrona
             </div>
             """, unsafe_allow_html=True)
             
