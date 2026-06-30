@@ -348,6 +348,55 @@ else:
 
         st.markdown("---")
 
+        # =====================================================================
+        # POSIZIONAMENTO CORRETTO: PLANCIA CENTRALE INFORMATIVA DELLE ATTIVITÀ
+        # Questo blocco ora riempie lo spazio bianco sotto i bottoni principali
+        # =====================================================================
+        st.subheader("📊 Cruscotto Attività Risorse Umane")
+        
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        with col_m1:
+            st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
+        with col_m2:
+            st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
+        with col_m3:
+            st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
+        with col_m4:
+            st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
+            
+        st.markdown("---")
+        
+        st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
+        col_news1, col_news2 = st.columns(2)
+        
+        with col_news1:
+            st.markdown("""
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
+                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🏛️ Circolari INPS & INAIL</h4>
+                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
+                    <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
+                    <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
+                    <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
+                    <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_news2:
+            st.markdown("""
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
+                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🔥 Ultim'ora Lavoro & Economia</h4>
+                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
+                    <li><b>[Adnkronos]</b> Occupazione in crescita: i contratti a tempo indeterminato trainano il mercato a Roma e provincia.</li>
+                    <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
+                    <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
+                    <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown("---")
+
         # --- SEZIONE 1: ANNUNCI ---
         if st.session_state.current_menu == "Annunci":
             st.subheader("📢 Gestione Annunci di Lavoro")
@@ -425,7 +474,7 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-       # --- SEZIONE 3: COLLOQUI (Con funzione di Annullamento e Pulizia Agenda) ---
+        # --- SEZIONE 3: COLLOQUI (CORRETTA CON FUNZIONE DI COLLEGAMENTO INTERFACCIA MEET NATIVA) ---
         elif st.session_state.current_menu == "Colloqui":
             st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
@@ -454,12 +503,17 @@ else:
                     <div class='saas-box'>
                         <h4>👤 Candidato: {c['nome']}</h4>
                         <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br><br>
-                        <a href="{link_wa}" target="_blank" class="whatsapp-btn">💬 WhatsApp</a>
-                        <a href="{meet_url}" target="_blank" class="meet-btn">📹 Avvia Riunione Meet Dedicata</a>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Dividiamo in 3 colonne per fare spazio al tasto Annulla dell'agenda attiva
+                    # Pulsanti Nativi Streamlit per evitare ricaricamenti di pagina
+                    col_b_wa, col_b_meet = st.columns(2)
+                    with col_b_wa:
+                        st.link_button("💬 Invia WhatsApp", link_wa, use_container_width=True)
+                    with col_b_meet:
+                        st.link_button("📹 Videochiamata Meet", meet_url, use_container_width=True, type="primary")
+                    
+                    st.write("")
                     c1, c2, c3 = st.columns(3)
                     if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True):
                         supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
@@ -514,7 +568,7 @@ else:
                     testo_intervista = st.text_area(
                         "Incolla qui il testo catturato dall'ascolto dell'estensione:", 
                         height=180, 
-                        placeholder="Incolla l'intero dialogo domande/risposte qui..."
+                        placeholder="Incolla l'intero dialogo domande/risposte hier..."
                     )
 
                     if st.button("💾 ELABORA SCHEDA DI ORIENTAMENTO", use_container_width=True, type="primary"):
@@ -548,14 +602,13 @@ else:
             st.markdown("---")
             st.markdown("### 📊 Riepilogo Cronologico di tutti i Turni Cloud")
             
-            # TOOL DI PULIZIA GLOBALE: permette di cancellare qualsiasi riga dal database agenda
             if agenda_list:
                 col_del_selettore, col_del_bottone = st.columns([2.5, 1])
                 with col_del_selettore:
                     opzioni_cancellazione = [f"{a['id']} | {a['candidato']} ({a.get('data', 'No Data')})" for a in agenda_list]
                     turno_da_eliminare = st.selectbox("🎯 Seleziona un appuntamento specifico da cancellare dal database:", opzioni_cancellazione)
                 with col_del_bottone:
-                    st.write("<br>", unsafe_allow_html=True) # Allinea il bottone al selettore
+                    st.write("<br>", unsafe_allow_html=True)
                     if st.button("🗑️ Rimuovi dal Cloud", use_container_width=True):
                         id_target = int(turno_da_eliminare.split(" | ")[0])
                         supabase.table("agenda").delete().eq("id", id_target).execute()
@@ -676,53 +729,3 @@ else:
                     supabase.table("candidati").update({"stato":nuovo}).eq("id",c['id']).execute()
                     st.success("Stato aggiornato!")
                     st.rerun()
-# --- SEZIONE AGGIUNTIVA: PLANCIA CENTRALE INFORMATIVA E METRICHE ATIVITÀ ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 1. CRUSCOTTO DELLE ATTIVITÀ HR SVOLTE
-        st.subheader("📊 Cruscotto Attività Risorse Umane")
-        
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        with col_m1:
-            st.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
-        with col_m2:
-            st.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
-        with col_m3:
-            st.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
-        with col_m4:
-            st.metric(label="✅ Assunzioni Perfezionate", value="24", delta="Tasso conversione 82%", delta_color="normal")
-            
-        st.markdown("---")
-        
-        # 2. FEED NOTIZIE NORMATIVE (SIMULATORE INPS / INAIL / ANSA / ADNKRONOS)
-        st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
-        
-        col_news1, col_news2 = st.columns(2)
-        
-        with col_news1:
-            st.markdown("""
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; min-height: 250px;">
-                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🏛️ Circolari INPS & INAIL</h4>
-                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                    <li><b>[INPS]</b> Rilascio nuove linee guida per l'esonero contributivo assunzioni Under 35 (Circolare n. 54).</li>
-                    <li><b>[INAIL]</b> Aggiornamento delle tariffe dei premi per le aziende del settore Logistica e Facchinaggio.</li>
-                    <li><b>[INPS]</b> Nuove modalità di trasmissione telematica dei flussi Uniemens da luglio.</li>
-                    <li><b>[MIN. LAVORO]</b> Tabelle dei minimi salariali aggiornate per i rinnovi contrattuali CCNL Commercio.</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with col_news2:
-            st.markdown("""
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; min-height: 250px;">
-                <h4 style="margin-top:0; color:#1f2937; display: flex; align-items: center; gap: 8px;">🔥 Ultim'ora Lavoro & Economia</h4>
-                <ul style="padding-left: 20px; font-size: 14px; color: #4b5563; line-height: 1.6; margin-top: 10px;">
-                    <li><b>[Adnkronos]</b> Occupazione in crescita: i contratta a tempo indeterminato trainano il mercato a Roma e provincia.</li>
-                    <li><b>[ANSA]</b> Approvato il nuovo pacchetto semplificazioni per il monitoraggio dello Smart Working aziendale.</li>
-                    <li><b>[Sole 24 Ore]</b> Costo del lavoro: analisi sull'impatto dei fringe benefit e dei bonus welfare in busta paga.</li>
-                    <li><b>[Focus]</b> Sicurezza sul lavoro: obbligo di formazione avanzata per addetti alla movimentazione merci.</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
