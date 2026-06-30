@@ -429,7 +429,7 @@ else:
             for cl in lista_clienti:
                 st.markdown(f"<div class='saas-box'><b>🏢 {cl['ragione_sociale']}</b> — P.IVA: {cl['partita_iva']}</div>", unsafe_allow_html=True)
 
-        # --- TAB 8: CANDIDATI (VERSIONE FINALE CON DOWNLOAD PDF ORIGINALE) ---
+        # --- TAB 8: CANDIDATI (CON FUNZIONE DI ELIMINAZIONE COMPLETA E PULIZIA STORAGE) ---
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
             res_tutti = supabase.table("candidati").select("*").order('id', desc=True).execute()
@@ -440,7 +440,7 @@ else:
             else:
                 for c in tutti:
                     testo_pulito_cv = c.get('testo_cv', 'Nessun testo estratto dal file PDF.')
-                    url_pdf_originale = c.get('immagine', '') # Il link del file nel bucket è salvato qui
+                    url_pdf_originale = c.get('immagine', '')
                     
                     st.markdown(f"""
                     <div class='saas-box' style='border-left: 5px solid #2563EB;'>
@@ -456,7 +456,8 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    col_sel, col_btn_stato, col_btn_dl = st.columns([2, 1.5, 1.5])
+                    # Layout a 4 colonne per inserire i tasti di gestione e cancellazione
+                    col_sel, col_btn_stato, col_btn_dl, col_btn_del = st.columns([2, 1.2, 1.2, 1.2])
                     
                     with col_sel:
                         nuovo_stato = st.selectbox(
@@ -467,15 +468,40 @@ else:
                         )
                     with col_btn_stato:
                         st.write("<br>", unsafe_allow_html=True)
-                        if st.button("💾 Applica Stato", key=f"global_sv_{c['id']}", use_container_width=True):
+                        if st.button("💾 Applica", key=f"global_sv_{c['id']}", use_container_width=True):
                             supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
                             st.success("Stato aggiornato sul cloud!")
                             st.rerun()
                     with col_btn_dl:
                         st.write("<br>", unsafe_allow_html=True)
-                        # Se l'URL del PDF esiste ed è memorizzato, mostriamo il pulsante di download nativo del file originale
                         if url_pdf_originale and url_pdf_originale.startswith("http"):
-                            st.link_button("📥 Scarica PDF Originale", url_pdf_originale, use_container_width=True)
+                            st.link_button("📥 Scarica PDF", url_pdf_originale, use_container_width=True)
                         else:
-                            st.info("PDF non presente nel Cloud.")
+                            st.info("PDF assente.")
+                            
+                    with col_btn_del:
+                        st.write("<br>", unsafe_allow_html=True)
+                        # Tasto distruttivo rosso per eliminare risorsa e documenti
+                        if st.button("🗑️ Elimina", key=f"global_del_{c['id']}", use_container_width=True, type="secondary"):
+                            with st.spinner("Rimozione candidato e documenti..."):
+                                # 1. Tentiamo di estrarre il nome del file dall'URL pubblico per pulire lo storage
+                                if url_pdf_originale and "curriculum/" in url_pdf_originale:
+                                    try:
+                                        nome_file_storage = url_pdf_originale.split("curriculum/")[-1]
+                                        supabase.storage.from_("curriculum").remove([nome_file_storage])
+                                    except Exception:
+                                        pass # Se il file non esiste fisicamente nello storage, passa oltre
+                                
+                                # 2. Eliminiamo anche eventuali turni fissati in agenda per questo candidato
+                                try:
+                                    supabase.table("agenda").delete().eq("candidato", c['nome']).execute()
+                                except Exception:
+                                    pass
+                                
+                                # 3. Cancelliamo definitivamente il record dalla tabella candidati
+                                supabase.table("candidati").delete().eq("id", c['id']).execute()
+                                
+                                st.success("Candidato rimosso con successo!")
+                                st.rerun()
+                                
                     st.markdown("<br>", unsafe_allow_html=True)
