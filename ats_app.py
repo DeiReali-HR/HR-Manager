@@ -272,21 +272,24 @@ else:
                     try:
                         system_instruction = (
                             "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
-                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL usando internet."
+                            "Usa sempre lo strumento di ricerca Google Search integrato per trovare informazioni aggiornate su contratti, CCNL italiani e leggi sul lavoro. "
+                            "Fornisci risposte professionali, precise ma molto concise."
                         )
                         
+                        # Configurazione corretta e aggiornata per forzare il Web Grounding di Gemini 2.0
                         response = ai_client.models.generate_content(
                             model='gemini-2.0-flash',
                             contents=user_query,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
-                                tools=[types.Tool(google_search=types.GoogleSearch())],
-                                max_output_tokens=300
+                                # Attivazione nativa dello strumento di ricerca Google
+                                tools=[{"google_search": {}}],
+                                max_output_tokens=400
                             )
                         )
                         risposta_ia = response.text
                     except Exception as e:
-                        # Se intercetta il blocco della quota (429) o qualsiasi altro errore IA, personalizza la risposta
+                        # Intercettazione elegante dei blocchi di quota (429) o errori di rete
                         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                             risposta_ia = "Scusami, ci sono troppe richieste nel sistema, attendi un minuto. O in alternativa utilizza la mia collega Chat GPT."
                         else:
