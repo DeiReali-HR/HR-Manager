@@ -426,7 +426,7 @@ else:
                     st.success(f"{c['nome']} spostato in sezione Colloqui!")
                     st.rerun()
 
-        # --- TAB 4: COLLOQUI ---
+        # --- TAB 4: COLLOQUI (FIX REALE PER LINK MEET COERENTE) ---
         with tab4:
             st.subheader("🤝 Calendario, Agenda e Analisi Interviste Live")
             col_agenda, col_nuovo = st.columns([2, 1.2])
@@ -446,7 +446,11 @@ else:
                     data_col = match_appuntamento['data'] if match_appuntamento else 'Da pianificare'
                     ora_col = match_appuntamento['ora'] if match_appuntamento else 'N/D'
                     
-                    meet_url = match_appuntamento['meet_link'] if match_appuntamento and match_appuntamento.get('meet_link') else genera_codice_meet_statico()
+                    # Definiamo l'URL una volta sola per tutta la card del candidato
+                    if match_appuntamento and match_appuntamento.get('meet_link'):
+                        meet_url = match_appuntamento['meet_link']
+                    else:
+                        meet_url = "https://meet.google.com/new"
                     
                     testo_wa = urllib.parse.quote(f"Ciao {c['nome']}, siamo l'HR dei Reali. Ti confermiamo il colloquio per la posizione di {c['posizione']}. Data: {data_col} ore {ora_col}. Avvia la riunione qui: {meet_url}")
                     link_wa = f"https://wa.me/{c['telefono']}?text={testo_wa}"
@@ -454,7 +458,8 @@ else:
                     st.markdown(f"""
                     <div class='saas-box'>
                         <h4>👤 Candidato: {c['nome']}</h4>
-                        <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br><br>
+                        <b>Pianificazione:</b> 🗓️ {data_col} | ⏰ {ora_col}<br>
+                        <b>Link Stanza:</b> <small style='color:#2563EB;'>{meet_url}</small><br><br>
                     </div>
                     """, unsafe_allow_html=True)
                     
