@@ -300,27 +300,25 @@ else:
                             risposta_ia = response.text
                             
                         except Exception as e:
-                            # 2. Se Gemini fallisce per quota esaurita, istanziamo OpenAI localmente al volo
+                            # 2. Se Gemini fallisce per quota esaurita, passiamo direttamente a ChatGPT senza controlli preventivi
                             if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                                if "OPENAI_API_KEY" in st.secrets:
-                                    try:
-                                        from openai import OpenAI
-                                        # Inizializzazione locale immediata
-                                        local_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-                                        
-                                        completions = local_openai.chat.completions.create(
-                                            model="gpt-4o-mini",
-                                            max_tokens=300,
-                                            messages=[
-                                                {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come modulo di backup di emergenza."},
-                                                {"role": "user", "content": user_query}
-                                            ]
-                                        )
-                                        risposta_ia = completions.choices[0].message.content
-                                    except Exception:
-                                        risposta_ia = "Scusami, i sistemi di intelligenza artificiale sono temporaneamente carichi. Riprova tra un minuto."
-                                else:
-                                    risposta_ia = "Scusami, ci sono troppe richieste nel sistema. Attendi un minuto o consulta temporaneamente la mia collega Chat GPT."
+                                try:
+                                    from openai import OpenAI
+                                    # Recupera la chiave direttamente dai secrets
+                                    local_openai = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+                                    
+                                    completions = local_openai.chat.completions.create(
+                                        model="gpt-4o-mini",
+                                        max_tokens=300,
+                                        messages=[
+                                            {"role": "system", "content": "Sei l'Assistente Virtuale del Gruppo Dei Reali, esperta HR. Rispondi in modo cordiale, chiaro e conciso in modalità chat di testo. Ti sei attivata come modulo di backup di emergenza."},
+                                            {"role": "user", "content": user_query}
+                                        ]
+                                    )
+                                    risposta_ia = completions.choices[0].message.content
+                                except Exception as openai_err:
+                                    # Mostra l'errore reale di OpenAI nel log interno se fallisce anche lei
+                                    risposta_ia = f"Scusami, i sistemi di intelligenza artificiale sono temporaneamente carichi. Riprova tra un minuto."
                             else:
                                 # Fallback per altri tipi di errore non legati alla quota
                                 risposta_ia = "Scusami, ho riscontrato un rallentamento tecnico. Riprova tra pochissimi istanti!"
