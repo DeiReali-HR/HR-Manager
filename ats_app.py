@@ -126,7 +126,7 @@ if 'current_menu' not in st.session_state: st.session_state.current_menu = "📢
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
-if 'riproduci_voce' not in st.session_state: st.session_state.riproduci_voce = None
+if 'sta_rispondendo' not in st.session_state: st.session_state.sta_rispondendo = False
     
 # --- PORTALE PUBBLICO ---
 if "job" in st.query_params:
