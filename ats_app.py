@@ -199,7 +199,7 @@ else:
             st.markdown("---")
             st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            # Garanzia di inizializzazione locale antirottura
+            # Garanzia di inizializzazione locale anti-rottura
             if "riproduci_voce" not in st.session_state:
                 st.session_state.riproduci_voce = None
             if "chat_history" not in st.session_state:
@@ -270,17 +270,16 @@ else:
                 
                 with st.spinner("Sto verificando per te..."):
                     try:
-                        system_instruction = (
-                            "Sei l'Assistente Virtuale del Gruppo Dei Reali, una consulente HR esperta, cordiale, gentile e precisa. "
-                            "Dai risposte professionali ma calorose. Aiuta l'utente a navigare nelle sezioni o rispondi a domande su contratti e CCNL usando internet."
-                        )
+                        # Ottimizzato e alleggerito per evitare errori di quota (429) sul piano gratuito
+                        system_instruction = "Sei l'Assistente HR del Gruppo Dei Reali. Rispondi in modo ultra-conciso e usa la ricerca web solo se strettamente necessario."
                         
                         response = ai_client.models.generate_content(
                             model='gemini-2.0-flash',
                             contents=user_query,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,
-                                tools=[types.Tool(google_search=types.GoogleSearch())]
+                                tools=[types.Tool(google_search=types.GoogleSearch())],
+                                max_output_tokens=300
                             )
                         )
                         risposta_ia = response.text
@@ -295,33 +294,57 @@ else:
                 st.session_state.riproduci_voce = risposta_ia
                 st.rerun()
 
-            # --- SINTESI VOCALE + RESET ANIMAZIONE ---
+            # --- SINTESI VOCALE DIGITALE "STILE CAR-PLAY" (LETTURA NATURALE) ---
             if st.session_state.riproduci_voce:
-                testo_da_leggere = st.session_state.riproduci_voce.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
+                # Pulizia totale delle formattazioni Markdown prima della lettura per renderla fluida
+                testo_pulito = st.session_state.riproduci_voce
+                testo_pulito = testo_pulito.replace("**", "").replace("*", " ").replace("###", "").replace("##", "")
+                testo_pulito = testo_pulito.replace("\n", " ").replace('"', '\\"').replace("'", "\\'")
                 
                 componente_audio = f"""
                 <script>
-                    var msg = new SpeechSynthesisUtterance("{testo_da_leggere}");
-                    msg.lang = 'it-IT';
-                    
-                    var voices = window.speechSynthesis.getVoices();
-                    var voceFemminile = voices.find(function(voice) {{
-                        return voice.lang.includes('it') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('elsa') || voice.name.toLowerCase().includes('cosmo') || voice.name.toLowerCase().includes('alice') || voice.name.toLowerCase().includes('google'));
-                    }});
-                    if (voceFemminile) {{ msg.voice = voceFemminile; }}
-                    
-                    msg.volume = 1; 
-                    msg.rate = 1.0; 
-                    
-                    msg.onend = function(event) {{
-                        var avatar = window.parent.document.getElementById('live-avatar');
-                        if(avatar) {{
-                            avatar.style.animation = 'avatar-idle 3s infinite ease-in-out';
-                            avatar.style.borderColor = '#EC4899';
+                    function parlaNaturale() {{
+                        window.speechSynthesis.cancel(); // Resetta code precedenti
+                        
+                        var msg = new SpeechSynthesisUtterance("{testo_pulito}");
+                        msg.lang = 'it-IT';
+                        
+                        var voices = window.speechSynthesis.getVoices();
+                        var voceFemminile = voices.find(function(voice) {{
+                            var name = voice.name.toLowerCase();
+                            return voice.lang.includes('it') && (
+                                name.includes('female') || name.includes('elsa') || 
+                                name.includes('cosmo') || name.includes('alice') || 
+                                name.includes('google') || name.includes('lucia') || name.includes('paola')
+                            );
+                        }});
+                        
+                        if (voceFemminile) {{
+                            msg.voice = voceFemminile;
+                        }} else {{
+                            var qualsiasiItaliana = voices.find(function(v) {{ return v.lang.includes('it'); }});
+                            if (qualsiasiItaliana) msg.voice = qualsiasiItaliana;
                         }}
-                    }};
-                    
-                    window.speechSynthesis.speak(msg);
+                        
+                        msg.volume = 1; 
+                        msg.rate = 1.05; 
+                        msg.pitch = 1.0; 
+                        
+                        msg.onend = function(event) {{
+                            var avatar = window.parent.document.getElementById('live-avatar');
+                            if(avatar) {{
+                                avatar.style.animation = 'avatar-idle 3s infinite ease-in-out';
+                                avatar.style.borderColor = '#EC4899';
+                            }}
+                        }};
+                        
+                        window.speechSynthesis.speak(msg);
+                    }}
+
+                    if (window.speechSynthesis.onvoiceschanged !== undefined) {{
+                        window.speechSynthesis.onvoiceschanged = parlaNaturale;
+                    }}
+                    parlaNaturale();
                 </script>
                 """
                 st.components.v1.html(componente_audio, height=0)
