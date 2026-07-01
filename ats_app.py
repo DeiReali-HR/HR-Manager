@@ -567,8 +567,8 @@ else:
                     {"azienda": "Tech Solutions Spa", "piva": "09876543211", "referente": "Laura Bianchi", "email": "l.bianchi@techsolutions.com", "stato": "In Attivazione"}
                 ]
 
-            # Layout a due colonne: Modulo a sinistra, Elenco a destra
-            col_mod, col_elenco = st.columns([1, 1.5])
+            # Layout a due colonne: Modulo a sinistra, Elenco con modifiche a destra
+            col_mod, col_elenco = st.columns([1, 1.6])
 
             with col_mod:
                 st.markdown("### ➕ Inserisci Nuovo Cliente")
@@ -591,23 +591,42 @@ else:
                                 "stato": stato_contratto
                             }
                             st.session_state.lista_clienti.append(nuovo_c)
-                            st.success(f"✔️ {ragione_sociale} registrato con successo!")
+                            st.success(f"✔️ {ragione_sociale} registrato!")
                             st.rerun()
                         else:
-                            st.error("❌ I campi Ragione Sociale e Partita IVA sono obbligatori.")
+                            st.error("❌ Ragione Sociale e Partita IVA sono obbligatori.")
 
             with col_elenco:
-                st.markdown("### 📋 Elenco Clienti Partner")
+                st.markdown("### 📋 Elenco & Gestione Clienti Partner")
+                st.caption("💡 Trucco: per eliminare un cliente, seleziona la riga sulla sinistra della tabella e premi il tasto CANC (o Delete) sulla tua tastiera, poi clicca su 'Salva Modifiche'.")
+                
                 if st.session_state.lista_clienti:
                     import pandas as pd
-                    # Convertiamo la lista di dizionari in un DataFrame pulito per Streamlit
+                    # Convertiamo in DataFrame
                     df_clienti = pd.DataFrame(st.session_state.lista_clienti)
-                    # Rinominiamo le colonne per renderle professionali nell'interfaccia
-                    df_clienti.columns = ["Azienda Partner", "Partita IVA", "Referente", "Email", "Stato"]
                     
-                    st.dataframe(df_clienti, use_container_width=True, hide_index=True)
+                    # Usiamo il Data Editor abilitando esplicitamente la cancellazione delle righe (num_rows="dynamic")
+                    df_modificato = st.data_editor(
+                        df_clienti,
+                        use_container_width=True,
+                        num_rows="dynamic",  # Permette di aggiungere/rimuovere righe dinamicamente
+                        column_config={
+                            "azienda": "Azienda Partner",
+                            "piva": "Partita IVA",
+                            "referente": "Referente",
+                            "email": "Email",
+                            "stato": st.column_config.SelectboxColumn("Stato", options=["Attivo", "In Attivazione", "Sospeso"])
+                        },
+                        key="editor_clienti"
+                    )
+                    
+                    # Se il DataFrame modificato dall'utente è diverso da quello in memoria, aggiorniamo la sessione
+                    if not df_modificato.equals(df_clienti):
+                        st.session_state.lista_clienti = df_modificato.to_dict(orient="records")
+                        st.success("🔄 Elenco aggiornato correttamente!")
+                        st.rerun()
                 else:
-                    st.info("Nessun cliente registrato al momento.")
+                    st.info("Nessun cliente in archivio.")
 
         # --- TAB 8: DATABASE ANAGRAFICO CANDIDATI (ORDINATO E CON SCHEDA COMPATTA) ---
         with scelta_tab[7]:
