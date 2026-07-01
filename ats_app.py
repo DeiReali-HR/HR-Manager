@@ -299,38 +299,51 @@ else:
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
             st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
             st.markdown("---")
-            st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            if "chat_history" not in st.session_state:
-                st.session_state.chat_history = []
-           # Mostra i messaggi precedenti mantenendo gli avatar fissi nella cronologia
+            # --- AREA AVATAR DINAMICO E CHAT ---
+            st.markdown("<h3 style='text-align: center; margin-bottom: 5px;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
+            
+            # Contenitore fisso per l'Avatar in evidenza (sempre presente e visibile in cima)
+            spazio_avatar = st.empty()
+            # Posa predefinita di riposo/attesa
+            spazio_avatar.image("1000334217.png", use_container_width=True)
+            
+            st.markdown("---")
+
+            # Mostra la cronologia dei messaggi precedenti
             for msg in st.session_state.chat_history:
                 avatar_immagine = "1000334217.png" if msg["role"] == "user" else "1000334218.png"
                 with st.chat_message(msg["role"], avatar=avatar_immagine):
                     st.write(msg["content"])
 
-            # Input per il nuovo messaggio all'assistente IA
-            if prompt := st.chat_input("Chiedi qualcosa all'assistente HR..."):
-                # 1. Messaggio utente fisso con il primo PNG
+            # Input per il nuovo messaggio
+            if prompt := st.chat_input("Chiedi qualcosa..."):
+                # 1. Mostra il messaggio dell'utente
                 with st.chat_message("user", avatar="1000334217.png"):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # 2. SIMULAZIONE DELLA REACTION DI MOVIMENTO DURANTE L'ELABORAZIONE
-                # Mostra l'avatar nella posa di transizione/caricamento
-                with st.chat_message("assistant", avatar="1000334217.png"):
-                    with st.spinner("L'assistente sta elaborando i dati..."):
-                        import time
-                        time.sleep(1.2) # Pausa per percepire lo stacco visivo di pensiero
+                # 2. ANIMAZIONE IN TEMPO REALE AL MOMENTO DELL'UTILIZZO
+                # L'avatar in cima cambia posa (scatta sul secondo PNG) per simulare il movimento e l'elaborazione
+                spazio_avatar.image("1000334218.png", use_container_width=True)
                 
-                # 3. RISPOSTA DEFINITIVA (L'avatar scatta sul secondo PNG ad elaborazione completata)
+                with st.chat_message("assistant", avatar="1000334217.png"):
+                    with st.spinner("Elaborazione in corso..."):
+                        import time
+                        time.sleep(1.5) # Pausa per rendere visibile il cambio di stato e il pensiero
+                
+                # 3. RISPOSTA DEFINITIVA
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar="1000334218.png"):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 
-                # Aggiorna l'interfaccia
-                st.rerun()            
+                # Ripristina l'avatar alla posa iniziale dopo aver risposto
+                spazio_avatar.image("1000334217.png", use_container_width=True)
+                
+                st.rerun()
+
+            st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
