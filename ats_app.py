@@ -300,108 +300,149 @@ else:
             st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
             st.markdown("---")
             
-            # --- AREA AVATAR DINAMICO E CHAT STILE SIRI ---
-            st.markdown("<h3 style='text-align: center; margin-bottom: 0px;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
-            
-            # Iniettiamo il CSS per rendere TUTTE le immagini in questa sezione dei cerchi perfetti con le onde di Siri
-            st.markdown("""
-            <style>
-            /* Forza l'immagine di Streamlit dentro un cerchio perfetto compatto */
-            [data-testid="stSidebar"] [data-testid="stImage"] img {
-                border-radius: 50% !important;
-                border: 3px solid #3B82F6 !important;
-                object-fit: cover !important;
-                width: 110px !important;
-                height: 110px !important;
-                margin: 0 auto !important;
-                display: block !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-            }
-            /* Contenitore per le onde in stile Siri */
-            .siri-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                position: relative;
-                margin: 15px auto;
-                width: 130px;
-                height: 130px;
-            }
-            .siri-wave-active {
-                position: absolute;
-                width: 130px;
-                height: 130px;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
-                opacity: 0.6;
-                animation: pulseSiri 1.4s infinite ease-in-out;
-                z-index: 0;
-            }
-            @keyframes pulseSiri {
-                0% { transform: scale(0.9); opacity: 0.4; filter: blur(3px); }
-                50% { transform: scale(1.15); opacity: 0.7; filter: blur(6px); }
-                100% { transform: scale(0.9); opacity: 0.4; filter: blur(3px); }
-            }
-            </style>
-            """, unsafe_allow_html=True)
-
-            # Contenitore per l'avatar responsivo
-            spazio_avatar = st.empty()
-            
-            # Stato iniziale: Riposo (Immagine 1 centrata, senza onde di sfondo)
-            with spazio_avatar.container():
-                st.markdown('<div class="siri-container">', unsafe_allow_html=True)
-                st.image("1000334217.png", width=110)
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            # Riga dedicata ai pulsanti di gestione chat per tenerli ordinati
-            st.markdown("---")
-            col_canc, _ = st.columns([1.3, 1])
-            with col_canc:
-                if st.button("🗑️ Cancella Chat", use_container_width=True):
-                    st.session_state.chat_history = []
-                    st.rerun()
-            st.markdown("---")
-
             # Inizializzazione cronologia se vuota
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
 
-            # Mostra i messaggi precedenti (senza icone duplicate)
+            # --- CODICE UNIFICATO PER CENTRARE L'AVATAR E LE ONDE DI SIRI ---
+            # Determiniamo quale immagine mostrare e se attivare la classe animata delle onde
+            if st.session_state.get("ia_sta_pensando", False):
+                immagine_corrente = "1000334218.png"
+                classe_onda = "siri-wave siri-active"
+            else:
+                immagine_corrente = "1000334217.png"
+                classe_onda = "siri-wave"
+
+            # CSS avanzato per centrare gli elementi e gestire la distribuzione degli spazi
+            st.markdown(f"""
+            <style>
+            /* Contenitore principale centrato */
+            .sidebar-chat-box {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                width: 100%;
+                margin-top: 10px;
+            }}
+            
+            /* Titolo dell'assistente */
+            .assistente-titolo {{
+                font-size: 1.15rem;
+                font-weight: bold;
+                margin-bottom: 15px;
+                color: inherit;
+            }}
+
+            /* Contenitore dell'avatar con onde concentriche */
+            .avatar-siri-wrapper {{
+                position: relative;
+                width: 140px;
+                height: 140px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 15px;
+            }}
+
+            /* Cerchio perfetto per l'avatar */
+            .avatar-siri-circle {{
+                width: 110px;
+                height: 110px;
+                border-radius: 50%;
+                border: 3px solid #3B82F6;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+                z-index: 5;
+                position: relative;
+                background-color: #fff;
+            }}
+
+            .avatar-siri-circle img {{
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }}
+
+            /* Onde di Siri (Inattive di base, animate solo con classe siri-active) */
+            .siri-wave {{
+                position: absolute;
+                width: 115px;
+                height: 115px;
+                border-radius: 50%;
+                background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
+                opacity: 0;
+                z-index: 1;
+                transition: all 0.3s ease;
+            }}
+
+            .siri-active {{
+                width: 135px;
+                height: 135px;
+                opacity: 0.65;
+                animation: pulseSiriWave 1.4s infinite ease-in-out;
+            }}
+
+            @keyframes pulseSiriWave {{
+                0% {{ transform: scale(0.92); opacity: 0.4; filter: blur(3px); }}
+                50% {{ transform: scale(1.12); opacity: 0.75; filter: blur(6px); }}
+                100% {{ transform: scale(0.92); opacity: 0.4; filter: blur(3px); }}
+            }}
+            </style>
+
+            <div class="sidebar-chat-box">
+                <div class="assistente-titolo">🤖 Assistente HR Virtuale</div>
+                <div class="avatar-siri-wrapper">
+                    <div class="{classe_onda}"></div>
+                    <div class="avatar-siri-circle">
+                        <img src="app/static/{immagine_corrente}" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png';">
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Pulsante cancella chat perfettamente centrato e distanziato sotto l'avatar
+            col_c1, col_c2, col_c3 = st.columns([0.5, 2.0, 0.5])
+            with col_c2:
+                if st.button("🗑️ Cancella Chat", use_container_width=True):
+                    st.session_state.chat_history = []
+                    st.rerun()
+            
+            st.markdown("---")
+
+            # Rendering della lista dei messaggi (senza icone duplicate)
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"], avatar=None):
                     st.write(msg["content"])
 
-            # Input per il nuovo messaggio
+            # Input per inviare un messaggio
             if prompt := st.chat_input("Chiedi qualcosa..."):
-                # 1. Mostra il messaggio dell'utente
+                # 1. Messaggio utente
                 with st.chat_message("user", avatar=None):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # 2. EFFETTO SIRI ATTIVO: Carica l'immagine 2 e accende le onde animate
-                with spazio_avatar.container():
-                    st.markdown('<div class="siri-container"><div class="siri-wave-active"></div>', unsafe_allow_html=True)
-                    st.image("1000334218.png", width=110)
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
+                # 2. Attiviamo lo stato di pensiero per accendere le onde e cambiare l'avatar
+                st.session_state["ia_sta_pensando"] = True
+                st.rerun()
+
+            # Gestione della risposta quando lo stato di pensiero è attivo
+            if st.session_state.get("ia_sta_pensando", False):
                 with st.chat_message("assistant", avatar=None):
-                    with st.spinner("Pensando..."):
+                    with st.spinner("Elaborazione in corso..."):
                         import time
-                        time.sleep(1.6) # Tempo per visualizzare la pulsazione delle onde
+                        time.sleep(1.6)  # Pausa per godersi l'effetto onda animato
                 
-                # 3. RISPOSTA ASSISTENTE
+                # 3. Risposta dell'assistente IA
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 
-                # Spegnimento delle onde: ritorna all'immagine 1 a riposo
-                with spazio_avatar.container():
-                    st.markdown('<div class="siri-container">', unsafe_allow_html=True)
-                    st.image("1000334217.png", width=110)
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
+                # Risposta completata: togliamo lo stato di pensiero
+                st.session_state["ia_sta_pensando"] = False
                 st.rerun()
 
             st.markdown("---")
