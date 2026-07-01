@@ -541,20 +541,171 @@ else:
                         else: supabase.table("agenda").insert(payload).execute()
                         st.rerun()
 
-        # --- TAB 5: ASSUNZIONI ---
+        Feet        # --- TAB: ASSUNZIONI & GENERAZIONE CONTRATTI ---
         with scelta_tab[4]:
-            st.subheader("🎉 Registro Ufficiale Nuove Assunzioni")
-            res = supabase.table("candidati").select("*").eq("stato", "Assunto").execute()
-            assunti = res.data if res.data else []
-            for a in assunti:
-                st.markdown(f"<div class='saas-box' style='border-left:4px solid #10B981;'><h3>✅ {a['nome']}</h3>Ruolo: {a['posizione']}</div>", unsafe_allow_html=True)
+            st.markdown("## 💼 Gestione Assunzioni & Onboarding")
+            
+            from fpdf import FPDF
+            import io
 
-        # --- TAB 6: REPORT ---
-        with scelta_tab[5]:
-            st.subheader("📊 Analytics")
-            res_cand = supabase.table("candidati").select("*").execute()
-            all_c = res_cand.data if res_cand.data else []
-            st.metric(label="Totale Candidature Cloud", value=len(all_c))
+            # 1. Inizializzazione dei database in sessione se non esistono
+            if "lista_assunzioni" not in st.session_state:
+                st.session_state.lista_assunzioni = [
+                    {"candidato": "Daniele Rossi", "ruolo": "Specializzando HR", "tipo_contratto": "Determinato", "data_inizio": "2026-04-01", "retribuzione": "28000"},
+                    {"candidato": "Marco Verdone", "ruolo": "Senior Recruiter", "tipo_contratto": "Indeterminato", "data_inizio": "2026-05-15", "retribuzione": "42000"}
+                ]
+            
+            # Recupero della lista candidati per il menu a tendina (con fallback se vuota)
+            if "lista_candidati" in st.session_state and st.session_state.lista_candidati:
+                # Se hai una lista di dizionari tipo [{"nome": "..."}]
+                opzioni_candidati = [c.get("nome", "Candidato") for c in st.session_state.lista_candidati]
+            else:
+                opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri", "Simona Viola"]
+
+            # 2. Layout a due colonne: Modulo a sinistra, Tabella di gestione a destra
+            col_form, col_tabella = st.columns([1, 1.4])
+
+            with col_form:
+                st.markdown("### ➕ Perfeziona Nuova Assunzione")
+                with st.form("form_nuova_assunzione", clear_on_submit=True):
+                    
+                    # Selezione del candidato da menu a tendina
+                    candidato_scelto = st.selectbox("Seleziona Candidato*", opzioni_candidati)
+                    
+                    ruolo_aziendale = st.text_input("Qualifica / Ruolo*")
+                    tipo_contratto = st.selectbox("Tipologia Contrattuale", ["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"])
+                    
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        data_inizio = st.date_input("Data Decorrenza", value=None)
+                    with c2:
+                        ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
+                    
+                    # Caricamento dei documenti obbligatori (es. documento d'identità, codice fiscale)
+                    documentazione = st.file_uploader("Carica Documenti d'Identità / CV Firmato (PDF, PNG)", type=["pdf", "png", "jpg"])
+                    
+                    submit_assunzione = st.form_submit_button("Registra Assunzione & Crea Scheda", use_container_width=True)
+                    
+                    if submit_assunzione:
+                        if candidato_scelto and ruolo_aziendale and data_inizio:
+                            nuova_ass = {
+                                "candidato": candidato_scelto,
+                                "ruolo": ruolo_aziendale,
+                                "tipo_contratto": tipo_contratto,
+                                "data_inizio": str(data_inizio),
+                                "retribuzione": str(ral_proposta)
+                            }
+                            st.session_state.lista_assunzioni.append(nuova_ass)
+                            st.success(f"✔️ Assunzione di {candidato_scelto} registrata in sessione!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Compila tutti i campi obbligatori (Candidato, Ruolo e Data Inizio).")
+
+            with col_tabella:
+                st.markdown("### 📋 Registro Assunzioni Attive")
+                st.caption("💡 Seleziona una riga e premi CANC sulla tastiera per eliminarla, poi conferma modifiche.")
+                
+                if st.session_state.lista_assunzioni:
+                    import pandas as pd
+                    df_assunzioni = pd.DataFrame(st.session_state.lista_assunzioni)
+                    
+                    # Editor dinamico con opzione di cancellazione righe integrata
+                    df_ass_modificato = st.data_editor(
+                        df_assunzioni,
+                        use_container_width=True,
+                        num_rows="dynamic",
+                        column_config={
+                            "candidato": "Dipendente",
+                            "ruolo": "Ruolo / Mansione",
+                            "tipo_contratto": st.column_config.SelectboxColumn("Contratto", options=["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"]),
+                            "data_inizio": "Data Inizio",
+                            "retribuzione": "RAL (€)"
+                        },
+                        key="editor_assunzioni"
+                    )
+                    
+                    # Sincronizzazione automatica della cancellazione/modifica
+                    if not df_ass_modificato.equals(df_assunzioni):
+                        st.session_state.lista_assunzioni = df_ass_modificato.to_dict(orient="records")
+                        st.success("🔄 Registro aggiornato!")
+                        st.rerun()
+                        
+                    # --- GENERAZIONE E DOWNLOAD SCHEDA PDF IN TEMPO REALE ---
+                    st.markdown("---")
+                    st.markdown("### 📄 Esporta Pratiche per l'Ufficio del Personale")
+                    
+                    # Scegli quale dipendente esportare tra quelli presenti nella tabella
+                    dipendente_da_esportare = st.selectbox(
+                        "Seleziona l'assunzione da inviare:", 
+                        [a["candidato"] for a in st.session_state.lista_assunzioni]
+                    )
+                    
+                    # Recupero dei dati specifici del dipendente selezionato
+                    dati_dip = next((item for item in st.session_state.lista_assunzioni if item["candidato"] == dipendente_da_esportare), None)
+                    
+                    if dati_dip:
+                        # Costruzione del PDF in memoria RAM senza salvare file locali sul server
+                        pdf = FPDF()
+                        pdf.add_page()
+                        
+                        # Intestazione formale
+                        pdf.set_font("Helvetica", "B", 16)
+                        pdf.set_text_color(59, 130, 246) # Blu Reali
+                        pdf.cell(0, 10, "SUITE HR ENTERPRISE - GRUPPO DEI REALI", ln=True, align="C")
+                        pdf.set_font("Helvetica", "", 10)
+                        pdf.set_text_color(100, 100, 100)
+                        pdf.cell(0, 6, "Trasmissione Pratica di Onboarding - Ufficio del Personale", ln=True, align="C")
+                        pdf.ln(10)
+                        
+                        # Tabella dati interni del PDF
+                        pdf.set_font("Helvetica", "B", 12)
+                        pdf.set_text_color(0, 0, 0)
+                        pdf.cell(0, 10, "RIEPILOGO ANAGRAFICO E CONTRATTUALE", ln=True)
+                        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                        pdf.ln(4)
+                        
+                        pdf.set_font("Helvetica", "", 11)
+                        pdf.cell(50, 8, "Dipendente / Candidato:", border=0)
+                        pdf.set_font("Helvetica", "B", 11)
+                        pdf.cell(0, 8, str(dati_dip["candidato"]), border=0, ln=True)
+                        
+                        pdf.set_font("Helvetica", "", 11)
+                        pdf.cell(50, 8, "Qualifica / Mansione:", border=0)
+                        pdf.set_font("Helvetica", "B", 11)
+                        pdf.cell(0, 8, str(dati_dip["ruolo"]), border=0, ln=True)
+                        
+                        pdf.set_font("Helvetica", "", 11)
+                        pdf.cell(50, 8, "Tipologia Contratto:", border=0)
+                        pdf.set_font("Helvetica", "B", 11)
+                        pdf.cell(0, 8, str(dati_dip["tipo_contratto"]), border=0, ln=True)
+                        
+                        pdf.set_font("Helvetica", "", 11)
+                        pdf.cell(50, 8, "Data Decorrenza:", border=0)
+                        pdf.set_font("Helvetica", "B", 11)
+                        pdf.cell(0, 8, str(dati_dip["data_inizio"]), border=0, ln=True)
+                        
+                        pdf.set_font("Helvetica", "", 11)
+                        pdf.cell(50, 8, "R.A.L. Assegnata:", border=0)
+                        pdf.set_font("Helvetica", "B", 11)
+                        pdf.cell(0, 8, f"{dati_dip['retribuzione']} EUR", border=0, ln=True)
+                        
+                        pdf.ln(15)
+                        pdf.set_font("Helvetica", "I", 9)
+                        pdf.set_text_color(120, 120, 120)
+                        pdf.cell(0, 10, "Documento generato automaticamente dalla piattaforma ATS Gruppo Dei Reali.", ln=True, align="L")
+                        
+                        # Output in byte del PDF pronti per il download
+                        pdf_output = pdf.output()
+                        
+                        st.download_button(
+                            label=f"📥 Scarica Scheda PDF di {dipendente_da_esportare}",
+                            data=bytes(pdf_output),
+                            file_name=f"Pratica_Assunzione_{dipendente_da_esportare.replace(' ', '_')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                else:
+                    st.info("Nessuna assunzione in attesa di elaborazione.")
 
         # --- TAB: ANAGRAFICA CLIENTI B2B ---
         with scelta_tab[6]:
