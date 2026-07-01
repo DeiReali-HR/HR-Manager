@@ -283,12 +283,12 @@ else:
                 st.rerun()
 
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
-        
-        # --- TAB MANAGEMENT ---
-        tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "📥 Screening", "🤝 Colloqui", "🎉 Assunzioni", "📊 Report", "🏢 Clienti", "👥 Candidati"]
-        scelta_tab = st.tabs(tab_nomi)
-        
-        # --- TAB 1: HOME ---
+
+# --- TAB MANAGEMENT (Assicurati che queste righe ci siano!) ---
+tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati"]
+scelta_tab = st.tabs(tab_nomi)
+
+# --- TAB 1: HOME ---
 with scelta_tab[0]:
     # --- INIZIO NOTIFICA CAMPANELLA ---
     res_count = supabase.table("candidati").select("id", count="exact").execute()
