@@ -303,20 +303,22 @@ else:
             
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-            # Mostra i messaggi precedenti della chat
+           # Mostra i messaggi precedenti della chat con gli avatar reali
             for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"]):
+                avatar_immagine = "1000381024.jpg" if msg["role"] == "user" else "1000381025.jpg"
+                with st.chat_message(msg["role"], avatar=avatar_immagine):
                     st.write(msg["content"])
 
             # Input per il nuovo messaggio all'assistente IA
             if prompt := st.chat_input("Chiedi qualcosa all'assistente HR..."):
-                with st.chat_message("user"):
+                # Messaggio utente con avatar 1000381024.jpg
+                with st.chat_message("user", avatar="1000381024.jpg"):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # Risposta simulata dell'IA (puoi collegarla alle tue funzioni OpenIA esistenti)
-                risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_conness['nome']}. Come posso aiutarti con la gestione della plancia?"
-                with st.chat_message("assistant"):
+                # Risposta assistente con avatar 1000381025.jpg
+                risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
+                with st.chat_message("assistant", avatar="1000381025.jpg"):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})            
             if st.button("🔒 Disconnetti", use_container_width=True):
