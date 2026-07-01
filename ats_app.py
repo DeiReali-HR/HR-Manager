@@ -289,8 +289,6 @@ else:
         scelta_tab = st.tabs(tab_nomi)
 
         # --- TAB 1: HOME ---
-        with scelta_tab[0]:
-            # --- TAB 1: HOME ---
 with scelta_tab[0]:
     # --- INIZIO NOTIFICA CAMPANELLA ---
     res_count = supabase.table("candidati").select("id", count="exact").execute()
