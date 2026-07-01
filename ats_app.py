@@ -206,147 +206,107 @@ if "job" in st.query_params:
 # --- AREA AMMINISTRATIVA ---
 else:
     if not st.session_state.autenticato:
-        st.markdown("<style>.stApp { background: radial-gradient(circle at 50% 50%, #1E3A8A 0%, #0F172A 100%) !important; } header { visibility: hidden !important; } div[data-testid='stForm'] { background: #FFFFFF !important; border-radius: 16px !important; padding: 40px !important; box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important; max-width: 450px !important; margin: 0 auto !important; } div[data-testid='stForm'] label p { color: #1E293B !important; font-weight: 700 !important; }</style>", unsafe_allow_html=True)
+        st.markdown("<style>.stApp { background: radial-gradient(circle at 50% 50%, #1F3A8A 0%, #0F172A 100%) !important; } header { visibility: hidden !important; }</style>", unsafe_allow_html=True)
         _, col_centro, _ = st.columns([1, 1.4, 1])
         with col_centro:
             st.markdown("<br><br><br>", unsafe_allow_html=True)
             with st.form("login"):
                 mostra_logo_aziendale()
-                login_mail = st.text_input("📧 E-mail Aziendale")
+                login_mail = st.text_input("📬 E-mail Aziendale")
                 login_pw = st.text_input("🔑 Password", type="password")
                 if st.form_submit_button("ACCEDI AL SISTEMA", use_container_width=True):
                     if login_mail in OPERATORI and OPERATORI[login_mail]["pw"] == login_pw:
                         st.session_state.autenticato = True
                         st.session_state.utente_connesso = OPERATORI[login_mail]
                         st.rerun()
-                    else: st.error("Credenziali non corrette.")
+                    else:
+                        st.error("Credenziali non corrette.")
     else:
-        # --- SIDEBAR: SIMULATORE CHATGPT ---
-        with st.sidebar:
-            mostra_logo_aziendale()
-            st.write(f"🟢 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
-            st.success("💬 Assistente ChatGPT v4-Mini Attivo")
-            
-            st.markdown("---")
-            st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>👩‍💼 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
-            
-            if "chat_history" not in st.session_state: st.session_state.chat_history = []
-            
-            img_talking_base64 = ""
-            img_idle_base64 = ""
-            if os.path.exists("1000334217.png") and os.path.exists("1000334218.png"):
-                import base64
-                with open("1000334217.png", "rb") as f1: img_idle_base64 = base64.b64encode(f1.read()).decode()
-                with open("1000334218.png", "rb") as f2: img_talking_base64 = base64.b64encode(f2.read()).decode()
-            
-            is_speaking = st.session_state.get("sta_rispondendo", False)
-            if img_idle_base64 and img_talking_base64:
-                active_img = img_talking_base64 if is_speaking else img_idle_base64
-                
-                # Semplifichiamo il calcolo del colore qui per evitare l'errore di sintassi
-                colore_bordo = "#10B981" if is_speaking else "#EC4899"
-                
-                st.markdown(f"""
-                    <div style="display: flex; justify-content: center; margin: 15px 0;">
-                        <div style="background-image: url('data:image/png;base64,{active_img}'); width: 105px; height: 105px; border-radius: 50%; background-size: cover; background-position: center 20%; border: 3px solid {colore_bordo};"></div>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("<div style='text-align: center; font-size: 40px;'>👩‍💼</div>", unsafe_allow_html=True)
-            
-            st.session_state.sta_rispondendo = False
-            container_chat = st.container(height=260)
-            with container_chat:
-                for msg in st.session_state.chat_history:
-                    with st.chat_message(msg["role"]): st.markdown(msg["text"])
-            
-            user_query = st.chat_input("Invia un messaggio a ChatGPT...")
-            if user_query:
-                with container_chat:
-                    with st.chat_message("user"): st.markdown(user_query)
-                st.session_state.chat_history.append({"role": "user", "text": user_query})
-                st.session_state.sta_rispondendo = True
-                
-                q = user_query.lower()
-                if "stipendio" in q or "facchino" in q or "netto" in q:
-                    risposta_ia = "Un facchino a Roma sotto contratto standard percepisce all'incirca **1.100€ - 1.180€ netti al mese**."
-                else:
-                    risposta_ia = f"Dati agganciati correttamente con i sistemi del Gruppo Dei Reali."
-                
-                with container_chat:
-                    with st.chat_message("assistant"): st.markdown(risposta_ia)
-                st.session_state.chat_history.append({"role": "assistant", "text": risposta_ia})
-                st.rerun()
+        # --- LOGIN EFFETTUATO: MOSTRIAMO L'INTERFACCIA HR ---
+        st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
+        # Inizializzazione dei Tab di navigazione principale
+        tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati"]
+        scelta_tab = st.tabs(tab_nomi)
+
+        # --- TAB 1: HOME / PLANCIA ---
+        with scelta_tab[0]:
+            # --- LOGICA NOTIFICA CAMPANELLA IN TEMPO REALE ---
+            try:
+                res_count = supabase.table("candidati").select("id", count="exact").execute()
+                totale_candidati = res_count.count if res_count.count is not None else 0
+            except Exception:
+                totale_candidati = 0
+
+            st.markdown(f"""
+            <div style="background-color: #EFF6FF; padding: 12px 20px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🛎️</span>
+                    <span style="font-size: 16px; font-weight: bold; color: #1E3A8A;">Notifiche Sistema HR:</span>
+                </div>
+                <span style="background-color: #EF4444; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 14px;">
+                    📄 {totale_candidati} Candidati Totali
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- CRUSCOTTO DELLE METRICHE GLOBALI ---
+            st.subheader("📊 Cruscotto Attività Risorse Umane")
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            col_m1.metric(label="📥 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
+            col_m2.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
+            col_m3.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
+            col_m4.metric(label="✅ Assunzioni Perfezionate", value="24", delta="82%")
+
+            # --- SEZIONE CENTRO AGGIORNAMENTI CON LINK POPUP ESTERNI ---
+            st.markdown("---")
+            st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
+            col_news1, col_news2 = st.columns(2)
+            
+            with col_news1:
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; margin-bottom: 10px;">
+                    <h4>🏛️ Circolari INPS & INAIL</h4>
+                    <ul>
+                        <li style="margin-bottom: 10px;"><b>[INPS]</b> Linee guida esonero contributivo Under 35.<br>
+                            <a href="https://www.inps.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Circolare Ufficiale ↗</a>
+                        </li>
+                        <li><b>[INAIL]</b> Tariffe premi aggiornate Logistica.<br>
+                            <a href="https://www.inail.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Tabelle Tariffe ↗</a>
+                        </li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+                
+            with col_news2:
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 10px;">
+                    <h4>🔥 Ultim'ora Lavoro</h4>
+                    <ul>
+                        <li style="margin-bottom: 10px;"><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali 2026.<br>
+                            <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
+                        </li>
+                        <li><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
+                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
+                        </li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO) ---
+        with st.sidebar:
+            st.markdown("---")
+            st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
+            st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
+            st.markdown("---")
+            st.markdown("<h3 style='text-align: center; margin-bottom: 0;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
+            
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+            
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
-
-        st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
-
-# --- TAB MANAGEMENT (Assicurati che queste righe ci siano!) ---
-tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati"]
-scelta_tab = st.tabs(tab_nomi)
-
-# --- TAB 1: HOME ---
-with scelta_tab[0]:
-    # --- INIZIO NOTIFICA CAMPANELLA ---
-    res_count = supabase.table("candidati").select("id", count="exact").execute()
-    totale_candidati = res_count.count if res_count.count is not None else 0
-
-    st.markdown(f"""
-    <div style="background-color: #EFF6FF; padding: 12px 20px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 24px;">🛎️</span>
-            <span style="font-size: 16px; font-weight: bold; color: #1E3A8A;">Notifiche Sistema HR:</span>
-        </div>
-        <span style="background-color: #EF4444; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 14px;">
-            📄 {totale_candidati} Candidati Totali
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
-    # --- FINE NOTIFICA CAMPANELLA ---
-
-    st.subheader("📊 Cruscotto Attività Risorse Umane")
-    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-    col_m1.metric(label="📥 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
-    col_m2.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
-    col_m3.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
-    col_m4.metric(label="✅ Assunzioni Perfezionate", value="24", delta="82%")
-
-    st.markdown("---")
-    st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
-    col_news1, col_news2 = st.columns(2)
-    
-    with col_news1:
-        st.markdown("""
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; margin-bottom: 10px;">
-            <h4>🏛️ Circolari INPS & INAIL</h4>
-            <ul>
-                <li><b>[INPS]</b> Linee guida esonero contributivo Under 35.<br>
-                    <a href="https://www.inps.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Circolare Ufficiale ↗</a>
-                </li>
-                <li style="margin-top: 10px;"><b>[INAIL]</b> Tariffe premi aggiornate Logistica.<br>
-                    <a href="https://www.inail.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Tabelle Tariffe ↗</a>
-                </li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with col_news2:
-        st.markdown("""
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 10px;">
-            <h4>🔥 Ultim'ora Lavoro</h4>
-            <ul>
-                <li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali 2026.<br>
-                    <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
-                </li>
-                <li style="margin-top: 10px;"><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
-                    <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
-                </li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
 
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
