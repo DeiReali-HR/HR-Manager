@@ -2,3 +2,4 @@ supabase
 google-genai
 pypdf
 openai
+fpdf2
