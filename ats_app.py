@@ -287,7 +287,7 @@ else:
         # --- TAB MANAGEMENT ---
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "📥 Screening", "🤝 Colloqui", "🎉 Assunzioni", "📊 Report", "🏢 Clienti", "👥 Candidati"]
         scelta_tab = st.tabs(tab_nomi)
-
+        
         # --- TAB 1: HOME ---
 with scelta_tab[0]:
     # --- INIZIO NOTIFICA CAMPANELLA ---
@@ -313,37 +313,40 @@ with scelta_tab[0]:
     col_m2.metric(label="🤝 Colloqui in Agenda", value="8", delta="3 oggi")
     col_m3.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
     col_m4.metric(label="✅ Assunzioni Perfezionate", value="24", delta="82%")
-            st.markdown("---")
-            st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
-            col_news1, col_news2 = st.columns(2)
-            with col_news1:
-                st.markdown("""
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; margin-bottom: 10px;">
-                    <h4>🏛️ Circolari INPS & INAIL</h4>
-                    <ul>
-                        <li><b>[INPS]</b> Linee guida esonero contributivo Under 35.<br>
-                            <a href="https://www.inps.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Circolare Ufficiale ↗</a>
-                        </li>
-                        <li style="margin-top: 10px;"><b>[INAIL]</b> Tariffe premi aggiornate Logistica.<br>
-                            <a href="https://www.inail.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Tabelle Tariffe ↗</a>
-                        </li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-            with col_news2:
-                st.markdown("""
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 10px;">
-                    <h4>🔥 Ultim'ora Lavoro</h4>
-                    <ul>
-                        <li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali 2026.<br>
-                            <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
-                        </li>
-                        <li style="margin-top: 10px;"><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
-                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
-                        </li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
+    col_news1, col_news2 = st.columns(2)
+    
+    with col_news1:
+        st.markdown("""
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; margin-bottom: 10px;">
+            <h4>🏛️ Circolari INPS & INAIL</h4>
+            <ul>
+                <li><b>[INPS]</b> Linee guida esonero contributivo Under 35.<br>
+                    <a href="https://www.inps.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Circolare Ufficiale ↗</a>
+                </li>
+                <li style="margin-top: 10px;"><b>[INAIL]</b> Tariffe premi aggiornate Logistica.<br>
+                    <a href="https://www.inail.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Tabelle Tariffe ↗</a>
+                </li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_news2:
+        st.markdown("""
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 10px;">
+            <h4>🔥 Ultim'ora Lavoro</h4>
+            <ul>
+                <li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali 2026.<br>
+                    <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
+                </li>
+                <li style="margin-top: 10px;"><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
+                    <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
+                </li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
