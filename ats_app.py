@@ -293,106 +293,123 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO CON COSTRUTTO MEMORIA PIL) ---
+        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO CON AVATAR CIRCOLARE & AURA SIRI) ---
         with st.sidebar:
             import os
-            from PIL import Image
+            import base64
 
-            # 1. INIZIALIZZAZIONE COMPLETA DELLE VARIABILI DI SESSIONE
+            # 1. INIZIALIZZAZIONE DELLA CHAT
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
             if "ia_sta_pensando" not in st.session_state:
                 st.session_state["ia_sta_pensando"] = False
-
-            # 2. GESTIONE SICURA DEL LOGO AZIENDALE CON PIL
+                
+            # LOGO DEI REALI: Caricamento sicuro
             logo_file = "1000376160.jpg"
             if os.path.exists(logo_file):
-                try:
-                    # Apriamo l'immagine in memoria per bypassare i limiti di Streamlit Cloud
-                    img_logo = Image.open(logo_file)
-                    col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
-                    with col_logo2:
-                        st.image(img_logo, use_container_width=True)
-                except Exception:
-                    st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 15px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
+                col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
+                with col_logo2:
+                    st.image(logo_file, use_container_width=True)
             else:
-                st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 15px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 20px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
             st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
             st.markdown("---")
             
-            # --- AREA ASSISTENTE VIRTUALE ED EFFETTO SIRI CENTRATO ---
+            # --- AREA ASSISTENTE VIRTUALE: GENERAZIONE COMPONENTE SIRI IN HTML/CSS ---
             st.markdown("<h4 style='text-align: center; margin-bottom: 0px;'>🤖 Assistente HR Virtuale</h4>", unsafe_allow_html=True)
             
-            # CSS isolato applicato dinamicamente
-            st.markdown("""
-            <style>
-            .siri-wrapper-box {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                position: relative;
-                margin: 20px auto 10px auto;
-                width: 130px;
-                height: 130px;
-            }
-            .siri-glow-wave {
-                position: absolute;
-                width: 125px;
-                height: 125px;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
-                opacity: 0.65;
-                animation: siriPulse 1.4s infinite ease-in-out;
-                z-index: 1;
-            }
-            @keyframes siriPulse {
-                0% { transform: scale(0.92); opacity: 0.4; filter: blur(3px); }
-                50% { transform: scale(1.15); opacity: 0.75; filter: blur(6px); }
-                100% { transform: scale(0.92); opacity: 0.4; filter: blur(3px); }
-            }
-            .assistente-avatar-tondo img {
-                border-radius: 50% !important;
-                border: 3px solid #3B82F6 !important;
-                object-fit: cover !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
+            # Funzione per convertire le immagini locali in stringhe Base64 leggibili dall'HTML standard
+            def ottieni_immagine_base64(percorso_file):
+                if os.path.exists(percorso_file):
+                    with open(percorso_file, "rb") as f:
+                        data = f.read()
+                    return base64.b64encode(data).decode()
+                return ""
 
-            # Contenitore dinamico per l'avatar dell'assistente
-            spazio_avatar = st.empty()
-            
-            # Controllo dello stato di pensiero estratto dalla sessione
+            # Determiniamo quale file caricare in base allo stato dell'IA
             if st.session_state["ia_sta_pensando"]:
-                avatar_corrente = "1000334218.png"
-                mostra_onda = True
+                avatar_file = "1000334218.png"
+                classe_animazione = "siri-glow-active"
             else:
-                avatar_corrente = "1000334217.png"
-                mostra_onda = False
+                avatar_file = "1000334217.png"
+                classe_animazione = "siri-glow-idle"
 
-            # Rendering controllato dell'avatar tramite PIL
-            with spazio_avatar.container():
-                if mostra_onda:
-                    st.markdown('<div class="siri-wrapper-box"><div class="siri-glow-wave"></div></div>', unsafe_allow_html=True)
+            stringa_base64 = ottieni_immagine_base64(avatar_file)
+
+            # Se l'immagine è presente sul server, creiamo la struttura con l'AURA DIETRO l'avatar tondo
+            if stringa_base64:
+                st.markdown(f"""
+                <style>
+                .siri-container-centrato {{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    position: relative;
+                    margin: 25px auto 15px auto;
+                    width: 140px;
+                    height: 140px;
+                }}
+                /* L'aura colorata di Siri posizionata dietro (z-index: 1) */
+                .siri-glow-active {{
+                    position: absolute;
+                    width: 125px;
+                    height: 125px;
+                    border-radius: 50%;
+                    background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
+                    opacity: 0.7;
+                    filter: blur(5px);
+                    animation: siriPulsazione 1.3s infinite ease-in-out;
+                    z-index: 1;
+                }}
+                .siri-glow-idle {{
+                    position: absolute;
+                    width: 115px;
+                    height: 115px;
+                    border-radius: 50%;
+                    background: #3B82F6;
+                    opacity: 0.15;
+                    filter: blur(4px);
+                    z-index: 1;
+                }}
+                @keyframes siriPulsazione {{
+                    0% {{ transform: scale(0.95); opacity: 0.5; filter: blur(4px); }}
+                    50% {{ transform: scale(1.18); opacity: 0.85; filter: blur(8px); }}
+                    100% {{ transform: scale(0.95); opacity: 0.5; filter: blur(4px); }}
+                }}
+                /* L'avatar ritagliato a cerchio perfetto posizionato sopra l'aura (z-index: 2) */
+                .avatar-circolare-perfetto {{
+                    width: 110px;
+                    height: 110px;
+                    border-radius: 50%;
+                    border: 3px solid #3B82F6;
+                    overflow: hidden;
+                    z-index: 2;
+                    position: relative;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+                }}
+                .avatar-circolare-perfetto img {{
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }}
+                </style>
                 
-                c_av1, c_av2, c_av3 = st.columns([1, 2, 1])
-                with c_av2:
-                    st.markdown('<div class="assistente-avatar-tondo">', unsafe_allow_html=True)
-                    if os.path.exists(avatar_corrente):
-                        try:
-                            img_avatar = Image.open(avatar_corrente)
-                            st.image(img_avatar, use_container_width=True)
-                        except Exception:
-                            st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
-                    else:
-                        st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
+                <div class="siri-container-centrato">
+                    <div class="{classe_animazione}"></div>
+                    <div class="avatar-circolare-perfetto">
+                        <img src="data:image/png;base64,{stringa_base64}">
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Fallback di emergenza se i file non sono leggibili
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", width=110)
 
-            # Tasto "Cancella Chat"
-            st.markdown("<br>", unsafe_allow_html=True)
+            # Pulsante "Cancella Chat"
             col_btn1, col_btn2, col_btn3 = st.columns([0.4, 2.2, 0.4])
             with col_btn2:
                 if st.button("🗑️ Cancella Chat", use_container_width=True):
@@ -401,32 +418,35 @@ else:
             
             st.markdown("---")
 
-            # Visualizzazione della cronologia salvata in session_state
+            # Mostra lo storico dei messaggi pulito (senza icone duplicate)
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"], avatar=None):
                     st.write(msg["content"])
 
-            # Input per inviare un nuovo messaggio alla chat
+            # Input per inviare un messaggio
             if prompt := st.chat_input("Chiedi qualcosa..."):
                 with st.chat_message("user", avatar=None):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
+                # Accendiamo l'animazione e cambiamo posa all'avatar
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
-            # Processo di risposta dell'IA
+            # Logica di risposta dell'IA quando lo stato è attivo
             if st.session_state["ia_sta_pensando"]:
                 with st.chat_message("assistant", avatar=None):
-                    with st.spinner("Elaborazione in corso..."):
+                    with st.spinner("Elaborazione..."):
                         import time
-                        time.sleep(1.4)
+                        time.sleep(1.5) # Pausa per mostrare l'effetto onda di Siri in tempo reale
                 
+                # CORREZIONE CRUCIALE: cambiato da 'resposta_ia' a 'risposta_ia' per eliminare il NameError
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
-                st.session_state.chat_history.append({"role": "assistant", "content": resposta_ia})
+                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 
+                # Spegnimento onde ed elaborazione completata
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
 
