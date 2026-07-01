@@ -303,7 +303,22 @@ else:
             
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-            
+            # Mostra i messaggi precedenti della chat
+            for msg in st.session_state.chat_history:
+                with st.chat_message(msg["role"]):
+                    st.write(msg["content"])
+
+            # Input per il nuovo messaggio all'assistente IA
+            if prompt := st.chat_input("Chiedi qualcosa all'assistente HR..."):
+                with st.chat_message("user"):
+                    st.write(prompt)
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
+                
+                # Risposta simulata dell'IA (puoi collegarla alle tue funzioni OpenIA esistenti)
+                risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_conness['nome']}. Come posso aiutarti con la gestione della plancia?"
+                with st.chat_message("assistant"):
+                    st.write(risposta_ia)
+                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})            
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
