@@ -300,46 +300,85 @@ else:
             st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
             st.markdown("---")
             
-            # --- AREA AVATAR DINAMICO E CHAT ---
-            st.markdown("<h3 style='text-align: center; margin-bottom: 5px;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
+            # --- AREA AVATAR DINAMICO E CHAT STILE SIRI ---
+            st.markdown("<h3 style='text-align: center; margin-bottom: 10px;'>🤖 Assistente HR Virtuale</h3>", unsafe_allow_html=True)
             
-            # Contenitore fisso per l'Avatar in evidenza (sempre presente e visibile in cima)
+            # CSS per creare il cerchio perfetto e l'animazione di pulsazione "Siri Wave"
+            st.markdown("""
+            <style>
+            .avatar-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                margin: 20px auto;
+                width: 130px;
+                height: 130px;
+            }
+            .siri-wave {
+                position: absolute;
+                width: 115px;
+                height: 115px;
+                border-radius: 50%;
+                background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899);
+                opacity: 0.6;
+                animation: pulseSiri 1.8s infinite ease-in-out;
+                z-index: 1;
+            }
+            @keyframes pulseSiri {
+                0% { transform: scale(0.95); opacity: 0.5; filter: blur(2px); }
+                50% { transform: scale(1.2); opacity: 0.8; filter: blur(6px); filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.6)); }
+                100% { transform: scale(0.95); opacity: 0.5; filter: blur(2px); }
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+            # Contenitore animato dell'avatar in cima
             spazio_avatar = st.empty()
-            # Posa predefinita di riposo/attesa
-            spazio_avatar.image("1000334217.png", use_container_width=True)
+            
+            # Configurazione iniziale a riposo (Immagine 1)
+            with spazio_avatar.container():
+                col_av1, col_av2, col_av3 = st.columns([1, 2, 1])
+                with col_av2:
+                    st.image("1000334217.png", use_container_width=True)
             
             st.markdown("---")
 
-            # Mostra la cronologia dei messaggi precedenti
+            # Mostra la cronologia dei messaggi precedenti (senza immagini nei fumetti)
             for msg in st.session_state.chat_history:
-                avatar_immagine = "1000334217.png" if msg["role"] == "user" else "1000334218.png"
-                with st.chat_message(msg["role"], avatar=avatar_immagine):
+                with st.chat_message(msg["role"]):
                     st.write(msg["content"])
 
             # Input per il nuovo messaggio
             if prompt := st.chat_input("Chiedi qualcosa..."):
-                # 1. Mostra il messaggio dell'utente
-                with st.chat_message("user", avatar="1000334217.png"):
+                # 1. Mostra il messaggio dell'utente (senza immagine nel fumetto)
+                with st.chat_message("user"):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # 2. ANIMAZIONE IN TEMPO REALE AL MOMENTO DELL'UTILIZZO
-                # L'avatar in cima cambia posa (scatta sul secondo PNG) per simulare il movimento e l'elaborazione
-                spazio_avatar.image("1000334218.png", use_container_width=True)
+                # 2. ATTIVAZIONE ONDE DI SIRI + SECONDO AVATAR IN ALTO (Posa di pensiero)
+                with spazio_avatar.container():
+                    st.markdown('<div class="avatar-container"><div class="siri-wave"></div></div>', unsafe_allow_html=True)
+                    col_av1, col_av2, col_av3 = st.columns([1, 2, 1])
+                    with col_av2:
+                        st.image("1000334218.png", use_container_width=True)
                 
-                with st.chat_message("assistant", avatar="1000334217.png"):
+                with st.chat_message("assistant"):
                     with st.spinner("Elaborazione in corso..."):
                         import time
-                        time.sleep(1.5) # Pausa per rendere visibile il cambio di stato e il pensiero
+                        time.sleep(1.8) # Tempo dell'animazione a onde
                 
-                # 3. RISPOSTA DEFINITIVA
+                # 3. RISPOSTA DEFINITIVA (senza immagine nel fumetto)
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
-                with st.chat_message("assistant", avatar="1000334218.png"):
+                with st.chat_message("assistant"):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 
-                # Ripristina l'avatar alla posa iniziale dopo aver risposto
-                spazio_avatar.image("1000334217.png", use_container_width=True)
+                # Risposta completata: Disattiviamo le onde e l'avatar in cima torna alla posa standard
+                with spazio_avatar.container():
+                    col_av1, col_av2, col_av3 = st.columns([1, 2, 1])
+                    with col_av2:
+                        st.image("1000334217.png", use_container_width=True)
                 
                 st.rerun()
 
