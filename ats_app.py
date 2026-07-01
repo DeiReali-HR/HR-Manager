@@ -556,13 +556,58 @@ else:
             all_c = res_cand.data if res_cand.data else []
             st.metric(label="Totale Candidature Cloud", value=len(all_c))
 
-        # --- TAB 7: CLIENTI ---
+        # --- TAB: ANAGRAFICA CLIENTI B2B ---
         with scelta_tab[6]:
-            st.subheader("🏢 Anagrafica Clienti B2B")
-            res_cl = supabase.table("clienti").select("*").execute()
-            lista_clienti = res_cl.data if res_cl.data else []
-            for cl in lista_clienti:
-                st.markdown(f"<div class='saas-box'><b>🏢 {cl['ragione_sociale']}</b> — P.IVA: {cl['partita_iva']}</div>", unsafe_allow_html=True)
+            st.markdown("## 🏢 Anagrafica Clienti B2B")
+            
+            # Inizializzazione del database clienti in sessione se non esiste
+            if "lista_clienti" not in st.session_state:
+                st.session_state.lista_clienti = [
+                    {"azienda": "Reali Logistics S.r.l.", "piva": "01234567890", "referente": "Mario Rossi", "email": "mario.rossi@realilogistics.it", "stato": "Attivo"},
+                    {"azienda": "Tech Solutions Spa", "piva": "09876543211", "referente": "Laura Bianchi", "email": "l.bianchi@techsolutions.com", "stato": "In Attivazione"}
+                ]
+
+            # Layout a due colonne: Modulo a sinistra, Elenco a destra
+            col_mod, col_elenco = st.columns([1, 1.5])
+
+            with col_mod:
+                st.markdown("### ➕ Inserisci Nuovo Cliente")
+                with st.form("form_nuovo_cliente", clear_on_submit=True):
+                    ragione_sociale = st.text_input("Ragione Sociale Azienda*")
+                    partita_iva = st.text_input("Partita IVA*")
+                    nome_referente = st.text_input("Nome Referente")
+                    email_contatto = st.text_input("Email di Contatto")
+                    stato_contratto = st.selectbox("Stato Contrattuale", ["Attivo", "In Attivazione", "Sospeso"])
+                    
+                    submit_cliente = st.form_submit_button("Registra Cliente", use_container_width=True)
+                    
+                    if submit_cliente:
+                        if ragione_sociale and partita_iva:
+                            nuovo_c = {
+                                "azienda": ragione_sociale,
+                                "piva": partita_iva,
+                                "referente": nome_referente,
+                                "email": email_contatto,
+                                "stato": stato_contratto
+                            }
+                            st.session_state.lista_clienti.append(nuovo_c)
+                            st.success(f"✔️ {ragione_sociale} registrato con successo!")
+                            st.rerun()
+                        else:
+                            st.error("❌ I campi Ragione Sociale e Partita IVA sono obbligatori.")
+
+            with col_elenco:
+                st.markdown("### 📋 Elenco Clienti Partner")
+                if st.session_state.lista_clienti:
+                    import pandas as pd
+                    # Convertiamo la lista di dizionari in un DataFrame pulito per Streamlit
+                    df_clienti = pd.DataFrame(st.session_state.lista_clienti)
+                    # Rinominiamo le colonne per renderle professionali nell'interfaccia
+                    df_clienti.columns = ["Azienda Partner", "Partita IVA", "Referente", "Email", "Stato"]
+                    
+                    st.dataframe(df_clienti, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Nessun cliente registrato al momento.")
 
         # --- TAB 8: DATABASE ANAGRAFICO CANDIDATI (ORDINATO E CON SCHEDA COMPATTA) ---
         with scelta_tab[7]:
