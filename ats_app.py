@@ -303,7 +303,7 @@ else:
             
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-           # Mostra i messaggi precedenti della chat con gli avatar reali
+           # Mostra i messaggi precedenti mantenendo gli avatar fissi nella cronologia
             for msg in st.session_state.chat_history:
                 avatar_immagine = "1000334217.png" if msg["role"] == "user" else "1000334218.png"
                 with st.chat_message(msg["role"], avatar=avatar_immagine):
@@ -311,16 +311,26 @@ else:
 
             # Input per il nuovo messaggio all'assistente IA
             if prompt := st.chat_input("Chiedi qualcosa all'assistente HR..."):
-                # Messaggio utente con avatar 1000334217.png
+                # 1. Messaggio utente fisso con il primo PNG
                 with st.chat_message("user", avatar="1000334217.png"):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # Risposta assistente con avatar 1000334218.png
+                # 2. SIMULAZIONE DELLA REACTION DI MOVIMENTO DURANTE L'ELABORAZIONE
+                # Mostra l'avatar nella posa di transizione/caricamento
+                with st.chat_message("assistant", avatar="1000334217.png"):
+                    with st.spinner("L'assistente sta elaborando i dati..."):
+                        import time
+                        time.sleep(1.2) # Pausa per percepire lo stacco visivo di pensiero
+                
+                # 3. RISPOSTA DEFINITIVA (L'avatar scatta sul secondo PNG ad elaborazione completata)
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar="1000334218.png"):
                     st.write(risposta_ia)
-                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})            
+                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
+                
+                # Aggiorna l'interfaccia
+                st.rerun()            
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
