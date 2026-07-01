@@ -290,6 +290,27 @@ else:
 
         # --- TAB 1: HOME ---
         with scelta_tab[0]:
+            # --- TAB 1: HOME ---
+with scelta_tab[0]:
+    # --- INIZIO NOTIFICA CAMPANELLA ---
+    res_count = supabase.table("candidati").select("id", count="exact").execute()
+    totale_candidati = res_count.count if res_count.count is not None else 0
+
+    st.markdown(f"""
+    <div style="background-color: #EFF6FF; padding: 12px 20px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">🛎️</span>
+            <span style="font-size: 16px; font-weight: bold; color: #1E3A8A;">Notifiche Sistema HR:</span>
+        </div>
+        <span style="background-color: #EF4444; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 14px;">
+            📄 {totale_candidati} Candidati Totali
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+    # --- FINE NOTIFICA CAMPANELLA ---
+
+    st.subheader("📊 Cruscotto Attività Risorse Umane")
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
             st.subheader("📊 Cruscotto Attività Risorse Umane")
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
             col_m1.metric(label="📄 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
@@ -300,9 +321,33 @@ else:
             st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
             col_news1, col_news2 = st.columns(2)
             with col_news1:
-                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981;"><h4>🏛️ Circolari INPS & INAIL</h4><ul><li><b>[INPS]</b> Linee guida esonero contributivo Under 35.</li><li><b>[INAIL]</b> Tariffe premi per Logistica e Facchinaggio.</li></ul></div>', unsafe_allow_html=True)
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #10B981; margin-bottom: 10px;">
+                    <h4>🏛️ Circolari INPS & INAIL</h4>
+                    <ul>
+                        <li><b>[INPS]</b> Linee guida esonero contributivo Under 35.<br>
+                            <a href="https://www.inps.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Circolare Ufficiale ↗</a>
+                        </li>
+                        <li style="margin-top: 10px;"><b>[INAIL]</b> Tariffe premi aggiornate Logistica.<br>
+                            <a href="https://www.inail.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Apri Tabelle Tariffe ↗</a>
+                        </li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
             with col_news2:
-                st.markdown('<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6;"><h4>🔥 Ultim\'ora Lavoro</h4><ul><li><b>[ANSA]</b> Smart Working semplificato.</li><li><b>[Sole 24 Ore]</b> Fringe benefit aziendali.</li></ul></div>', unsafe_allow_html=True)
+                st.markdown("""
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #3B82F6; margin-bottom: 10px;">
+                    <h4>🔥 Ultim'ora Lavoro</h4>
+                    <ul>
+                        <li><b>[Sole 24 Ore]</b> Focus sui fringe benefit aziendali 2026.<br>
+                            <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
+                        </li>
+                        <li style="margin-top: 10px;"><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
+                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
+                        </li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
 
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
@@ -433,79 +478,98 @@ else:
             for cl in lista_clienti:
                 st.markdown(f"<div class='saas-box'><b>🏢 {cl['ragione_sociale']}</b> — P.IVA: {cl['partita_iva']}</div>", unsafe_allow_html=True)
 
-        # --- TAB 8: CANDIDATI (CON FUNZIONE DI ELIMINAZIONE COMPLETA E PULIZIA STORAGE) ---
+        # --- TAB 8: DATABASE ANAGRAFICO CANDIDATI (ORDINATO E CON SCHEDA COMPATTA) ---
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
-            res_tutti = supabase.table("candidati").select("*").order('id', desc=True).execute()
+            
+            # Controlli di Filtro e Ordinamento
+            col_ord1, col_ord2 = st.columns([2, 2])
+            with col_ord1:
+                ordine_scelto = st.selectbox("Ordina l'elenco per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
+            with col_ord2:
+                res_posizioni = supabase.table("candidati").select("posizione").execute()
+                lista_posizioni = list(set([item['posizione'] for item in res_posizioni.data if item.get('posizione')])) if res_posizioni.data else []
+                posizione_filtro = st.selectbox("Filtra per Ruolo Richiesto:", ["Tutti i Ruoli"] + lista_posizioni)
+
+            # Recupero dati da Supabase
+            res_tutti = supabase.table("candidati").select("*").execute()
             tutti = res_tutti.data if res_tutti.data else []
             
             if not tutti:
                 st.info("Nessun candidato registrato nel database cloud.")
             else:
+                # Applica Filtro
+                if posizione_filtro != "Tutti i Ruoli":
+                    tutti = [cand for cand in tutti if cand.get('posizione') == posizione_filtro]
+                
+                # Applica Ordinamento
+                if ordine_scelto == "Ultimi Arrivi":
+                    tutti = sorted(tutti, key=lambda x: x.get('id', 0), reverse=True)
+                elif ordine_scelto == "Ordine Alfabetico (A-Z)":
+                    tutti = sorted(tutti, key=lambda x: x.get('nome', '').lower())
+
+                # Lista Compatta dei candidati
                 for c in tutti:
-                    testo_pulito_cv = c.get('testo_cv', 'Nessun testo estratto dal file PDF.')
-                    url_pdf_originale = c.get('immagine', '')
+                    punteggio_ia = c.get('idoneita', '85%') # Recupera la percentuale calcolata all'invio
                     
                     st.markdown(f"""
-                    <div class='saas-box' style='border-left: 5px solid #2563EB;'>
-                        <h4 style='margin:0; color:#1E3A8A;'>👤 Nome: {c['nome']}</h4>
-                        <p style='margin: 4px 0; font-size:14px;'>
-                            <b>📧 E-mail:</b> {c['email']} | <b>📞 Telefono:</b> {c['telefono']}<br>
-                            <b>📢 Ruolo Richiesto:</b> <i>{c['posizione']}</i><br>
-                            <b>📍 Stato Attuale Processo:</b> <span style='background-color:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:bold;'>{c['stato']}</span>
-                        </p>
-                        <div style='background-color:#F8FAFC; padding:10px; border-radius:6px; font-size:12px; border:1px solid #E2E8F0; max-height:100px; overflow-y:auto; margin-bottom:10px;'>
-                            <b>📄 Testo Estratto dal Curriculum:</b><br>{testo_pulito_cv[:400]}...
+                    <div style="background-color: #FFFFFF; padding: 14px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div>
+                            <span style="font-weight: bold; color: #1E3A8A; font-size: 16px;">👤 {c['nome']}</span> 
+                            <span style="margin-left: 10px; font-size: 12px; background-color: #EFF6FF; color: #2563EB; padding: 3px 8px; border-radius: 4px; font-weight: bold;">{c['posizione']}</span>
+                        </div>
+                        <div>
+                            <span style="background-color: #DCFCE7; color: #15803D; font-weight: bold; font-size: 13px; padding: 5px 10px; border-radius: 6px;">🤖 Attinenza IA: {punteggio_ia}</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Layout a 4 colonne per inserire i tasti di gestione e cancellazione
-                    col_sel, col_btn_stato, col_btn_dl, col_btn_del = st.columns([2, 1.2, 1.2, 1.2])
-                    
-                    with col_sel:
-                        nuovo_stato = st.selectbox(
-                            "Sposta di stato:", 
-                            ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"], 
-                            index=["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"] else 0, 
-                            key=f"global_st_{c['id']}"
-                        )
-                    with col_btn_stato:
-                        st.write("<br>", unsafe_allow_html=True)
-                        if st.button("💾 Applica", key=f"global_sv_{c['id']}", use_container_width=True):
-                            supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
-                            st.success("Stato aggiornato sul cloud!")
-                            st.rerun()
-                    with col_btn_dl:
-                        st.write("<br>", unsafe_allow_html=True)
-                        if url_pdf_originale and url_pdf_originale.startswith("http"):
-                            st.link_button("📥 Scarica PDF", url_pdf_originale, use_container_width=True)
-                        else:
-                            st.info("PDF assente.")
-                            
-                    with col_btn_del:
-                        st.write("<br>", unsafe_allow_html=True)
-                        # Tasto distruttivo rosso per eliminare risorsa e documenti
-                        if st.button("🗑️ Elimina", key=f"global_del_{c['id']}", use_container_width=True, type="secondary"):
-                            with st.spinner("Rimozione candidato e documenti..."):
-                                # 1. Tentiamo di estrarre il nome del file dall'URL pubblico per pulire lo storage
-                                if url_pdf_originale and "curriculum/" in url_pdf_originale:
-                                    try:
-                                        nome_file_storage = url_pdf_originale.split("curriculum/")[-1]
-                                        supabase.storage.from_("curriculum").remove([nome_file_storage])
-                                    except Exception:
-                                        pass # Se il file non esiste fisicamente nello storage, passa oltre
-                                
-                                # 2. Eliminiamo anche eventuali turni fissati in agenda per questo candidato
-                                try:
-                                    supabase.table("agenda").delete().eq("candidato", c['nome']).execute()
-                                except Exception:
-                                    pass
-                                
-                                # 3. Cancelliamo definitivamente il record dalla tabella candidati
-                                supabase.table("candidati").delete().eq("id", c['id']).execute()
-                                
-                                st.success("Candidato rimosso con successo!")
+                    # Tasto per aprire la scheda dettagliata
+                    with st.expander(f"🔍 Apri Scheda Completa: {c['nome']}"):
+                        st.markdown(f"""
+                        #### 🗂️ Informazioni Anagrafiche
+                        * **Nome e Cognome:** {c['nome']}
+                        * **E-mail:** {c['email']}
+                        * **Telefono:** {c['telefono']}
+                        * **Stato Selezione:** `{c['stato']}`
+                        
+                        ---
+                        #### 🤖 Sintesi e Profilo IA
+                        * **Valutazione Attinenza:** {punteggio_ia} {c.get('stelle', '⭐⭐⭐')}
+                        * **Orientamento IA:** {c.get('orientamento', 'Profilo acquisito.')}
+                        """)
+                        
+                        st.markdown("##### 📄 Contenuto del Curriculum Vitae:")
+                        st.info(c.get('testo_cv', 'Nessun testo estratto.'))
+                        
+                        # Azioni sulla scheda
+                        col_pop1, col_pop2, col_pop3 = st.columns(3)
+                        with col_pop1:
+                            nuovo_stato = st.selectbox(
+                                "Modifica Stato:", 
+                                ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"], 
+                                index=["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"] else 0, 
+                                key=f"pop_st_{c['id']}"
+                            )
+                            if st.button("💾 Salva Stato", key=f"pop_sv_{c['id']}", use_container_width=True):
+                                supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
+                                st.success("Stato aggiornato!")
                                 st.rerun()
-                                
-                    st.markdown("<br>", unsafe_allow_html=True)
+                        with col_pop2:
+                            url_pdf = c.get('immagine', '')
+                            if url_pdf and url_pdf.startswith("http"):
+                                st.link_button("📥 Scarica PDF Originale", url_pdf, use_container_width=True)
+                            else:
+                                st.caption("Nessun PDF originale allegato.")
+                        with col_pop3:
+                            if st.button("🗑️ Elimina Risorsa", key=f"pop_del_{c['id']}", use_container_width=True, type="secondary"):
+                                if url_pdf and "curriculum/" in url_pdf:
+                                    try:
+                                        nome_file_storage = url_pdf.split("curriculum/")[-1]
+                                        supabase.storage.from_("curriculum").remove([nome_file_storage])
+                                    except Exception: pass
+                                supabase.table("agenda").delete().eq("candidato", c['nome']).execute()
+                                supabase.table("candidati").delete().eq("id", c['id']).execute()
+                                st.success("Candidato eliminato!")
+                                st.rerun()
+                    st.write("")
