@@ -293,9 +293,10 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO VIA SESSION STATE) ---
+        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO CON COSTRUTTO MEMORIA PIL) ---
         with st.sidebar:
             import os
+            from PIL import Image
 
             # 1. INIZIALIZZAZIONE COMPLETA DELLE VARIABILI DI SESSIONE
             if "chat_history" not in st.session_state:
@@ -303,15 +304,19 @@ else:
             if "ia_sta_pensando" not in st.session_state:
                 st.session_state["ia_sta_pensando"] = False
 
-            # 2. GESTIONE SICURA E PERSISTENTE DEL LOGO AZIENDALE
+            # 2. GESTIONE SICURA DEL LOGO AZIENDALE CON PIL
             logo_file = "1000376160.jpg"
             if os.path.exists(logo_file):
-                col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
-                with col_logo2:
-                    st.image(logo_file, use_container_width=True)
+                try:
+                    # Apriamo l'immagine in memoria per bypassare i limiti di Streamlit Cloud
+                    img_logo = Image.open(logo_file)
+                    col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
+                    with col_logo2:
+                        st.image(img_logo, use_container_width=True)
+                except Exception:
+                    st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 15px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             else:
-                # Fallback testuale elegante che impedisce il crash se la tab si aggiorna
-                st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-top: 5px; margin-bottom: 15px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 15px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -360,7 +365,7 @@ else:
             # Contenitore dinamico per l'avatar dell'assistente
             spazio_avatar = st.empty()
             
-            # Controllo dello stato di pensiero estratto in modo sicuro dalla sessione
+            # Controllo dello stato di pensiero estratto dalla sessione
             if st.session_state["ia_sta_pensando"]:
                 avatar_corrente = "1000334218.png"
                 mostra_onda = True
@@ -368,7 +373,7 @@ else:
                 avatar_corrente = "1000334217.png"
                 mostra_onda = False
 
-            # Rendering controllato dell'avatar
+            # Rendering controllato dell'avatar tramite PIL
             with spazio_avatar.container():
                 if mostra_onda:
                     st.markdown('<div class="siri-wrapper-box"><div class="siri-glow-wave"></div></div>', unsafe_allow_html=True)
@@ -377,12 +382,16 @@ else:
                 with c_av2:
                     st.markdown('<div class="assistente-avatar-tondo">', unsafe_allow_html=True)
                     if os.path.exists(avatar_corrente):
-                        st.image(avatar_corrente, use_container_width=True)
+                        try:
+                            img_avatar = Image.open(avatar_corrente)
+                            st.image(img_avatar, use_container_width=True)
+                        except Exception:
+                            st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
                     else:
                         st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            # Tasto "Cancella Chat" posizionato stabilmente sotto l'avatar
+            # Tasto "Cancella Chat"
             st.markdown("<br>", unsafe_allow_html=True)
             col_btn1, col_btn2, col_btn3 = st.columns([0.4, 2.2, 0.4])
             with col_btn2:
@@ -392,7 +401,7 @@ else:
             
             st.markdown("---")
 
-            # Visualizzazione della cronologia salvata in session_state (senza icone duplicate)
+            # Visualizzazione della cronologia salvata in session_state
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"], avatar=None):
                     st.write(msg["content"])
@@ -403,23 +412,21 @@ else:
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # Attiviamo lo stato persistente prima del rerun
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
-            # Processo di elaborazione legato alla sessione attiva
+            # Processo di risposta dell'IA
             if st.session_state["ia_sta_pensando"]:
                 with st.chat_message("assistant", avatar=None):
                     with st.spinner("Elaborazione in corso..."):
                         import time
-                        time.sleep(1.4) # Finestra temporale per mostrare le onde di Siri pulsare
+                        time.sleep(1.4)
                 
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
-                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
+                st.session_state.chat_history.append({"role": "assistant", "content": resposta_ia})
                 
-                # Rilascio dello stato e ritorno alla quiete
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
 
