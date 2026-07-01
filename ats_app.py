@@ -295,10 +295,14 @@ else:
 
         # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO) ---
         with st.sidebar:
-            # Mostra il logo ufficiale dei Reali in cima alla sidebar centrandolo
-            col_logo1, col_logo2, col_logo3 = st.columns([0.5, 2.0, 0.5])
-            with col_logo2:
-                st.image("1000376160.jpg", use_container_width=True)
+            # Mostra il logo ufficiale dei Reali in modo sicuro (evita i crash se il file manca)
+            try:
+                col_logo1, col_logo2, col_logo3 = st.columns([0.5, 2.0, 0.5])
+                with col_logo2:
+                    st.image("1000376160.jpg", use_container_width=True)
+            except Exception:
+                # Se il file manca, mostra un titolo di backup testuale stilizzato invece di andare in crash
+                st.markdown("<h3 style='text-align: center; color: #3B82F6;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -356,7 +360,7 @@ else:
                 avatar_corrente = "1000334217.png"
                 mostra_onda = False
 
-            # Generazione dell'avatar centrato
+            # Generazione dell'avatar centrato (protetto da try-except)
             with spazio_avatar.container():
                 if mostra_onda:
                     st.markdown('<div class="siri-wrapper-box"><div class="siri-glow-wave"></div></div>', unsafe_allow_html=True)
@@ -365,7 +369,10 @@ else:
                 c_av1, c_av2, c_av3 = st.columns([1, 2, 1])
                 with c_av2:
                     st.markdown('<div class="assistente-avatar-tondo">', unsafe_allow_html=True)
-                    st.image(avatar_corrente, use_container_width=True)
+                    try:
+                        st.image(avatar_corrente, use_container_width=True)
+                    except Exception:
+                        st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
             # Pulsante "Cancella Chat" posizionato simmetricamente sotto l'avatar
@@ -377,10 +384,6 @@ else:
                     st.rerun()
             
             st.markdown("---")
-
-            # Inizializzazione cronologia se vuota
-            if "chat_history" not in st.session_state:
-                st.session_state.chat_history = []
 
             # Visualizzazione dello storico messaggi senza icone duplicate
             for msg in st.session_state.chat_history:
@@ -417,7 +420,6 @@ else:
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
-
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
