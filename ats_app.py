@@ -295,14 +295,21 @@ else:
 
         # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO) ---
         with st.sidebar:
-            # 1. INIZIALIZZAZIONE DELLA CHAT (Sempre in cima per evitare conflitti)
+            import os
+
+            # 1. INIZIALIZZAZIONE DELLA CHAT (Sempre in cima per prevenire AttributeError)
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
                 
-            # LOGO DEI REALI: Fisso, centrato e visibile in alto
-            col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
-            with col_logo2:
-                st.image("1000376160.jpg", use_container_width=True)
+            # LOGO DEI REALI: Caricamento sicuro
+            logo_file = "1000376160.jpg"
+            if os.path.exists(logo_file):
+                col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
+                with col_logo2:
+                    st.image(logo_file, use_container_width=True)
+            else:
+                # Backup se il file non viene trovato
+                st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 20px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -312,7 +319,7 @@ else:
             # --- AREA ASSISTENTE VIRTUALE ED EFFETTO SIRI ---
             st.markdown("<h4 style='text-align: center; margin-bottom: 0px;'>🤖 Assistente HR Virtuale</h4>", unsafe_allow_html=True)
             
-            # CSS isolato solo ed esclusivamente per il cerchio dell'assistente e le onde pulsanti
+            # CSS isolato solo per l'effetto onda di Siri e il ritaglio circolare dell'avatar
             st.markdown("""
             <style>
             .siri-wrapper-box {
@@ -339,7 +346,6 @@ else:
                 50% { transform: scale(1.15); opacity: 0.75; filter: blur(6px); }
                 100% { transform: scale(0.92); opacity: 0.4; filter: blur(3px); }
             }
-            /* Ritaglia a cerchio perfetto SOLO l'immagine dentro questo specifico div */
             .assistente-avatar-tondo img {
                 border-radius: 50% !important;
                 border: 3px solid #3B82F6 !important;
@@ -352,27 +358,29 @@ else:
             # Contenitore dinamico dell'avatar dell'assistente
             spazio_avatar = st.empty()
             
-            # Scelta dell'immagine dell'avatar in base allo stato di pensiero dell'IA
+            # Selezione dell'immagine dell'avatar corretta in base allo stato
             if st.session_state.get("ia_sta_pensando", False):
-                avatar_corrente = "100033428.png"
+                avatar_corrente = "1000334218.png"
                 mostra_onda = True
             else:
-                avatar_corrente = "100033427.png"
+                avatar_corrente = "1000334217.png"
                 mostra_onda = False
 
-            # Generazione dell'avatar perfettamente centrato
+            # Generazione dell'avatar centrato
             with spazio_avatar.container():
                 if mostra_onda:
                     st.markdown('<div class="siri-wrapper-box"><div class="siri-glow-wave"></div></div>', unsafe_allow_html=True)
                 
-                # Colonne bilanciate per la centratura esatta
                 c_av1, c_av2, c_av3 = st.columns([1, 2, 1])
                 with c_av2:
                     st.markdown('<div class="assistente-avatar-tondo">', unsafe_allow_html=True)
-                    st.image(avatar_corrente, use_container_width=True)
+                    if os.path.exists(avatar_corrente):
+                        st.image(avatar_corrente, use_container_width=True)
+                    else:
+                        st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-            # Pulsante "Cancella Chat" posizionato simmetricamente sotto l'avatar
+            # Pulsante "Cancella Chat" posizionato sotto l'avatar
             st.markdown("<br>", unsafe_allow_html=True)
             col_btn1, col_btn2, col_btn3 = st.columns([0.4, 2.2, 0.4])
             with col_btn2:
@@ -382,34 +390,32 @@ else:
             
             st.markdown("---")
 
-            # Visualizzazione dello storico messaggi senza icone duplicate
+            # Storico messaggi pulito senza icone duplicate
             for msg in st.session_state.chat_history:
                 with st.chat_message(msg["role"], avatar=None):
                     st.write(msg["content"])
 
-            # Input per inviare un messaggio
+            # Input per inviare il messaggio
             if prompt := st.chat_input("Chiedi qualcosa..."):
                 with st.chat_message("user", avatar=None):
                     st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 
-                # Attiviamo l'animazione Siri e cambiamo posa all'avatar
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
-            # Logica di calcolo ed elaborazione quando lo stato è attivo
+            # Gestione risposta ed effetto Siri attivo
             if st.session_state.get("ia_sta_pensando", False):
                 with st.chat_message("assistant", avatar=None):
                     with st.spinner("Elaborazione..."):
                         import time
-                        time.sleep(1.5) # Tempo per visualizzare le onde di Siri pulsare
+                        time.sleep(1.5)
                 
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 
-                # Spegnimento onde ed elaborazione completata
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
 
