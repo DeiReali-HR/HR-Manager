@@ -295,14 +295,14 @@ else:
 
         # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO) ---
         with st.sidebar:
-            # Mostra il logo ufficiale dei Reali in modo sicuro (evita i crash se il file manca)
-            try:
-                col_logo1, col_logo2, col_logo3 = st.columns([0.5, 2.0, 0.5])
-                with col_logo2:
-                    st.image("1000376160.jpg", use_container_width=True)
-            except Exception:
-                # Se il file manca, mostra un titolo di backup testuale stilizzato invece di andare in crash
-                st.markdown("<h3 style='text-align: center; color: #3B82F6;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
+            # 1. INIZIALIZZAZIONE DELLA CHAT (Sempre in cima per evitare conflitti)
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+                
+            # LOGO DEI REALI: Fisso, centrato e visibile in alto
+            col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
+            with col_logo2:
+                st.image("1000376160.jpg", use_container_width=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
@@ -352,27 +352,24 @@ else:
             # Contenitore dinamico dell'avatar dell'assistente
             spazio_avatar = st.empty()
             
-            # Scelta dell'immagine e attivazione dell'onda in base allo stato di pensiero dell'IA
+            # Scelta dell'immagine dell'avatar in base allo stato di pensiero dell'IA
             if st.session_state.get("ia_sta_pensando", False):
-                avatar_corrente = "1000334218.png"
+                avatar_corrente = "100033428.png"
                 mostra_onda = True
             else:
-                avatar_corrente = "1000334217.png"
+                avatar_corrente = "100033427.png"
                 mostra_onda = False
 
-            # Generazione dell'avatar centrato (protetto da try-except)
+            # Generazione dell'avatar perfettamente centrato
             with spazio_avatar.container():
                 if mostra_onda:
                     st.markdown('<div class="siri-wrapper-box"><div class="siri-glow-wave"></div></div>', unsafe_allow_html=True)
                 
-                # Colonne bilanciate per centrare l'immagine
+                # Colonne bilanciate per la centratura esatta
                 c_av1, c_av2, c_av3 = st.columns([1, 2, 1])
                 with c_av2:
                     st.markdown('<div class="assistente-avatar-tondo">', unsafe_allow_html=True)
-                    try:
-                        st.image(avatar_corrente, use_container_width=True)
-                    except Exception:
-                        st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", use_container_width=True)
+                    st.image(avatar_corrente, use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
             # Pulsante "Cancella Chat" posizionato simmetricamente sotto l'avatar
@@ -420,6 +417,7 @@ else:
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
                 st.rerun()
+                
         # --- TAB 2: ANNUNCI ---
         with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
