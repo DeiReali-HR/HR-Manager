@@ -875,159 +875,159 @@ else:
                                 st.success("Candidato eliminato!")
                                 st.rerun()
                     st.write("") 
-                    # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
-                    with scelta_tab[8]:
-                        st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-                        st.caption("Questa sezione simula la pagina 'Lavora con Noi' del Gruppo Dei Reali, mostrando gli annunci attivi con un layout a griglia moderno.")
+    # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
+    with scelta_tab[8]:
+    st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
+    st.caption("Questa sezione simula la pagina 'Lavora con Noi' del Gruppo Dei Reali, mostrando gli annunci attivi con un layout a griglia moderno.")
+    
+    # CSS per la bacheca annunci stile portale Enterprise
+    st.markdown("""
+    <style>
+    .vetrina-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    }
+    .vetrina-card {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    }
+    .vetrina-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    }
+    .vetrina-img-box {
+    width: 100%;
+    height: 160px;
+    background-size: cover;
+    background-position: center;
+    }
+    .vetrina-corpo {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    }
+    .vetrina-tag-sede {
+    display: inline-block;
+    background-color: #EFF6FF;
+    color: #2563EB;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    }
+    .vetrina-titolo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    }
+    .vetrina-estratto {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    }
+    .vetrina-info-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 12px;
+    margin-top: auto;
+    font-size: 12px;
+    color: #64748B;
+    }
+    .vetrina-valore {
+    font-weight: bold;
+    color: #0F172A;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Recuperiamo gli annunci vivi dal database cloud
+    res_vetrina = supabase.table("annunci").select("*").execute()
+    annunci_vetrina = res_vetrina.data if res_vetrina.data else []
+    
+    # Filtriamo solo quelli attivi (escludendo i sospesi)
+    annunci_attivi = [a for a in annunci_vetrina if a.get("stato") != "Sospeso"]
+    
+    if not annunci_attivi:
+    st.info("Nessun annuncio di lavoro attualmente pubblicato in bacheca.")
+    else:
+    col_v1, col_v2 = st.columns([2, 1.2])
+    
+    with col_v1:
+        st.markdown("<div class='vetrina-container'>", unsafe_allow_html=True)
+        
+        for idx, a in enumerate(annunci_attivi):
+            img_vetrina = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600"
+            
+            testo_estratto = a.get("note", "")
+            if len(testo_estratto) > 120:
+                testo_estratto = testo_estratto[:120] + "..."
+            
+            link_candidatura_diretto = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+    
+            # Card HTML Estetica
+            st.markdown(f"""
+            <div class="vetrina-card">
+                <div class="vetrina-img-box" style="background-image: url('{img_vetrina}');"></div>
+                <div class="vetrina-corpo">
+                    <div>
+                        <span class="vetrina-tag-sede">📍 {a.get('sede', 'Roma')}</span>
+                    </div>
+                    <div class="vetrina-titolo">{a['posizione']}</div>
+                    <div class="vetrina-estratto">{testo_estratto}</div>
+                    <div class="vetrina-info-box">
+                        <span>Inquadramento: <span class="vetrina-valore">{a.get('inquadramento', 'RAL')}</span></span>
+                        <span>Budget: <span class="vetrina-valore">{a.get('importo', 'N/D')} €</span></span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Expander integrato per candidarsi
+            with st.expander(f"🔍 Dettagli completi e Candidatura per {a['posizione']}"):
+                st.markdown(f"### Descrizione Completa del Ruolo")
+                st.write(a.get("note", "Nessun dettaglio aggiuntivo."))
+                st.markdown("---")
                 
-                        # CSS per la bacheca annunci stile portale Enterprise
-                        st.markdown("""
-                        <style>
-                        .vetrina-container {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                            gap: 20px;
-                            margin-top: 20px;
-                        }
-                        .vetrina-card {
-                            background-color: #FFFFFF;
-                            border-radius: 12px;
-                            border: 1px solid #E2E8F0;
-                            overflow: hidden;
-                            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-                            transition: transform 0.2s ease, box-shadow 0.2s ease;
-                            display: flex;
-                            flex-direction: column;
-                            height: 100%;
-                        }
-                        .vetrina-card:hover {
-                            transform: translateY(-4px);
-                            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-                        }
-                        .vetrina-img-box {
-                            width: 100%;
-                            height: 160px;
-                            background-size: cover;
-                            background-position: center;
-                        }
-                        .vetrina-corpo {
-                            padding: 20px;
-                            flex-grow: 1;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .vetrina-tag-sede {
-                            display: inline-block;
-                            background-color: #EFF6FF;
-                            color: #2563EB;
-                            font-size: 11px;
-                            font-weight: 700;
-                            padding: 4px 8px;
-                            border-radius: 4px;
-                            margin-bottom: 10px;
-                            text-transform: uppercase;
-                        }
-                        .vetrina-titolo {
-                            font-size: 18px;
-                            font-weight: 700;
-                            color: #0F172A;
-                            margin-bottom: 8px;
-                            line-height: 1.4;
-                        }
-                        .vetrina-estratto {
-                            font-size: 13px;
-                            color: #475569;
-                            line-height: 1.5;
-                            margin-bottom: 15px;
-                        }
-                        .vetrina-info-box {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            border-top: 1px solid #F1F5F9;
-                            padding-top: 12px;
-                            margin-top: auto;
-                            font-size: 12px;
-                            color: #64748B;
-                        }
-                        .vetrina-valore {
-                            font-weight: bold;
-                            color: #0F172A;
-                        }
-                        </style>
-                        """, unsafe_allow_html=True)
-                
-                        # Recuperiamo gli annunci vivi dal database cloud
-                        res_vetrina = supabase.table("annunci").select("*").execute()
-                        annunci_vetrina = res_vetrina.data if res_vetrina.data else []
-                
-                        # Filtriamo solo quelli attivi (escludendo i sospesi)
-                        annunci_attivi = [a for a in annunci_vetrina if a.get("stato") != "Sospeso"]
-                
-                        if not annunci_attivi:
-                            st.info("Nessun annuncio di lavoro attualmente pubblicato in bacheca.")
-                        else:
-                            col_v1, col_v2 = st.columns([2, 1.2])
-                            
-                            with col_v1:
-                                st.markdown("<div class='vetrina-container'>", unsafe_allow_html=True)
-                                
-                                for idx, a in enumerate(annunci_attivi):
-                                    img_vetrina = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600"
-                                    
-                                    testo_estratto = a.get("note", "")
-                                    if len(testo_estratto) > 120:
-                                        testo_estratto = testo_estratto[:120] + "..."
-                                    
-                                    link_candidatura_diretto = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                
-                                    # Card HTML Estetica
-                                    st.markdown(f"""
-                                    <div class="vetrina-card">
-                                        <div class="vetrina-img-box" style="background-image: url('{img_vetrina}');"></div>
-                                        <div class="vetrina-corpo">
-                                            <div>
-                                                <span class="vetrina-tag-sede">📍 {a.get('sede', 'Roma')}</span>
-                                            </div>
-                                            <div class="vetrina-titolo">{a['posizione']}</div>
-                                            <div class="vetrina-estratto">{testo_estratto}</div>
-                                            <div class="vetrina-info-box">
-                                                <span>Inquadramento: <span class="vetrina-valore">{a.get('inquadramento', 'RAL')}</span></span>
-                                                <span>Budget: <span class="vetrina-valore">{a.get('importo', 'N/D')} €</span></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Expander integrato per candidarsi
-                                    with st.expander(f"🔍 Dettagli completi e Candidatura per {a['posizione']}"):
-                                        st.markdown(f"### Descrizione Completa del Ruolo")
-                                        st.write(a.get("note", "Nessun dettaglio aggiuntivo."))
-                                        st.markdown("---")
-                                        
-                                        st.markdown(f"""
-                                        <div style="text-align: center; margin-top: 10px;">
-                                            <p style="font-size: 13px; color: #475569;">Per completare il profilo, inserire i tuoi dati anagrafici e caricare il tuo <b>CV originale in formato PDF</b>, clicca sul link ufficiale qui sotto:</p>
-                                            <a href="{link_candidatura_diretto}" target="_blank" style="background-color: #2563EB; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
-                                                📝 Compila Form e Allega CV ↗
-                                            </a>
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                        st.write("")
-                                
-                                st.markdown("</div>", unsafe_allow_html=True)
-                                
-                            with col_v2:
-                                st.markdown(f"""
-                                <div style="background-color: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #E2E8F0; position: sticky; top: 20px;">
-                                    <h3 style="color: #1E3A8A; margin-top: 0;">👑 Gruppo Dei Reali</h3>
-                                    <p style="font-size: 13px; color: #475569; line-height: 1.6;">Benvenuto nella plancia di simulazione del nostro portale carriere pubblici.</p>
-                                    <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 15px 0;">
-                                    <h5 style="margin-bottom: 8px; color: #0F172A;">📊 Stato Vetrina</h5>
-                                    <ul style="font-size: 13px; color: #475569; padding-left: 20px; margin: 0;">
-                                        <li style="margin-bottom: 5px;">Annunci sincronizzati: <b>{len(annunci_attivi)}</b></li>
-                                        <li style="margin-bottom: 5px;">Server di routing: <b>Attivo</b></li>
-                                        <li>Stato Storage Cloud: <b>Online</b></li>
-                                    </ul>
-                                </div>
-                                """, unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="text-align: center; margin-top: 10px;">
+                    <p style="font-size: 13px; color: #475569;">Per completare il profilo, inserire i tuoi dati anagrafici e caricare il tuo <b>CV originale in formato PDF</b>, clicca sul link ufficiale qui sotto:</p>
+                    <a href="{link_candidatura_diretto}" target="_blank" style="background-color: #2563EB; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
+                        📝 Compila Form e Allega CV ↗
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+                st.write("")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with col_v2:
+        st.markdown(f"""
+        <div style="background-color: #FFFFFF; padding: 25px; border-radius: 12px; border: 1px solid #E2E8F0; position: sticky; top: 20px;">
+            <h3 style="color: #1E3A8A; margin-top: 0;">👑 Gruppo Dei Reali</h3>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6;">Benvenuto nella plancia di simulazione del nostro portale carriere pubblici.</p>
+            <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 15px 0;">
+            <h5 style="margin-bottom: 8px; color: #0F172A;">📊 Stato Vetrina</h5>
+            <ul style="font-size: 13px; color: #475569; padding-left: 20px; margin: 0;">
+                <li style="margin-bottom: 5px;">Annunci sincronizzati: <b>{len(annunci_attivi)}</b></li>
+                <li style="margin-bottom: 5px;">Server di routing: <b>Attivo</b></li>
+                <li>Stato Storage Cloud: <b>Online</b></li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
