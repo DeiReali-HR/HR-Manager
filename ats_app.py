@@ -865,11 +865,12 @@ else:
                                 st.caption("Nessun PDF originale allegato.")
                         with col_pop3:
                             if st.button("🗑️ Elimina Risorsa", key=f"pop_del_{c['id']}", use_container_width=True, type="secondary"):
-                                 if url_pdf and "curriculum/" in url_pdf:
+                                if url_pdf and "curriculum/" in url_pdf:
                                     try:
                                         nome_file_storage = url_pdf.split("curriculum/")[-1]
                                         supabase.storage.from_("curriculum").remove([nome_file_storage])
-                                    except Exception: pass
+                                    except Exception:
+                                        pass
                                 supabase.table("agenda").delete().eq("candidato", c['nome']).execute()
                                 supabase.table("candidati").delete().eq("id", c['id']).execute()
                                 st.success("Candidato eliminato!")
