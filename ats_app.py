@@ -874,10 +874,9 @@ else:
                                 supabase.table("candidati").delete().eq("id", c['id']).execute()
                                 st.success("Candidato eliminato!")
                                 st.rerun()
-                    st.write("")
-
-               # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
-    with scelta_tab[8]:
+                    st.write("") 
+                    # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
+                    with scelta_tab[8]:
         st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
         st.caption("Questa sezione simula la pagina 'Lavora con Noi' del Gruppo Dei Reali, mostrando gli annunci attivi con un layout a griglia moderno.")
 
