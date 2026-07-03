@@ -602,14 +602,14 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE ---
+        # --- TAB 9: PORTALE CARRIERE (STRUTTURA SHOWCASE AGGIORNATA CON BOX OBBLIGATO SANIFICATO) ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
             st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
 
             st.markdown("""
             <style>
-            /* Box obbligato nativo che forza la riga orizzontale reale a prescindere dai container di Streamlit */
+            /* Box obbligato che blocca l'allineamento orizzontale in blocco unico */
             .box-obbligato-vetrina {
                 display: flex !important;
                 flex-direction: row !important;
@@ -666,20 +666,20 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA DENTRO UN UNICO BOX ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA SENZA INFRAZIONI DI TAG ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                # Costruiamo l'intera stringa in blocco unico per bypassare le restrizioni di layout verticali di Streamlit
                 html_box_compilato = "<div class='box-obbligato-vetrina'>"
                 for a in annunci_flag_vetrina:
                     raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
+                    # Rimosso il secondo div orfano di chiusura!
                     html_box_compilato += f"""
                     <div class='vetrina-item-box'>
                         <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
