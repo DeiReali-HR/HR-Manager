@@ -221,7 +221,7 @@ else:
         # --- LOGIN EFFETTUATO: MOSTRIAMO L'INTERFACCIA HR ---
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
-        # Inizializzazione dei Tab di navigazione principale
+        # Inizializzazione dei Tab di navigazione principale (Assicurati che siano 9 voci!)
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)"]
         scelta_tab = st.tabs(tab_nomi)
 
