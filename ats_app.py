@@ -312,7 +312,7 @@ else:
                             <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
                         </li>
                         <li><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
-                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
+                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenda Flash ↗</a>
                         </li>
                     </ul>
                 </div>
@@ -511,36 +511,54 @@ else:
                     if st.button("🗑️ Elimina", key=f"del_{c['id']}"):
                         supabase.table("candidati").delete().eq("id", c['id']).execute(); st.rerun()
 
-        # --- TAB 9: PORTALE CARRIERE (CORREZIONE GRIGLIA 8 COLONNE ORIZZONTALE) ---
+        # --- TAB 9: PORTALE CARRIERE (BLINDATURA GRIGLIA ED ALLINEAMENTO ORIZZONTALE REALE) ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
             st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne reale orizzontale superiore, barra di ricerca e annunci inferiori su 2 colonne.")
 
             st.markdown("""
             <style>
-            /* Forza il contenitore principale di Streamlit a non rompere la griglia */
-            .grid-8-annunci {
-                display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important;
+            /* Forza il macro blocco di Streamlit a visualizzare i figli in linea flessibile orizzontale */
+            [data-testid="stMarkdownContainer"] > div.grid-8-annunci {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
                 gap: 12px !important;
-                margin-bottom: 35px !important;
                 width: 100% !important;
+                margin-bottom: 35px !important;
             }
-            @media (min-width: 576px) { .grid-8-annunci { grid-template-columns: repeat(4, 1fr) !important; } }
-            @media (min-width: 1200px) { .grid-8-annunci { grid-template-columns: repeat(8, 1fr) !important; } }
+            
+            .grid-8-annunci {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                gap: 12px !important;
+                width: 100% !important;
+                margin-bottom: 35px !important;
+            }
 
-            /* Contenitore interno per forzare l'allineamento orizzontale degli elementi */
+            /* Ogni colonna occupa esattamente un ottavo dello spazio meno il gap su schermi grandi */
             .vetrina-item {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
-                width: 100% !important;
+                flex: 0 0 calc(12.5% - 11px) !important;
+                min-width: 110px !important;
+                max-width: 180px !important;
+            }
+            
+            @media (max-width: 1200px) {
+                .vetrina-item { flex: 0 0 calc(25% - 9px) !important; }
+            }
+            @media (max-width: 576px) {
+                .vetrina-item { flex: 0 0 calc(50% - 6px) !important; }
             }
 
             .vetrina-solo-img {
                 display: block !important;
                 width: 100% !important;
-                max-width: 180px !important;
                 aspect-ratio: 395 / 704 !important;
                 background-size: cover !important;
                 background-repeat: no-repeat !important;
@@ -638,33 +656,29 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA ORIZZONTALE REALE ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA ORIZZONTALE REALE ED AUTOMATICA ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                # 1. APRIAMO il contenitore della griglia una volta sola PRIMA del ciclo
                 html_vetrina = "<div class='grid-8-annunci'>"
                 
                 for a in annunci_flag_vetrina:
                     raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     
-                    # Pulizia automatica dell'URL da spazi o caratteri errati
+                    # Sanificazione URL da spazi o caratteri errati
                     img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
-                    # 2. Aggiungiamo solo l'item e chiudiamo SOLO il vetrina-item all'interno del ciclo
                     html_vetrina += f"""
                     <div class='vetrina-item'>
                         <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
                     </div>
                     """
                 
-                # 3. CHIUDIAMO il contenitore della griglia principale una volta sola FUORI dal ciclo
                 html_vetrina += "</div>"
-                
                 st.markdown(html_vetrina, unsafe_allow_html=True)
 
             st.markdown("---")
