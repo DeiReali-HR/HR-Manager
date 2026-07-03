@@ -602,46 +602,13 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (STRUTTURA SHOWCASE AGGIORNATA CON BOX OBBLIGATO SANIFICATO) ---
+        # --- TAB 9: PORTALE CARRIERE (FIX CON CONTAINER ISOLATO AD UNICO BLOCCO SORGENTE) ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
             st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
 
             st.markdown("""
             <style>
-            /* Box obbligato che blocca l'allineamento orizzontale in blocco unico */
-            .box-obbligato-vetrina {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                justify-content: flex-start !important;
-                align-items: center !important;
-                gap: 14px !important;
-                width: 100% !important;
-                overflow-x: auto !important;
-                padding: 10px 0 !important;
-                margin-bottom: 30px !important;
-            }
-            .vetrina-item-box {
-                flex: 0 0 calc(12.5% - 13px) !important;
-                min-width: 110px !important;
-                max-width: 165px !important;
-                display: block !important;
-            }
-            .vetrina-solo-img {
-                display: block !important;
-                width: 100% !important;
-                aspect-ratio: 395 / 704 !important;
-                background-size: cover !important;
-                background-repeat: no-repeat !important;
-                background-position: center !important;
-                background-color: #0F172A !important;
-                border-radius: 8px !important;
-                border: 1px solid #E2E8F0 !important;
-                transition: transform 0.2s ease !important;
-            }
-            .vetrina-solo-img:hover { transform: translateY(-4px) !important; box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important; }
-
             .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 15px !important; }
             @media (min-width: 992px) { .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; } }
             .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; max-height: 382px !important; }
@@ -666,27 +633,31 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA SENZA INFRAZIONI DI TAG ---
+            # --- LIVELLO 1: BLINDATURA ATTRAVERSO STRINGA PRE-RENDERIZZATA IN UN UNICO BLOCCO ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                html_box_compilato = "<div class='box-obbligato-vetrina'>"
+                # Struttura CSS iniettata in blocco unico per forzare l'affiancamento rigido fino a 8 elementi
+                html_sorgente_unito = """
+                <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 14px; width: 100%; overflow-x: auto; padding: 10px 0;">
+                """
                 for a in annunci_flag_vetrina:
                     raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
-                    # Rimosso il secondo div orfano di chiusura!
-                    html_box_compilato += f"""
-                    <div class='vetrina-item-box'>
-                        <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
+                    html_sorgente_unito += f"""
+                    <div style="flex: 0 0 calc(12.5% - 13px); min-width: 110px; max-width: 165px; display: block;">
+                        <a href="{link_candidatura}" target="_blank" style="display: block; width: 100%; aspect-ratio: 395 / 704; background-image: url('{img_v_url}'); background-size: cover; background-repeat: no-repeat; background-position: center; background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'"></a>
                     </div>
                     """
-                html_box_compilato += "</div>"
-                st.markdown(html_box_compilato, unsafe_allow_html=True)
+                html_sorgente_unito += "</div>"
+                
+                # Usiamo st.components.v1.html con altezza fissa per incapsulare il box in un ambiente isolato e sicuro
+                st.components.v1.html(html_sorgente_unito, height=310, scrolling=False)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
