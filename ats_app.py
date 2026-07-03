@@ -99,18 +99,28 @@ st.markdown("""
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
     .umana-banner { position: relative; width: 100%; height: 280px; background-size: cover; background-position: center; border-radius: 16px; margin-bottom: 25px; box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.55); display: flex; align-items: flex-end; padding: 35px; }
     .umana-banner-title { color: #FFFFFF !important; font-size: 34px !important; font-weight: 800 !important; margin: 0 !important; }
-    .umana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #FFFFFF; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; }
-    .umana-kpi { border-right: 1px solid #E2E8F0; padding-right: 10px; }
+    .umana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; background: #FFFFFF; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
+    .umana-kpi { border-right: 1px solid #E2E8F0; padding-right: 8px; }
     .umana-kpi:last-child { border-right: none; }
-    .umana-kpi-label { font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; }
-    .umana-kpi-value { font-size: 15px; color: #0F172A; font-weight: 700; margin-top: 2px; }
-    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 1000px; margin: 20px auto; }
+    .umana-kpi-label { font-size: 10px; text-transform: uppercase; color: #64748B; font-weight: 700; }
+    .umana-kpi-value { font-size: 13px; color: #0F172A; font-weight: 700; margin-top: 2px; }
+    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 30px; width: 100%; margin: 10px auto; }
     .saas-box { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
     .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; padding: 15px; margin-top: 10px; }
     .whatsapp-btn { background-color: #25D366 !important; color: white !important; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center; font-weight: bold; margin-right: 5px; font-size: 13px; }
     .meet-btn { background-color: #1a73e8 !important; color: white !important; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center; font-weight: bold; font-size: 13px; }
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
     .sidebar-spec { background-color: #F1F5F9; padding: 12px; border-radius: 8px; border: 1px solid #CBD5E1; margin-top: 15px; font-size: 12px; color: #334155; }
+    
+    /* Stile per l'immagine fissa a sinistra del portale pubblico */
+    .public-left-img {
+        width: 100%;
+        aspect-ratio: 395 / 704;
+        background-size: cover;
+        background-position: center;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -125,9 +135,9 @@ if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso =
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
-if 'sta_rispondendo' not in st.session_state: st.session_state.sta_rispondendo = False
+if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
-# --- PORTALE PUBBLICO ---
+# --- PORTALE PUBBLICO (IMPOSTAZIONE ORIZZONTALE A 3 COLONNE RIGIDE) ---
 if "job" in st.query_params:
     job_param = str(st.query_params["job"])
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
@@ -137,69 +147,98 @@ if "job" in st.query_params:
         if annuncio_selezionato.get('stato') == 'Sospeso':
             st.warning("Selezioni momentaneamente chiuse per questa posizione.")
         else:
-            img_url = annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="public-card">', unsafe_allow_html=True)
             
-            st.markdown(f"""
-                <div class="umana-grid">
-                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
-                </div>
-            """, unsafe_allow_html=True)
+            # Generazione layout a tre colonne: 1. Foto Vetrina, 2. Dati Annuncio, 3. Modulo Candidatura
+            col_sinistra, col_centro, col_destra = st.columns([1.1, 1.5, 1.4])
             
-            st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
-            with st.form("candidatura"):
-                c_nome = st.text_input("Nome e Cognome *")
-                c_mail = st.text_input("E-mail *")
-                c_tel = st.text_input("Telefono *")
-                c_file = st.file_uploader("Allega CV PDF *", type=["pdf"])
+            with col_sinistra:
+                # Carica specificamente la Foto Vetrina (395x704), se assente fallback su immagine o Unsplash
+                img_v_public = annuncio_selezionato.get('foto_vetrina') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                st.markdown(f'<div class="public-left-img" style="background-image: url(\'{img_v_public}\');"></div>', unsafe_allow_html=True)
                 
-                if st.form_submit_button("INVIA CANDIDATURA"):
-                    if c_nome and c_mail and c_tel and c_file:
-                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
-                            testo_pdf = estrai_testo_pdf(c_file)
-                            try:
-                                v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
-                            except Exception:
-                                v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
-                            
-                            pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
-                            nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
-                            
-                            c_file.seek(0)
-                            file_bytes = c_file.read()
-                            
-                            supabase.storage.from_("curriculum").upload(
-                                path=nome_file_storage,
-                                file=file_bytes,
-                                file_options={"content-type": "application/pdf"}
-                            )
-                            
-                            url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
-                            
-                            payload_candidato = {
-                                "nome": c_nome,
-                                "email": c_mail,
-                                "telefono": c_tel,
-                                "posizione": annuncio_selezionato['posizione'],
-                                "idoneita": str(v),
-                                "stelle": str(s),
-                                "orientamento": str(o),
-                                "stato": "In Screening",
-                                "testo_cv": testo_pdf,
-                                "immagine": url_download_pdf
-                            }
-                            
-                            supabase.table("candidati").insert(payload_candidato).execute()
-                            st.success("🎉 Candidatura inviata correttamente! Il tuo CV originale è stato acquisito nel Cloud.")
-                    else:
-                        st.error("Compila tutti i campi obbligatori ed allega il tuo CV in formato PDF.")
+            with col_centro:
+                st.markdown(f"<h1 style='color: #0F172A; margin-top:0;'>{annuncio_selezionato['posizione']}</h1>", unsafe_allow_html=True)
+                
+                # Griglia dati interna
+                st.markdown(f"""
+                    <div class="umana-grid">
+                        <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
+                        <div class="umana-kpi"><div class="umana-kpi-label">💼 Contratto</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
+                        <div class="umana-kpi"><div class="umana-kpi-label">💸 Budget</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("### 📋 Descrizione e Requisiti")
+                st.write(annuncio_selezionato['note'])
+                
+            with col_destra:
+                st.markdown("### 📝 Invia Candidatura")
+                with st.form("candidatura_3_colonne"):
+                    c_nome = st.text_input("Nome e Cognome *")
+                    c_mail = st.text_input("E-mail *")
+                    c_tel = st.text_input("Telefono *")
+                    
+                    # Due uploader distinti richiesti per separare CV da altri allegati
+                    c_file = st.file_uploader("Allega Curriculum Vitae (PDF) *", type=["pdf"])
+                    c_generic = st.file_uploader("Altri file/Allegati generici (Opzionale)", type=["pdf", "png", "jpg", "doc", "docx"])
+                    
+                    if st.form_submit_button("INVIA LA CANDIDATURA", use_container_width=True):
+                        if c_nome and c_mail and c_tel and c_file:
+                            with st.spinner("Elaborazione dati e analisi IA..."):
+                                testo_pdf = estrai_testo_pdf(c_file)
+                                try:
+                                    v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
+                                except Exception:
+                                    v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
+                                
+                                pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
+                                nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
+                                
+                                c_file.seek(0)
+                                file_bytes = c_file.read()
+                                
+                                # Upload CV primario su Supabase Storage
+                                supabase.storage.from_("curriculum").upload(
+                                    path=nome_file_storage,
+                                    file=file_bytes,
+                                    file_options={"content-type": "application/pdf"}
+                                )
+                                url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
+                                
+                                # Se presente il file generico, viene caricato separatamente nel Cloud
+                                if c_generic:
+                                    try:
+                                        nome_generic_storage = f"allegato_{pulito_nome}_{random.randint(1000,9999)}_{c_generic.name}"
+                                        c_generic.seek(0)
+                                        supabase.storage.from_("curriculum").upload(
+                                            path=nome_generic_storage,
+                                            file=c_generic.read()
+                                        )
+                                    except Exception:
+                                        pass
+                                
+                                payload_candidato = {
+                                    "nome": c_nome,
+                                    "email": c_mail,
+                                    "telefono": c_tel,
+                                    "posizione": annuncio_selezionato['posizione'],
+                                    "idoneita": str(v),
+                                    "stelle": str(s),
+                                    "orientamento": str(o),
+                                    "stato": "In Screening",
+                                    "testo_cv": testo_pdf,
+                                    "immagine": url_download_pdf
+                                }
+                                
+                                supabase.table("candidati").insert(payload_candidato).execute()
+                                st.success("🎉 Candidatura e allegati salvati con successo nel Cloud Gruppo Dei Reali!")
+                        else:
+                            st.error("Compila i campi obbligatori contrassegnati con l'asterisco ed inserisci il tuo CV.")
             st.markdown('</div>', unsafe_allow_html=True)
     else: st.error("Annuncio non trovato.")
 
-# --- AREA AMMINISTRATIVA ---
+# --- AREA AMMINISTRATIVA / BACKOFFICE ---
 else:
     if not st.session_state.autenticato:
         st.markdown("<style>.stApp { background: radial-gradient(circle at 50% 50%, #1F3A8A 0%, #0F172A 100%) !important; } header { visibility: hidden !important; }</style>", unsafe_allow_html=True)
@@ -218,10 +257,9 @@ else:
                     else:
                         st.error("Credenziali non corrette.")
     else:
-        # --- LOGIN EFFETTUATO: MOSTRIAMO L'INTERFACCIA HR ---
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
-        # Inizializzazione dei Tab di navigazione principale (9 elementi stabili, indici da 0 a 8)
+        # Inizializzazione dei Tab di navigazione principale (9 elementi stabili)
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)"]
         scelta_tab = st.tabs(tab_nomi)
 
@@ -245,7 +283,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
 
-            # --- CRUSCOTTO DELLE METRICHE GLOBALI ---
             st.subheader("📊 Cruscotto Attività Risorse Umane")
             col_m1, col_m2, col_m3, col_m4 = st.columns(4)
             col_m1.metric(label="📥 CV Ricevuti & Screening", value="142", delta="+12 questa settimana")
@@ -253,7 +290,6 @@ else:
             col_m3.metric(label="💼 Posizioni Aperte", value="5", delta="Filtro: Roma")
             col_m4.metric(label="✅ Assunzioni Perfezionate", value="24", delta="82%")
 
-            # --- SEZIONE CENTRO AGGIORNAMENTI CON LINK POPUP ESTERNI ---
             st.markdown("---")
             st.subheader("📰 Centro Aggiornamenti & Flash Normativi")
             col_news1, col_news2 = st.columns(2)
@@ -282,24 +318,21 @@ else:
                             <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
                         </li>
                         <li><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
-                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
+                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenda Flash ↗</a>
                         </li>
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # --- CONFIGURAZIONE DELLA SIDEBAR (CHATTING E PROFILO CON AVATAR CIRCOLARE & AURA SIRI) ---
+        # --- SIDEBAR COMPONENTE CHAT ---
         with st.sidebar:
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-            if "ia_sta_pensando" not in st.session_state:
-                st.session_state["ia_sta_pensando"] = False
-                
+            
             logo_file = "1000376160.jpg"
             if os.path.exists(logo_file):
                 col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
-                with col_logo2:
-                    st.image(logo_file, use_container_width=True)
+                with col_logo2: st.image(logo_file, use_container_width=True)
             else:
                 st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 20px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
@@ -310,22 +343,7 @@ else:
             
             st.markdown("<h4 style='text-align: center; margin-bottom: 0px;'>🤖 Assistente HR Virtuale</h4>", unsafe_allow_html=True)
             
-            def ottieni_immagine_base64(percorso_file):
-                if os.path.exists(percorso_file):
-                    with open(percorso_file, "rb") as f:
-                        data = f.read()
-                    return base64.b64encode(data).decode()
-                return ""
-
-            if st.session_state["ia_sta_pensando"]:
-                avatar_file = "1000334218.png"
-                classe_animazione = "siri-glow-active"
-            else:
-                avatar_file = "1000334217.png"
-                classe_animazione = "siri-glow-idle"
-
-            stringa_base64 = ottieni_immagine_base64(avatar_file)
-
+            stringa_base64 = ottieni_immagine_base64("1000334218.png" if st.session_state["ia_sta_pensando"] else "1000334217.png")
             if stringa_base64:
                 st.markdown(f"""
                 <style>
@@ -341,44 +359,29 @@ else:
                 .avatar-circolare-perfetto img {{ width: 100%; height: 100%; object-fit: cover; }}
                 </style>
                 <div class="siri-container-centrato">
-                    <div class="{classe_animazione}"></div>
-                    <div class="avatar-circolare-perfetto">
-                        <img src="data:image/png;base64,{stringa_base64}">
-                    </div>
+                    <div class="{"siri-glow-active" if st.session_state['ia_sta_pensando'] else "siri-glow-idle"}"></div>
+                    <div class="avatar-circolare-perfetto"><img src="data:image/png;base64,{stringa_base64}"></div>
                 </div>
                 """, unsafe_allow_html=True)
-            else:
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", width=110)
 
-            col_btn1, col_btn2, col_btn3 = st.columns([0.4, 2.2, 0.4])
-            with col_btn2:
-                if st.button("🗑️ Cancella Chat", use_container_width=True):
-                    st.session_state.chat_history = []
-                    st.rerun()
+            if st.button("🗑️ Cancella Chat", use_container_width=True):
+                st.session_state.chat_history = []
+                st.rerun()
             
             st.markdown("---")
-
             for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"], avatar=None):
-                    st.write(msg["content"])
+                with st.chat_message(msg["role"], avatar=None): st.write(msg["content"])
 
             if prompt := st.chat_input("Chiedi qualcosa..."):
-                with st.chat_message("user", avatar=None):
-                    st.write(prompt)
+                with st.chat_message("user", avatar=None): st.write(prompt)
                 st.session_state.chat_history.append({"role": "user", "content": prompt})
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
             if st.session_state["ia_sta_pensando"]:
-                with st.chat_message("assistant", avatar=None):
-                    with st.spinner("Elaborazione..."):
-                        import time
-                        time.sleep(1.5)
-                
+                import time
+                time.sleep(1.0)
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
-                with st.chat_message("assistant", avatar=None):
-                    st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
@@ -388,25 +391,32 @@ else:
                 st.session_state.autenticato = False
                 st.rerun()
                 
-        # --- TAB 2: ANNUNCI ---
+        # --- TAB 2: GESTIONE ANNUNCI ---
         with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
             res_ann = supabase.table("annunci").select("*").execute()
             elenco = res_ann.data if res_ann.data else []
             
-            def_pos, def_inq, def_imp, def_sede, def_foto, def_note = "","RAL","","","",""
+            def_pos, def_inq, def_imp, def_sede, def_foto_v, def_foto_a, def_note, def_evidenza = "","RAL","","","","", "", False
             if st.session_state.edit_mode and st.session_state.edit_job_id:
                 job = next((a for a in elenco if a["id"] == st.session_state.edit_job_id), None)
-                if job: def_pos, def_inq, def_imp, def_sede, def_foto, def_note = job["posizione"], job["inquadramento"], job["importo"], job["sede"], job.get("immagine",""), job["note"]
+                if job: 
+                    def_pos, def_inq, def_imp, def_sede = job["posizione"], job["inquadramento"], job["importo"], job["sede"]
+                    def_foto_v, def_foto_a, def_note, def_evidenza = job.get("foto_vetrina", ""), job.get("foto_annuncio", ""), job["note"], job.get("in_evidenza", False)
             elif st.session_state.ai_generated_text: def_note = st.session_state.ai_generated_text
 
-            col1, col2, col3 = st.columns([1.1, 1.1, 1.4])
+            col1, col2, col3 = st.columns([1.2, 1.2, 1.3])
             with col1:
                 t_pos = st.text_input("📍 Titolo Posizione", value=def_pos)
                 t_inq = st.radio("Inquadramento", ["RAL","Lordo","Orario"], index=["RAL","Lordo","Orario"].index(def_inq) if def_inq in ["RAL","Lordo","Orario"] else 0)
                 t_imp = st.text_input("Budget Importo (€)", value=def_imp)
                 t_sede = st.text_input("Sede di Lavoro", value=def_sede)
-                t_foto = st.text_input("URL Foto Copertina", value=def_foto)
+                
+                st.markdown("**🖼️ Asset Immagini Dedicati**")
+                t_foto_v = st.text_input("URL Foto Vetrina (Livello 1: 395x704 px)", value=def_foto_v)
+                t_foto_a = st.text_input("URL Foto Annuncio (Livello 2: 395x382 px)", value=def_foto_a)
+                t_evidenza = st.checkbox("🌟 Posiziona questo annuncio nei primi 8 (In Vetrina)", value=def_evidenza)
+                
             with col2:
                 t_note = st.text_area("Descrizione Estesa", value=def_note, height=220)
                 if st.button("🪄 Genera con IA"):
@@ -416,17 +426,24 @@ else:
                         st.rerun()
                 if st.session_state.edit_mode:
                     if st.button("💾 AGGIORNA ANNUNCIO", use_container_width=True):
-                        supabase.table("annunci").update({"posizione":t_pos,"inquadramento":t_inq,"importo":t_imp,"sede":t_sede,"note":t_note,"immagine":t_foto}).eq("id", st.session_state.edit_job_id).execute()
+                        supabase.table("annunci").update({
+                            "posizione": t_pos, "inquadramento": t_inq, "importo": t_imp, "sede": t_sede, 
+                            "note": t_note, "foto_vetrina": t_foto_v, "foto_annuncio": t_foto_a, "in_evidenza": t_evidenza
+                        }).eq("id", st.session_state.edit_job_id).execute()
                         st.session_state.edit_mode = False; st.session_state.ai_generated_text = ""; st.rerun()
                 else:
                     if st.button("🚀 PUBBLICA ANNUNCIO", use_container_width=True):
                         clean_id = re.sub(r'[^a-z0-9]', '-', t_pos.lower())[:15] + f"-{random.randint(10,99)}"
-                        supabase.table("annunci").insert({"id":clean_id,"posizione":t_pos,"inquadramento":t_inq,"importo":t_imp,"sede":t_sede,"note":t_note,"immagine":t_foto,"stato":"Attivo"}).execute()
+                        supabase.table("annunci").insert({
+                            "id": clean_id, "posizione": t_pos, "inquadramento": t_inq, "importo": t_imp, "sede": t_sede, 
+                            "note": t_note, "foto_vetrina": t_foto_v, "foto_annuncio": t_foto_a, "stato": "Attivo", "in_evidenza": t_evidenza
+                        }).execute()
                         st.session_state.ai_generated_text = ""; st.rerun()
             with col3:
                 st.markdown("### Elenco Annunci Pubblicati")
                 for a in elenco:
-                    st.markdown(f"<div class='saas-box'><b>📢 {a['posizione']}</b><div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div></div>", unsafe_allow_html=True)
+                    badge_vetrina = " [🌟 VETRINA]" if a.get("in_evidenza") else ""
+                    st.markdown(f"<div class='saas-box'><b>📢 {a['posizione']}</b>{badge_vetrina}<div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div></div>", unsafe_allow_html=True)
                     c1, c2, c3 = st.columns(3)
                     if c1.button("Modifica", key=f"e_{a['id']}"): st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
                     if c2.button("Sospendi/Attiva", key=f"s_{a['id']}"): supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute(); st.rerun()
@@ -434,23 +451,13 @@ else:
 
         # --- TAB 3: SCREENING ---
         with scelta_tab[2]:
-            st.subheader("📥 Candidature Ricevute da Esaminare (In Screening)")
+            st.subheader("📥 Candidature Ricevute da Esaminare")
             res = supabase.table("candidati").select("*").eq("stato", "In Screening").execute()
             candidati = res.data if res.data else []
-            if not candidati:
-                st.info("Nessun nuovo candidato da valutare al momento.")
             for c in candidati:
-                st.markdown(f"""
-                <div class='saas-box'>
-                    <h4>👤 {c['nome']}</h4>
-                    <b>Posizione:</b> {c['posizione']}<br>
-                    <b>Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span> | {c['stelle']}<br>
-                    <div class='ai-box'><b>Sintesi IA:</b> {c['orientamento']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"<div class='saas-box'><h4>👤 {c['nome']}</h4><b>Posizione:</b> {c['posizione']}<br><b>Idoneità:</b> <span style='color:#2563EB; font-weight:bold;'>{c['idoneita']}</span><div class='ai-box'><b>Sintesi IA:</b> {c['orientamento']}</div></div>", unsafe_allow_html=True)
                 if st.button(f"🤝 Approva {c['nome']} per Colloquio", key=f"ap_{c['id']}", use_container_width=True):
-                    supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute()
-                    st.rerun()
+                    supabase.table("candidati").update({"stato":"Approvato per Colloquio"}).eq("id", c['id']).execute(); st.rerun()
 
         # --- TAB 4: COLLOQUI ---
         with scelta_tab[3]:
@@ -458,352 +465,62 @@ else:
             col_agenda, col_nuovo = st.columns([2, 1.2])
             res_agenda_db = supabase.table("agenda").select("*").execute()
             agenda_list = res_agenda_db.data if res_agenda_db.data else []
-            
             with col_agenda:
                 res_col = supabase.table("candidati").select("*").eq("stato", "Approvato per Colloquio").execute()
                 colloqui = res_col.data if res_col.data else []
-                if not colloqui: st.info("Nessun colloquio pianificato.")
                 for c in colloqui:
                     match_app = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
                     d_c = match_app['data'] if match_app else 'Da pianificare'
-                    o_c = match_app['ora'] if match_app else 'N/D'
-                    meet_url = match_app['meet_link'] if match_app and match_app.get('meet_link') else "https://meet.google.com/new"
-                    
-                    st.markdown(f"<div class='saas-box'><h4>👤 {c['nome']}</h4>🗓️ {d_c} | ⏰ {o_c}</div>", unsafe_allow_html=True)
-                    cb1, cb2 = st.columns(2)
-                    cb1.link_button("💬 WhatsApp", f"https://wa.me/{c['telefono']}", use_container_width=True)
-                    cb2.link_button("📹 Videochiamata", meet_url, use_container_width=True, type="primary")
-                    
-                    st.write("")
-                    c1, c2, c3 = st.columns(3)
-                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute(); st.rerun()
-                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute(); st.rerun()
-                    if c3.button("🗑️ Annulla Turno", key=f"cncl_{c['id']}", use_container_width=True):
-                        if match_app: supabase.table("agenda").delete().eq("id", match_app['id']).execute(); st.rerun()
-            
+                    st.markdown(f"<div class='saas-box'><h4>👤 {c['nome']}</h4>🗓️ {d_c}</div>", unsafe_allow_html=True)
+                    c1, c2 = st.columns(2)
+                    c1.link_button("💬 WhatsApp", f"https://wa.me/{c['telefono']}", use_container_width=True)
+                    if c2.button("🎉 Promuovi ad Assunto", key=f"ass_{c['id']}", use_container_width=True):
+                        supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute(); st.rerun()
             with col_nuovo:
                 if colloqui:
-                    candidato_sel = st.selectbox("Schedula risorsa", [c['nome'] for c in colloqui])
-                    c_obj = next(c for c in colloqui if c['nome'] == candidato_sel)
-                    nuova_data = st.date_input("Data", date.today())
-                    nuova_ora = st.time_input("Orario", time(15, 45))
+                    c_sel = st.selectbox("Schedula risorsa", [c['nome'] for c in colloqui])
                     if st.button("Salva Appuntamento", use_container_width=True):
-                        match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
-                        payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
-                        if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
-                        else: supabase.table("agenda").insert(payload).execute()
-                        st.rerun()
+                        supabase.table("agenda").insert({"candidato": c_sel, "data": str(date.today()), "ora": "15:45", "meet_link": genera_codice_meet_statico()}).execute(); st.rerun()
 
-        # --- TAB 5: ASSUNZIONI & GENERAZIONE CONTRATTI ---
+        # --- TAB 5: ASSUNZIONI & CONTRATTI ---
         with scelta_tab[4]:
             st.markdown("## 💼 Gestione Assunzioni & Onboarding")
-            
-            from fpdf import FPDF
-            import io
-
             if "lista_assunzioni" not in st.session_state:
-                st.session_state.lista_assunzioni = [
-                    {"candidato": "Daniele Rossi", "ruolo": "Specializzando HR", "tipo_contratto": "Determinato", "data_inizio": "2026-04-01", "retribuzione": "28000"},
-                    {"candidato": "Marco Verdone", "ruolo": "Senior Recruiter", "tipo_contratto": "Indeterminato", "data_inizio": "2026-05-15", "retribuzione": "42000"}
-                ]
-            
-            if "lista_candidati" in st.session_state and st.session_state.lista_candidati:
-                opzioni_candidati = [c.get("nome", "Candidato") for c in st.session_state.lista_candidati]
-            else:
-                opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri", "Simona Viola"]
+                st.session_state.lista_assunzioni = [{"candidato": "Daniele Rossi", "ruolo": "Specializzando HR", "tipo_contratto": "Determinato", "data_inizio": "2026-04-01", "retribuzione": "28000"}]
+            df_assunzioni = pd.DataFrame(st.session_state.lista_assunzioni)
+            st.data_editor(df_assunzioni, use_container_width=True, num_rows="dynamic")
 
-            col_form, col_tabella = st.columns([1, 1.4])
-
-            with col_form:
-                st.markdown("### ➕ Perfeziona Nuova Assunzione")
-                with st.form("form_nuova_assunzione", clear_on_submit=True):
-                    candidato_scelto = st.selectbox("Seleziona Candidato*", opzioni_candidati)
-                    ruolo_aziendale = st.text_input("Qualifica / Ruolo*")
-                    tipo_contratto = st.selectbox("Tipologia Contrattuale", ["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"])
-                    
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        data_inizio = st.date_input("Data Decorrenza", value=None)
-                    with c2:
-                        ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
-                    
-                    documentazione = st.file_uploader("Carica Documenti d'Identità / Contratto Firmato", type=["pdf", "png", "jpg"])
-                    submit_assunzione = st.form_submit_button("Registra Assunzione & Crea Scheda", use_container_width=True)
-                    
-                    if submit_assunzione:
-                        if candidato_scelto and ruolo_aziendale and data_inizio:
-                            nuova_ass = {
-                                "candidato": candidato_scelto,
-                                "ruolo": ruolo_aziendale,
-                                "tipo_contratto": tipo_contratto,
-                                "data_inizio": str(data_inizio),
-                                "retribuzione": str(ral_proposta)
-                            }
-                            st.session_state.lista_assunzioni.append(nuova_ass)
-                            st.success(f"✔️ Assunzione di {candidato_scelto} inserita!")
-                            st.rerun()
-                        else:
-                            st.error("❌ Compila i campi obbligatori (Candidato, Ruolo e Data Inizio).")
-
-            with col_tabella:
-                st.markdown("### 📋 Registro Assunzioni Attive")
-                st.caption("💡 Seleziona una riga sulla sinistra e premi il tasto CANC sulla tastiera per eliminarla.")
-                
-                if st.session_state.lista_assunzioni:
-                    import pandas as pd
-                    df_assunzioni = pd.DataFrame(st.session_state.lista_assunzioni)
-                    
-                    df_ass_modificato = st.data_editor(
-                        df_assunzioni,
-                        use_container_width=True,
-                        num_rows="dynamic",
-                        column_config={
-                            "candidato": "Dipendente",
-                            "ruolo": "Ruolo / Mansione",
-                            "tipo_contratto": st.column_config.SelectboxColumn("Contratto", options=["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"]),
-                            "data_inizio": "Data Inizio",
-                            "retribuzione": "RAL (€)"
-                        },
-                        key="editor_assunzioni_v2"
-                    )
-                    
-                    if not df_ass_modificato.equals(df_assunzioni):
-                        st.session_state.lista_assunzioni = df_ass_modificato.to_dict(orient="records")
-                        st.success("🔄 Archivio aggiornato con successo!")
-                        st.rerun()
-                        
-                    st.markdown("---")
-                    st.markdown("### 📄 Esporta Pratiche Ufficio del Personale")
-                    
-                    dipendente_selezionato = st.selectbox(
-                        "Seleziona l'anagrafica da esportare:", 
-                        [a["candidato"] for a in st.session_state.lista_assunzioni]
-                    )
-                    
-                    dati_dip = next((item for item in st.session_state.lista_assunzioni if item["candidato"] == dipendente_selezionato), None)
-                    
-                    if dati_dip:
-                        pdf = FPDF()
-                        pdf.add_page()
-                        
-                        pdf.set_font("Helvetica", "B", 16)
-                        pdf.set_text_color(59, 130, 246)
-                        pdf.cell(0, 10, "SUITE HR ENTERPRISE - GRUPPO DEI REALI", ln=True, align="C")
-                        pdf.set_font("Helvetica", "", 10)
-                        pdf.set_text_color(100, 100, 100)
-                        pdf.cell(0, 6, "Pratica di Onboarding & Trasmissione Contrattuale", ln=True, align="C")
-                        pdf.ln(10)
-                        
-                        pdf.set_font("Helvetica", "B", 12)
-                        pdf.set_text_color(0, 0, 0)
-                        pdf.cell(0, 10, "DATI CONTRATTUALI RISORSA", ln=True)
-                        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-                        pdf.ln(4)
-                        
-                        elementi_scheda = [
-                            ("Dipendente / Candidato:", dati_dip["candidato"]),
-                            ("Qualifica / Mansione:", dati_dip["ruolo"]),
-                            ("Tipologia Contratto:", dati_dip["tipo_contratto"]),
-                            ("Data Decorrenza:", dati_dip["data_inizio"]),
-                            ("R.A.L. Assegnata:", f"{dati_dip['retribuzione']} EUR")
-                        ]
-                        
-                        pdf.set_font("Helvetica", "", 11)
-                        for label, valore in elementi_scheda:
-                            pdf.set_font("Helvetica", "", 11)
-                            pdf.cell(50, 8, label, border=0)
-                            pdf.set_font("Helvetica", "B", 11)
-                            pdf.cell(0, 8, str(valore), border=0, ln=True)
-                        
-                        pdf.ln(15)
-                        pdf.set_font("Helvetica", "I", 9)
-                        pdf.set_text_color(120, 120, 120)
-                        pdf.cell(0, 10, "Documento valido ai fini degli adempimenti interni del personale del Gruppo Dei Reali.", ln=True, align="L")
-                        
-                        pdf_output = pdf.output()
-                        
-                        st.download_button(
-                            label=f"📥 Scarica Scheda PDF di {dipendente_selezionato}",
-                            data=bytes(pdf_output),
-                            file_name=f"Pratica_Assunzione_{dipendente_selezionato.replace(' ', '_')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                else:
-                    st.info("Nessuna assunzione registrata nel sistema.")
-
-        # --- TAB 6: REPORT (Precedentemente vuota o implicita, mantenuta per la coerenza degli indici) ---
+        # --- TAB 6: REPORT ---
         with scelta_tab[5]:
             st.subheader("📊 Report e Statistiche Personale")
-            st.info("I grafici analitici del personale, i tempi medi di onboarding e le metriche di screening verranno renderizzati in questa sezione.")
+            st.info("I grafici analitici del personale verranno renderizzati in questa sezione.")
 
-        # --- TAB 7: ANAGRAFICA CLIENTI B2B ---
+        # --- TAB 7: ANAGRAFICA CLIENTI ---
         with scelta_tab[6]:
             st.markdown("## 🏢 Anagrafica Clienti B2B")
-            
             if "lista_clienti" not in st.session_state:
-                st.session_state.lista_clienti = [
-                    {"azienda": "Reali Logistics S.r.l.", "piva": "01234567890", "referente": "Mario Rossi", "email": "mario.rossi@realilogistics.it", "stato": "Attivo"},
-                    {"azienda": "Tech Solutions Spa", "piva": "09876543211", "referente": "Laura Bianchi", "email": "l.bianchi@techsolutions.com", "stato": "In Attivazione"}
-                ]
+                st.session_state.lista_clienti = [{"azienda": "Reali Logistics S.r.l.", "piva": "01234567890", "referente": "Mario Rossi", "stato": "Attivo"}]
+            st.data_editor(pd.DataFrame(st.session_state.lista_clienti), use_container_width=True, num_rows="dynamic")
 
-            col_mod, col_elenco = st.columns([1, 1.6])
-
-            with col_mod:
-                st.markdown("### ➕ Inserisci Nuovo Cliente")
-                with st.form("form_nuovo_cliente", clear_on_submit=True):
-                    ragione_sociale = st.text_input("Ragione Sociale Azienda*")
-                    partita_iva = st.text_input("Partita IVA*")
-                    nome_referente = st.text_input("Nome Referente")
-                    email_contatto = st.text_input("Email di Contatto")
-                    stato_contratto = st.selectbox("Stato Contrattuale", ["Attivo", "In Attivazione", "Sospeso"])
-                    
-                    submit_cliente = st.form_submit_button("Registra Cliente", use_container_width=True)
-                    
-                    if submit_cliente:
-                        if ragione_sociale and partita_iva:
-                            nuovo_c = {
-                                "azienda": ragione_sociale,
-                                "piva": partita_iva,
-                                "referente": nome_referente,
-                                "email": email_contatto,
-                                "stato": stato_contratto
-                            }
-                            st.session_state.lista_clienti.append(nuovo_c)
-                            st.success(f"✔️ {ragione_sociale} registrato!")
-                            st.rerun()
-                        else:
-                            st.error("❌ Ragione Sociale e Partita IVA sono obbligatori.")
-
-            with col_elenco:
-                st.markdown("### 📋 Elenco & Gestione Clienti Partner")
-                st.caption("💡 Trucco: per eliminare un cliente, seleziona la riga sulla sinistra della tabella e premi il tasto CANC (o Delete) sulla tua tastiera, poi clicca su 'Salva Modifiche'.")
-                
-                if st.session_state.lista_clienti:
-                    import pandas as pd
-                    df_clienti = pd.DataFrame(st.session_state.lista_clienti)
-                    
-                    df_modificato = st.data_editor(
-                        df_clienti,
-                        use_container_width=True,
-                        num_rows="dynamic",
-                        column_config={
-                            "azienda": "Azienda Partner",
-                            "piva": "Partita IVA",
-                            "referente": "Referente",
-                            "email": "Email",
-                            "stato": st.column_config.SelectboxColumn("Stato", options=["Attivo", "In Attivazione", "Sospeso"])
-                        },
-                        key="editor_clienti"
-                    )
-                    
-                    if not df_modificato.equals(df_clienti):
-                        st.session_state.lista_clienti = df_modificato.to_dict(orient="records")
-                        st.success("🔄 Elenco aggiornato correttamente!")
-                        st.rerun()
-                else:
-                    st.info("Nessun cliente in archivio.")
-
-        # --- TAB 8: DATABASE ANAGRAFICO CANDIDATI ---
+        # --- TAB 8: DATABASE CANDIDATI ---
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
-            
-            col_ord1, col_ord2 = st.columns([2, 2])
-            with col_ord1:
-                ordine_scelto = st.selectbox("Ordina l'elenco per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
-            with col_ord2:
-                res_posizioni = supabase.table("candidati").select("posizione").execute()
-                lista_posizioni = list(set([item['posizione'] for item in res_posizioni.data if item.get('posizione')])) if res_posizioni.data else []
-                posizione_filtro = st.selectbox("Filtra per Ruolo Richiesto:", ["Tutti i Ruoli"] + lista_posizioni)
-
             res_tutti = supabase.table("candidati").select("*").execute()
             tutti = res_tutti.data if res_tutti.data else []
-            
-            if not tutti:
-                st.info("Nessun candidato registrato nel database cloud.")
-            else:
-                if posizione_filtro != "Tutti i Ruoli":
-                    tutti = [cand for cand in tutti if cand.get('posizione') == posizione_filtro]
-                
-                if ordine_scelto == "Ultimi Arrivi":
-                    tutti = sorted(tutti, key=lambda x: x.get('id', 0), reverse=True)
-                elif ordine_scelto == "Ordine Alfabetico (A-Z)":
-                    tutti = sorted(tutti, key=lambda x: x.get('nome', '').lower())
+            for c in tutti:
+                with st.expander(f"👤 {c['nome']} - {c['posizione']} ({c['stato']})"):
+                    st.write(f"Email: {c['email']} | Telefono: {c['telefono']}")
+                    st.text(c.get('testo_cv', ''))
+                    if st.button("🗑️ Elimina", key=f"del_{c['id']}"):
+                        supabase.table("candidati").delete().eq("id", c['id']).execute(); st.rerun()
 
-                # Lista Compatta dei candidati
-                for c in tutti:
-                    punteggio_ia = c.get('idoneita', '85%')
-                    
-                    st.markdown(f"""
-                    <div style="background-color: #FFFFFF; padding: 14px; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <div>
-                            <span style="font-weight: bold; color: #1E3A8A; font-size: 16px;">👤 {c['nome']}</span> 
-                            <span style="margin-left: 10px; font-size: 12px; background-color: #EFF6FF; color: #2563EB; padding: 3px 8px; border-radius: 4px; font-weight: bold;">{c['posizione']}</span>
-                        </div>
-                        <div>
-                            <span style="background-color: #DCFCE7; color: #15803D; font-weight: bold; font-size: 13px; padding: 5px 10px; border-radius: 6px;">🤖 Attinenza IA: {punteggio_ia}</span>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    with st.expander(f"🔍 Apri Scheda Completa: {c['nome']}"):
-                        st.markdown(f"""
-                        #### 🗂️ Informazioni Anagrafiche
-                        * **Nome e Cognome:** {c['nome']}
-                        * **E-mail:** {c['email']}
-                        * **Telefono:** {c['telefono']}
-                        * **Stato Selezione:** `{c['stato']}`
-                        
-                        ---
-                        #### 🤖 Sintesi e Profilo IA
-                        * **Valutazione Attinenza:** {punteggio_ia} {c.get('stelle', '⭐⭐⭐')}
-                        * **Orientamento IA:** {c.get('orientamento', 'Profilo acquisito.')}
-                        """)
-                        
-                        st.markdown("##### 📄 Contenuto del Curriculum Vitae:")
-                        st.info(c.get('testo_cv', 'Nessun testo estratto.'))
-                        
-                        col_pop1, col_pop2, col_pop3 = st.columns(3)
-                        with col_pop1:
-                            nuovo_stato = st.selectbox(
-                                "Modifica Stato:", 
-                                ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"], 
-                                index=["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"].index(c['stato']) if c['stato'] in ["In Screening", "Approvato per Colloquio", "Assunto", "Rifiutato"] else 0, 
-                                key=f"pop_st_{c['id']}"
-                            )
-                            if st.button("💾 Salva Stato", key=f"pop_sv_{c['id']}", use_container_width=True):
-                                supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
-                                st.success("Stato aggiornato!")
-                                st.rerun()
-                        with col_pop2:
-                            url_pdf = c.get('immagine', '')
-                            if url_pdf and url_pdf.startswith("http"):
-                                st.link_button("📥 Scarica PDF Originale", url_pdf, use_container_width=True)
-                            else:
-                                st.caption("Nessun PDF originale allegato.")
-                        with col_pop3:
-                            if st.button("🗑️ Elimina Risorsa", key=f"pop_del_{c['id']}", use_container_width=True, type="secondary"):
-                                if url_pdf and "curriculum/" in url_pdf:
-                                    try:
-                                        nome_file_storage = url_pdf.split("curriculum/")[-1]
-                                        supabase.storage.from_("curriculum").remove([nome_file_storage])
-                                    except Exception:
-                                        pass
-                                supabase.table("agenda").delete().eq("candidato", c['nome']).execute()
-                                supabase.table("candidati").delete().eq("id", c['id']).execute()
-                                st.success("Candidato eliminato!")
-                                st.rerun()
-                    st.write("")
-
-        # --- TAB 9: VETRINA CARRIERE SIMULATA ---
+        # --- TAB 9: VETRINA CARRIERE ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Griglie bloccate: Immagini verticali tarate con precisione a 8 annunci per riga.")
+            st.caption("Layout pixel-perfect calibrato geometricamente a 8 colonne per riga.")
 
-            # CSS Ultra-Rigoroso: blocca la larghezza delle card per evitare l'effetto gigante
             st.markdown("""
             <style>
-            /* Griglia a 8 colonne fisse e allineate */
             .grid-8-annunci {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -811,154 +528,57 @@ else:
                 margin-bottom: 35px;
                 width: 100%;
             }
-            @media (min-width: 768px) {
-                .grid-8-annunci { grid-template-columns: repeat(4, 1fr); }
-            }
-            @media (min-width: 1200px) {
-                .grid-8-annunci { 
-                    grid-template-columns: repeat(8, 1fr); 
-                }
-            }
+            @media (min-width: 768px) { .grid-8-annunci { grid-template-columns: repeat(4, 1fr); } }
+            @media (min-width: 1200px) { .grid-8-annunci { grid-template-columns: repeat(8, 1fr); } }
 
-            /* CARD VETRINA BLOCCATA: Forza il rapporto verticale 395x704 e impedisce l'allargamento */
             .vetrina-solo-img {
-                display: block;
-                width: 100%;
-                max-width: 180px; /* Impedisce alle immagini landscape di allargarsi all'infinito */
-                aspect-ratio: 395 / 704;
-                background-size: contain; /* Cambiato da cover a contain per non tagliare loghi o scritte orizzontali */
-                background-repeat: no-repeat;
-                background-position: center;
-                background-color: #0F172A; /* Sfondo scuro elegante se l'immagine non è perfettamente verticale */
-                border-radius: 8px;
-                border: 1px solid #E2E8F0;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                margin: 0 auto; /* Centra la card nella sua colonna */
+                display: block; width: 100%; max-width: 180px; aspect-ratio: 395 / 704;
+                background-size: cover; background-repeat: no-repeat; background-position: center;
+                background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0;
+                transition: transform 0.2s ease; margin: 0 auto;
             }
-            .vetrina-solo-img:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-            }
+            .vetrina-solo-img:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
 
-            /* CARD STANDARD BLOCCATA: Immagine sopra (395x382) + Testo sotto */
             .card-standard-vetrina {
-                display: flex;
-                flex-direction: column;
-                width: 100%;
-                max-width: 180px;
-                aspect-ratio: 395 / 704;
-                background-color: #FFFFFF;
-                border-radius: 8px;
-                border: 1px solid #E2E8F0;
-                overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-                transition: transform 0.2s ease;
-                text-decoration: none;
-                color: inherit;
-                margin: 0 auto;
+                display: flex; flex-direction: column; width: 100%; max-width: 180px; aspect-ratio: 395 / 704;
+                background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; overflow: hidden;
+                transition: transform 0.2s ease; text-decoration: none; color: inherit; margin: 0 auto;
             }
-            .card-standard-vetrina:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-            }
-            .card-standard-img-half {
-                width: 100%;
-                height: 54%; 
-                background-size: cover;
-                background-position: center;
-            }
-            .card-standard-text-half {
-                padding: 10px;
-                height: 46%;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-                background: #FFFFFF;
-                overflow: hidden;
-            }
-            .card-title-mini {
-                font-size: 11px;
-                font-weight: 700;
-                color: #0F172A;
-                line-height: 1.2;
-                margin-bottom: 4px;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-            .card-desc-mini {
-                font-size: 9px;
-                color: #475569;
-                line-height: 1.2;
-                display: -webkit-box;
-                -webkit-line-clamp: 4;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-            .card-footer-mini {
-                margin-top: auto;
-                font-size: 9px;
-                font-weight: bold;
-                color: #2563EB;
-                display: flex;
-                justify-content: space-between;
-            }
+            .card-standard-vetrina:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
+            .card-standard-img-half { width: 100%; height: 54%; background-size: cover; background-position: center; }
+            .card-standard-text-half { padding: 10px; height: 46%; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+            .card-title-mini { font-size: 11px; font-weight: 700; color: #0F172A; line-height: 1.2; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .card-desc-mini { font-size: 9px; color: #475569; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+            .card-footer-mini { margin-top: auto; font-size: 9px; font-weight: bold; color: #2563EB; display: flex; justify-content: space-between; }
             </style>
             """, unsafe_allow_html=True)
 
-            # Caricamento dinamico dei dati da Supabase
-            res_vetrina = supabase.table("annunci").select("*").execute()
-            annunci_raw = res_vetrina.data if res_vetrina.data else []
-            annunci_vivi = [a for a in annunci_raw if a.get("stato") != "Sospeso"]
+            annunci_flag_vetrina = [a for a in elenco if a.get("in_evidenza") == True][:8]
+            annunci_standard_resto = [a for a in elenco if a.get("in_evidenza") != True]
 
-            # Distribuzione: i primi 8 vanno nel Box Orizzontale Vetrina
-            annunci_box_vetrina = annunci_vivi[:8]
-            annunci_box_standard = annunci_vivi[8:]
-
-            # --- LIVELLO 1: VETRINA ORIZZONTALE (SOLO IMMAGINI 395x704) ---
-            st.markdown("### 🌟 In Vetrina")
-            if not annunci_box_vetrina:
-                st.info("Nessun annuncio disponibile.")
+            st.markdown("### 🌟 In Vetrina (Selezionati)")
+            if not annunci_flag_vetrina:
+                st.info("Nessun annuncio in evidenza.")
             else:
                 st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
-                for a in annunci_box_vetrina:
-                    img_url = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    st.markdown(f"""
-                    <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_url}');" title="Candidati per {a['posizione']}">
-                    </a>
-                    """, unsafe_allow_html=True)
+                for a in annunci_flag_vetrina:
+                    img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    st.markdown(f'<a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            # --- LIVELLO 2: RESTO DEGLI ANNUNCI (IMMAGINE 395x382 + TESTO RIDOTTO SOTTO) ---
             st.markdown("---")
-            st.markdown("### 📋 Altre Posizioni Aperte")
-            
-            annunci_sotto = annunci_box_standard if annunci_box_standard else annunci_vivi
-
-            if not annunci_sotto:
-                st.info("Nessun ulteriore annuncio presente in archivio.")
-            else:
-                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
-                for a in annunci_sotto:
-                    img_url = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    estratto_testo = a.get("note", "Nessun dettaglio inserito.")
-                    
-                    st.markdown(f"""
-                    <a href="{link_candidatura}" target="_blank" class="card-standard-vetrina">
-                        <div class="card-standard-img-half" style="background-image: url('{img_url}');"></div>
-                        <div class="card-standard-text-half">
-                            <div class="card-title-mini">{a['posizione']}</div>
-                            <div class="card-desc-mini">{estratto_testo}</div>
-                            <div class="card-footer-mini">
-                                <span>📍 {a.get('sede', 'Roma')}</span>
-                                <span>{a.get('importo', 'N/D')} €</span>
-                            </div>
-                        </div>
-                    </a>
-                    """, unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("### 📋 Tutte le Posizioni Aperte")
+            st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+            for a in (annunci_standard_resto if annunci_standard_resto else elenco):
+                img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                st.markdown(f"""
+                <a href="https://deireali-hr.streamlit.app/?job={a['id']}" target="_blank" class="card-standard-vetrina">
+                    <div class="card-standard-img-half" style="background-image: url('{img_a_url}');"></div>
+                    <div class="card-standard-text-half">
+                        <div class="card-title-mini">{a['posizione']}</div>
+                        <div class="card-desc-mini">{a.get('note', '')[:80]}...</div>
+                        <div class="card-footer-mini"><span>📍 {a.get('sede', 'Roma')}</span><span>{a.get('importo', 'N/D')} €</span></div>
+                    </div>
+                </a>
+                """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
