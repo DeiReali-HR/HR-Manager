@@ -511,10 +511,10 @@ else:
                     if st.button("🗑️ Elimina", key=f"del_{c['id']}"):
                         supabase.table("candidati").delete().eq("id", c['id']).execute(); st.rerun()
 
-        # --- TAB 9: PORTALE CARRIERE (FILTRI LIVE, SHOWCASE ORIZZONTALE E PAGINAZIONE) ---
+        # --- TAB 9: PORTALE CARRIERE (GRIGLIA A 2 COLONNE CON CARD ORIZZONTALI ALTEZZA 382PX) ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e massimo 5 file di annunci estesi con paginazione.")
+            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
 
             st.markdown("""
             <style>
@@ -536,13 +536,19 @@ else:
             }
             .vetrina-solo-img:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
 
-            .showcase-horizontal-container {
-                display: flex;
-                flex-direction: column;
+            /* Griglia a 2 colonne affiancate per gli annunci Showcase inferiori */
+            .showcase-grid-2columns {
+                display: grid;
+                grid-template-columns: 1fr;
                 gap: 20px;
                 width: 100%;
                 margin-top: 15px;
             }
+            @media (min-width: 992px) {
+                .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr); }
+            }
+
+            /* Card orizzontale bloccata geometricamente a 382px di altezza massima */
             .showcase-card-row {
                 display: flex;
                 background-color: #FFFFFF;
@@ -550,64 +556,84 @@ else:
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-                transition: transform 0.2s ease;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
                 width: 100%;
+                height: 382px;
+                max-height: 382px;
             }
             .showcase-card-row:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+                transform: translateY(-3px);
+                box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08);
             }
+            
+            /* Lato Immagine: Proporzione perfetta basata sui 382px di altezza */
             .showcase-img-side {
-                width: 300px;
-                min-width: 300px;
+                width: 40%;
+                min-width: 40%;
+                height: 100%;
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
+                border-right: 1px solid #F1F5F9;
             }
+            
+            /* Lato Testo: scroll interno pulito se la descrizione supera lo spazio utile */
             .showcase-content-side {
-                padding: 25px;
+                width: 60%;
+                padding: 20px;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                flex-grow: 1;
+                height: 100%;
+                overflow: hidden;
             }
+            .showcase-scrollable-body {
+                overflow-y: auto;
+                flex-grow: 1;
+                padding-right: 5px;
+                margin-bottom: 10px;
+            }
+            /* Custom scrollbar sottile ed elegante */
+            .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
+            .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
+
             .showcase-title {
-                font-size: 20px;
+                font-size: 18px;
                 font-weight: 700;
                 color: #0F172A;
-                margin-bottom: 8px;
+                margin-bottom: 4px;
+                line-height: 1.3;
             }
             .showcase-meta-grid {
                 display: flex;
-                gap: 15px;
-                font-size: 13px;
+                flex-wrap: wrap;
+                gap: 8px 12px;
+                font-size: 12px;
                 font-weight: 600;
                 color: #2563EB;
-                margin-bottom: 12px;
+                margin-bottom: 10px;
             }
             .showcase-text {
-                font-size: 14px;
+                font-size: 13px;
                 color: #475569;
                 line-height: 1.5;
-                margin-bottom: 20px;
                 white-space: pre-line;
             }
             .showcase-btn {
                 align-self: flex-start;
                 background-color: #0F172A;
                 color: #FFFFFF !important;
-                padding: 10px 20px;
+                padding: 8px 16px;
                 border-radius: 6px;
                 font-weight: 600;
-                font-size: 13px;
+                font-size: 12px;
                 text-decoration: none !important;
                 transition: background-color 0.2s;
+                margin-top: auto;
+                width: 100%;
+                text-align: center;
             }
             .showcase-btn:hover { background-color: #1E293B; }
-            @media (max-width: 768px) {
-                .showcase-card-row { flex-direction: column; }
-                .showcase-img-side { width: 100%; height: 250px; min-width: auto; }
-            }
             </style>
             """, unsafe_allow_html=True)
 
@@ -620,7 +646,7 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA (SOLO IMMAGINI STATISCHE) ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
@@ -637,16 +663,16 @@ else:
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
 
-            # --- NUOVA BARRA DI RICERCA AVANZATA ---
+            # --- BARRA DI RICERCA AVANZATA ---
             col_search1, col_search2 = st.columns(2)
             with col_search1:
                 search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
             with col_search2:
                 search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
 
-            # Filtriamo l'elenco in base alle selezioni della barra di ricerca
+            # Filtriamo l'elenco escludendo la riga in evidenza
             annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if not annunci_filtrati: # Fallback se non ci sono annunci standard
+            if not annunci_filtrati:
                 annunci_filtrati = annunci_vivi
 
             if search_ruolo != "Tutti i Ruoli":
@@ -654,30 +680,26 @@ else:
             if search_citta != "Tutte le Sedi":
                 annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
-            # --- GESTIONE RIGIDA DELLE 5 FILE (PAGINAZIONE DA MAX 10 ELEMENTI) ---
-            CONTEGGIO_PER_PAGINA = 10  # 2 annunci per fila * 5 file = 10 elementi max
+            # --- GESTIONE DELLE PAGINE (MAX 5 FILE DI 2 COLONNE = 10 ANNUNCI MAX PER PAGINA) ---
+            CONTEGGIO_PER_PAGINA = 10  
             totale_annunci_filtrati = len(annunci_filtrati)
             
             if totale_annunci_filtrati == 0:
                 st.info("Nessun annuncio corrisponde ai criteri di ricerca selezionati.")
             else:
-                # Calcolo del numero di pagine totali
                 pagine_totali = max(1, (totale_annunci_filtrati + CONTEGGIO_PER_PAGINA - 1) // CONTEGGIO_PER_PAGINA)
-                
-                # Se abbiamo più di 10 elementi, mostriamo il selettore di pagina in stile pulito
                 pagina_corrente = 1
                 if pagine_totali > 1:
                     col_pag1, col_pag2 = st.columns([4, 1])
                     with col_pag2:
                         pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1)
                 
-                # Taglio dell'elenco (Slicing) in base alla pagina selezionata
                 inizio_index = (pagina_corrente - 1) * CONTEGGIO_PER_PAGINA
                 fine_index = inizio_index + CONTEGGIO_PER_PAGINA
                 annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
 
-                # --- RENDER DELLE RIGHE ORIZZONTALI (SHOWCASE D'IMPATTO) ---
-                st.markdown("<div class='showcase-horizontal-container'>", unsafe_allow_html=True)
+                # --- GRIGLIA A DUE COLONNE AFFIANCATE ---
+                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
                 for a in annunci_da_mostrare:
                     img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
@@ -686,12 +708,12 @@ else:
                     <div class="showcase-card-row">
                         <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
                         <div class="showcase-content-side">
-                            <div>
+                            <div class="showcase-scrollable-body">
                                 <div class="showcase-title">{a['posizione']}</div>
                                 <div class="showcase-meta-grid">
-                                    <span>📍 Sede: {a.get('sede', 'Roma')}</span>
-                                    <span>💼 Contratto: {a.get('inquadramento', 'RAL')}</span>
-                                    <span>💸 Budget: {a.get('importo', 'N/D')} €</span>
+                                    <span>📍 {a.get('sede', 'Roma')}</span>
+                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                    <span>💸 {a.get('importo', 'N/D')} €</span>
                                 </div>
                                 <div class="showcase-text">{a.get('note', '')}</div>
                             </div>
