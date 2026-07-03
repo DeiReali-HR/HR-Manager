@@ -96,14 +96,17 @@ st.markdown("""
     <style>
     .stApp { background-color: #F8FAFC !important; color: #0F172A !important; }
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
-    .umana-banner { position: relative; width: 100%; height: 280px; background-size: cover; background-position: center; border-radius: 16px; margin-bottom: 25px; box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.55); display: flex; align-items: flex-end; padding: 35px; }
-    .umana-banner-title { color: #FFFFFF !important; font-size: 34px !important; font-weight: 800 !important; margin: 0 !important; }
-    .umana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #FFFFFF; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; }
-    .umana-grid > div { border-right: 1px solid #E2E8F0; padding-right: 10px; }
-    .umana-grid > div:last-child { border-right: none; }
+    .umana-banner { position: relative; width: 100%; height: 160px; background-size: cover; background-position: center; border-radius: 12px; margin-bottom: 20px; box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.4); display: flex; align-items: flex-end; padding: 20px; }
+    .umana-banner-title { color: #FFFFFF !important; font-size: 26px !important; font-weight: 800 !important; margin: 0 !important; }
+    .umana-grid-3cols { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #E2E8F0; }
+    @media (min-width: 576px) { .umana-grid-3cols { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 768px) { .umana-grid-3cols { grid-template-columns: repeat(4, 1fr); } }
+    .umana-grid-3cols > div { border-right: 1px solid #E2E8F0; padding-right: 5px; }
+    .umana-grid-3cols > div:last-child { border-right: none; }
     .umana-kpi-label { font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; }
-    .umana-kpi-value { font-size: 15px; color: #0F172A; font-weight: 700; margin-top: 2px; }
-    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 1000px; margin: 20px auto; }
+    .umana-kpi-value { font-size: 14px; color: #0F172A; font-weight: 700; margin-top: 2px; }
+    .public-card-3cols { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 25px; margin: 10px auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .public-left-img { width: 100%; aspect-ratio: 395 / 704; background-size: cover; background-position: center; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .saas-box { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
     .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; padding: 15px; margin-top: 10px; }
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
@@ -123,7 +126,7 @@ if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
     
-# --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
+# --- PORTALE PUBBLICO: DETTAGLIO CON LAYOUT ORIZZONTALE A TRE COLONNE ---
 if "job" in st.query_params:
     job_param = str(st.query_params["job"])
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
@@ -133,64 +136,100 @@ if "job" in st.query_params:
         if annuncio_selezionato.get('stato') == 'Sospeso':
             st.warning("Selezioni momentaneamente chiuse per questa posizione.")
         else:
-            img_url = annuncio_selezionato.get('foto_annuncio') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="public-card-3cols">', unsafe_allow_html=True)
             
-            st.markdown(f"""
-                <div class="umana-grid">
-                    <div><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
-                    <div><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
-                    <div><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
-                    <div><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
-                </div>
-            """, unsafe_allow_html=True)
+            # Generazione delle tre macro-colonne orizzontali
+            col_sinistra_foto, col_centro_dati, col_destra_modulo = st.columns([1, 1.6, 1.4], gap="large")
             
-            st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
-            with st.form("candidatura"):
-                c_nome = st.text_input("Nome e Cognome *")
-                c_mail = st.text_input("E-mail *")
-                c_tel = st.text_input("Telefono *")
-                c_file = st.file_uploader("Allega CV PDF *", type=["pdf"])
+            # 1. COLONNA DI SINISTRA: Foto Vetrina Verticale (395x704)
+            with col_sinistra_foto:
+                img_v_url = annuncio_selezionato.get('foto_vetrina') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                st.markdown(f'<div class="public-left-img" style="background-image: url(\'{img_v_url}\');"></div>', unsafe_allow_html=True)
+            
+            # 2. COLONNA CENTRALE: Dati e Informazioni Annuncio
+            with col_centro_dati:
+                st.markdown(f"<h1 style='color:#0F172A; margin-top:0; font-size:28px;'>{annuncio_selezionato['posizione']}</h1>", unsafe_allow_html=True)
                 
-                if st.form_submit_button("INVIA CANDIDATURA"):
-                    if c_nome and c_mail and c_tel and c_file:
-                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
-                            testo_pdf = estrai_testo_pdf(c_file)
-                            v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
+                st.markdown(f"""
+                    <div class="umana-grid-3cols">
+                        <div><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
+                        <div><div class="umana-kpi-label">💼 Contratto</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
+                        <div><div class="umana-kpi-label">💸 Budget</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                        <div><div class="umana-kpi-label">🔑 Riferimento</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("### 📝 Descrizione e Requisiti")
+                st.markdown(f"<div style='color:#334155; line-height:1.6; white-space:pre-line;'>{annuncio_selezionato['note']}</div>", unsafe_allow_html=True)
+            
+            # 3. COLONNA DI DESTRA: Modulo Acquisizione Dati e Candidatura Multi-File
+            with col_destra_modulo:
+                st.markdown("<h3 style='margin-top:0; color:#1E3A8A;'>🎯 Invia la tua Candidatura</h3>", unsafe_allow_html=True)
+                with st.form("candidatura_3colonne"):
+                    c_nome = st.text_input("Nome e Cognome *")
+                    c_mail = st.text_input("Indirizzo E-mail *")
+                    c_tel = st.text_input("Numero di Telefono *")
+                    
+                    st.markdown("<hr style='margin:15px 0; border:0; border-top:1px solid #E2E8F0;'>", unsafe_allow_html=True)
+                    st.markdown("**📄 Allegati Richiesti**")
+                    c_file = st.file_uploader("Curriculum Vitae (Solo PDF) *", type=["pdf"])
+                    c_generico = st.file_uploader("Documenti aggiuntivi (Opzionale: PDF, PNG, JPG)", type=["pdf", "png", "jpg"])
+                    
+                    st.write("")
+                    bottone_invio = st.form_submit_button("TRASMETTI CANDIDATURA", use_container_width=True)
+                    
+                    if bottone_invio:
+                        if c_nome and c_mail and c_tel and c_file:
+                            with st.spinner("Acquisizione file ed elaborazione algoritmi IA..."):
+                                testo_pdf = estrai_testo_pdf(c_file)
+                                v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
+                                
+                                prefisso_univoco = f"{re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())}_{random.randint(1000,9999)}"
+                                
+                                # Caricamento e salvataggio file 1: Curriculum PDF
+                                c_file.seek(0)
+                                b_cv = c_file.read()
+                                nome_storage_cv = f"{prefisso_univoco}_cv.pdf"
+                                supabase.storage.from_("curriculum").upload(path=nome_storage_cv, file=b_cv, file_options={"content-type": "application/pdf"})
+                                url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_storage_cv)
+                                
+                                # Caricamento e salvataggio file 2: File Generico Opzionale
+                                url_download_generico = None
+                                if c_generico is not None:
+                                    c_generico.seek(0)
+                                    b_gen = c_generico.read()
+                                    estensione = c_generico.name.split('.')[-1] if '.' in c_generico.name else 'bin'
+                                    nome_storage_gen = f"{prefisso_univoco}_allegato.{estensione}"
+                                    
+                                    mimetype_rilevato = "application/octet-stream"
+                                    if estensione.lower() == 'pdf': mimetype_rilevato = "application/pdf"
+                                    elif estensione.lower() in ['png', 'jpg', 'jpeg']: mimetype_rilevato = f"image/{estensione.lower()}"
+                                    
+                                    supabase.storage.from_("curriculum").upload(path=nome_storage_gen, file=b_gen, file_options={"content-type": mimetype_rilevato})
+                                    url_download_generico = supabase.storage.from_("curriculum").get_public_url(nome_storage_gen)
+                                
+                                payload_candidato = {
+                                    "nome": c_nome,
+                                    "email": c_mail,
+                                    "telefono": c_tel,
+                                    "posizione": annuncio_selezionato['posizione'],
+                                    "idoneita": str(v),
+                                    "stelle": str(s),
+                                    "orientamento": str(o),
+                                    "stato": "In Screening",
+                                    "testo_cv": testo_pdf,
+                                    "immagine": url_download_pdf,
+                                    "allegato_generico": url_download_generico # Colonna opzionale nel database per tracciare il secondo file
+                                }
+                                
+                                supabase.table("candidati").insert(payload_candidato).execute()
+                                st.success("🎉 Candidatura e allegati acquisiti nel Cloud con successo!")
+                        else:
+                            st.error("I campi contrassegnati con asterisco (*) sono obbligatori per completare l'invio.")
                             
-                            pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
-                            nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
-                            
-                            c_file.seek(0)
-                            file_bytes = c_file.read()
-                            
-                            supabase.storage.from_("curriculum").upload(
-                                path=nome_file_storage,
-                                file=file_bytes,
-                                file_options={"content-type": "application/pdf"}
-                            )
-                            
-                            url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
-                            
-                            payload_candidato = {
-                                "nome": c_nome,
-                                "email": c_mail,
-                                "telefono": c_tel,
-                                "posizione": annuncio_selezionato['posizione'],
-                                "idoneita": str(v),
-                                "stelle": str(s),
-                                "orientamento": str(o),
-                                "stato": "In Screening",
-                                "testo_cv": testo_pdf,
-                                "immagine": url_download_pdf
-                            }
-                            
-                            supabase.table("candidati").insert(payload_candidato).execute()
-                            st.success("🎉 Candidatura inviata correttamente! Il tuo CV originale è stato acquisito nel Cloud.")
-                    else:
-                        st.error("Compila tutti i campi obbligatori ed allega il tuo CV in formato PDF.")
             st.markdown('</div>', unsafe_allow_html=True)
-    else: st.error("Annuncio non trovato.")
+    else: 
+        st.error("L'annuncio richiesto non è stato trovato o è stato rimosso.")
 
 # --- AREA AMMINISTRATIVA / BACKOFFICE ---
 else:
@@ -602,7 +641,7 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (FIX CON CONTAINER ISOLATO AD UNICO BLOCCO SORGENTE) ---
+        # --- TAB 9: PORTALE CARRIERE ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
             st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
@@ -633,14 +672,13 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: BLINDATURA ATTRAVERSO STRINGA PRE-RENDERIZZATA IN UN UNICO BLOCCO ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA AD UNICO BLOCCO ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                # Struttura CSS iniettata in blocco unico per forzare l'affiancamento rigido fino a 8 elementi
                 html_sorgente_unito = """
                 <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 14px; width: 100%; overflow-x: auto; padding: 10px 0;">
                 """
@@ -655,8 +693,6 @@ else:
                     </div>
                     """
                 html_sorgente_unito += "</div>"
-                
-                # Usiamo st.components.v1.html con altezza fissa per incapsulare il box in un ambiente isolato e sicuro
                 st.components.v1.html(html_sorgente_unito, height=310, scrolling=False)
 
             st.markdown("---")
