@@ -790,29 +790,28 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
+    # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
     with scelta_tab[8]:
         st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-        st.caption("Layout ottimizzato: Griglie ad alta densità con immagini verticali native.")
+        st.caption("Layout geometrico: Griglie ad alta densità con immagini verticali native.")
 
         # CSS Avanzato per griglie a 8 colonne e proporzioni pixel-perfect
         st.markdown("""
         <style>
-        /* Griglia principale flessibile che punta a 8 elementi per riga su schermi grandi */
         .grid-8-columns {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 12px;
             margin-bottom: 35px;
             width: 100%;
         }
-        @media (min-width: 1400px) {
+        @media (min-width: 1200px) {
             .grid-8-columns {
                 grid-template-columns: repeat(8, 1fr);
             }
         }
 
-        /* CARD VETRINA: Solo immagine verticale (395x704 proporzionale) */
+        /* CARD VETRINA: Solo immagine verticale (395x704 px proporzionale) */
         .card-vetrina-only-img {
             display: block;
             width: 100%;
@@ -830,7 +829,7 @@ else:
             box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         }
 
-        /* CARD STANDARD: Immagine sopra (395x382) + Testo sotto = Totale 395x704 proporzionale */
+        /* CARD STANDARD: Immagine sopra (395x382 px) + Testo sotto = Totale 395x704 px proporzionale */
         .card-standard-full {
             display: flex;
             flex-direction: column;
@@ -851,8 +850,7 @@ else:
         }
         .card-standard-img {
             width: 100%;
-            /* Mantiene la proporzione esatta dei 382px rispetto ai 704px totali (~54%) */
-            height: 54%; 
+            height: 54%; /* Rispetta la proporzione esatta dei 382px rispetto ai 704px totali */
             background-size: cover;
             background-position: center;
             border-bottom: 1px solid #F1F5F9;
@@ -865,7 +863,7 @@ else:
             justify-content: flex-start;
         }
         .card-standard-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             color: #0F172A;
             line-height: 1.3;
@@ -876,7 +874,7 @@ else:
             overflow: hidden;
         }
         .card-standard-text {
-            font-size: 11px;
+            font-size: 10px;
             color: #475569;
             line-height: 1.3;
             display: -webkit-box;
@@ -886,7 +884,7 @@ else:
         }
         .card-standard-footer {
             margin-top: auto;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             color: #2563EB;
             display: flex;
@@ -900,12 +898,12 @@ else:
         annunci_raw = res_vetrina.data if res_vetrina.data else []
         annunci_vivi = [a for a in annunci_raw if a.get("stato") != "Sospeso"]
 
-        # Separazione logica degli annunci (Simulazione: i primi 8 vanno nel box Vetrina)
+        # Separazione logica: i primi 8 vanno nel box Vetrina Orizzontale
         annunci_in_vetrina = annunci_vivi[:8]
         annunci_restanti = annunci_vivi[8:]
 
         # --- SEZIONE 1: BOX ORIZZONTALE VETRINA (SOLO IMMAGINE VERTICALE 395x704) ---
-        st.markdown("### 🌟 Annunci Speciali in Vetrina")
+        st.markdown("### 🌟 In Vetrina (Selezionati)")
         if not annunci_in_vetrina:
             st.info("Nessun annuncio contrassegnato in vetrina.")
         else:
@@ -922,12 +920,10 @@ else:
 
         # --- SEZIONE 2: IL RESTO DEGLI ANNUNCI (IMMAGINE 395x382 + TESTO SOTTO) ---
         st.markdown("---")
-        st.markdown("### 📋 Tutte le Posizioni Aperte")
-        if not annunci_restanti and len(annunci_vivi) <= 8:
-            # Se ci sono meno di 8 annunci totali, mostriamo comunque tutti in versione estesa per riempire la pagina
-            annunci_mostra_standard = annunci_vivi
-        else:
-            annunci_mostra_standard = annunci_restanti
+        st.markdown("### 📋 Altre Posizioni Aperte")
+        
+        # Se ci sono meno di 8 annunci totali nell'app, li mostriamo tutti anche in versione estesa per non lasciare vuoti
+        annunci_mostra_standard = annunci_restanti if annunci_restanti else annunci_vivi
 
         if not annunci_mostra_standard:
             st.info("Nessun ulteriore annuncio presente in archivio.")
@@ -936,8 +932,6 @@ else:
             for a in annunci_mostra_standard:
                 img = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                 link_target = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                
-                # Taglio della descrizione per l'estratto ridotto
                 testo_breve = a.get("note", "Nessun dettaglio inserito.")
                 
                 st.markdown(f"""
