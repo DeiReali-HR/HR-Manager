@@ -617,77 +617,54 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (STRUTTURA COMPATTA E OTTIMIZZATA) ---
+        # --- TAB 9: PORTALE CARRIERE (STRUTTURA INTEGRATA E FUNZIONANTE) ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
-
-            # Stili CSS per il layout di vetrina e schede
-            st.markdown("""
-            <style>
-            .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 10px !important; }
-            @media (min-width: 992px) { .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; } }
-            .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; }
-            .showcase-card-row:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08) !important; }
-            </style>
-            """, unsafe_allow_html=True)
 
             res_vetrina_live = supabase.table("annunci").select("*").execute()
             elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
             annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
 
-            # --- VETRINA (TOP 8) ---
+            # 1. VETRINA (TOP 8)
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if annunci_flag_vetrina:
-                # Contenitore vetrina isolato
-                html_sorgente = """
-                <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 12px; width: 100%; overflow-x: auto; padding: 5px 0; margin-bottom: 0;">
-                """
+                html_vetrina = '<div style="display: flex; flex-direction: row; gap: 12px; overflow-x: auto; padding-bottom: 10px;">'
                 for a in annunci_flag_vetrina:
-                    img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    # Aspect ratio 395/704 mantiene le immagini dei tuoi flyer leggibili
-                    html_sorgente += f"""
-                    <div style="flex: 0 0 140px; min-width: 140px;">
-                        <a href="{link}" target="_blank" style="display: block; width: 100%; aspect-ratio: 395/704; background-image: url('{img_url}'); background-size: cover; border-radius: 8px; border: 1px solid #E2E8F0;"></a>
-                    </div>
-                    """
-                html_sorgente += "</div>"
-                st.components.v1.html(html_sorgente, height=260, scrolling=False)
+                    img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    html_vetrina += f'<a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" style="flex: 0 0 140px; aspect-ratio: 395/704; background-image: url(\'{img}\'); background-size: cover; border-radius: 8px; border: 1px solid #E2E8F0;"></a>'
+                html_vetrina += '</div>'
+                st.components.v1.html(html_vetrina, height=260, scrolling=False)
 
-            # --- SEZIONE ELENCO (COMPATTATA) ---
-            # Il margin-top negativo "risucchia" il titolo dell'elenco verso l'alto
-            st.markdown("""
-                <div style="margin-top: -30px;">
-                    <h3>📋 Tutte le Posizioni Aperte</h3>
-                </div>
-            """, unsafe_allow_html=True)
-
-            # --- LOGICA FILTRI E CARDS ---
-            c1, c2 = st.columns(2)
-            ruoli = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+            # 2. ELENCO POSIZIONI (STRUTTURA DIRETTA)
+            st.markdown("### 📋 Tutte le Posizioni Aperte")
             
-            with c1: search_ruolo = st.selectbox("🔍 Qualifica", ["Tutti i Ruoli"] + ruoli)
-            with c2: search_citta = st.selectbox("📍 Città / Sede", ["Tutte le Sedi"] + citta)
+            # Filtri
+            col_search1, col_search2 = st.columns(2)
+            ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
+            citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+            
+            with col_search1: search_ruolo = st.selectbox("Qualifica", ruoli)
+            with col_search2: search_citta = st.selectbox("Città / Sede", citta)
 
-            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if search_ruolo != "Tutti i Ruoli": annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
-            if search_citta != "Tutte le Sedi": annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
+            # Filtro logico
+            annunci_da_mostrare = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
+            if search_ruolo != "Tutti i Ruoli": annunci_da_mostrare = [a for a in annunci_da_mostrare if a.get("posizione") == search_ruolo]
+            if search_citta != "Tutte le Sedi": annunci_da_mostrare = [a for a in annunci_da_mostrare if a.get("sede") == search_citta]
 
-            st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
-            for a in annunci_filtrati:
-                st.markdown(f"""
-                <div class="showcase-card-row">
-                    <div class="showcase-img-side" style="background-image: url('{a.get('foto_annuncio') or a.get('immagine')}'); width: 40%; background-size: cover; background-position: center;"></div>
-                    <div class="showcase-content-side" style="width: 60%; padding: 20px;">
-                        <h4>{a['posizione']}</h4>
-                        <p style="font-size: 12px; color: #64748B;">📍 {a.get('sede')} • 💸 {a.get('importo')} €</p>
-                        <div style="font-size: 13px; height: 180px; overflow-y: auto;">{a.get('note')}</div>
-                        <a href="https://deireali-hr.streamlit.app/?job={a['id']}" target="_blank" style="display:block; text-align:center; background:#0F172A; color:#FFF; padding:10px; border-radius:6px; margin-top:10px; text-decoration:none;">CANDIDATI</a>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            # Render ELENCO (senza grid complessi che nascondono i dati)
+            if not annunci_da_mostrare:
+                st.info("Nessun annuncio trovato.")
+            else:
+                for a in annunci_da_mostrare:
+                    with st.container():
+                        c1, c2 = st.columns([1, 3])
+                        with c1:
+                            st.image(a.get("foto_annuncio") or a.get("immagine"), use_container_width=True)
+                        with c2:
+                            st.subheader(a['posizione'])
+                            st.write(f"📍 {a.get('sede')} • 💸 {a.get('importo')} €")
+                            st.write(a.get('note')[:250] + "...")
+                            st.link_button("CANDIDATI ORA", f"https://deireali-hr.streamlit.app/?job={a['id']}")
+                        st.markdown("---")
