@@ -471,7 +471,7 @@ else:
                     nuova_ora = st.time_input("Orario", time(15, 45))
                     if st.button("Salva Appuntamento", use_container_width=True):
                         match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
-                        payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nueva_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
+                        payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
                         if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
                         else: supabase.table("agenda").insert(payload).execute()
                         st.rerun()
@@ -602,51 +602,32 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (FIX COMPLETO ALLINEAMENTO ORIZZONTALE REALE FINO A 8) ---
+        # --- TAB 9: PORTALE CARRIERE ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne reale orizzontale superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
+            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
 
             st.markdown("""
             <style>
-            /* Forza in modo aggressivo il blocco nativo Streamlit a comportarsi da contenitore flessibile in riga */
-            [data-testid="stMarkdownContainer"] > div.grid-8-annunci {
+            /* Box obbligato nativo che forza la riga orizzontale reale a prescindere dai container di Streamlit */
+            .box-obbligato-vetrina {
                 display: flex !important;
                 flex-direction: row !important;
-                flex-wrap: wrap !important;
+                flex-wrap: nowrap !important;
                 justify-content: flex-start !important;
                 align-items: center !important;
-                gap: 12px !important;
+                gap: 14px !important;
                 width: 100% !important;
-                margin-bottom: 35px !important;
+                overflow-x: auto !important;
+                padding: 10px 0 !important;
+                margin-bottom: 30px !important;
             }
-            
-            .grid-8-annunci {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                gap: 12px !important;
-                width: 100% !important;
-                margin-bottom: 35px !important;
-            }
-
-            /* Ogni colonna occupa esattamente un ottavo del layout (12.5%) meno la compensazione dei gap */
-            .vetrina-item {
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                flex: 0 0 calc(12.5% - 11px) !important;
+            .vetrina-item-box {
+                flex: 0 0 calc(12.5% - 13px) !important;
                 min-width: 110px !important;
-                max-width: 180px !important;
+                max-width: 165px !important;
+                display: block !important;
             }
-            
-            @media (max-width: 1200px) {
-                .vetrina-item { flex: 0 0 calc(25% - 9px) !important; }
-            }
-            @media (max-width: 600px) {
-                .vetrina-item { flex: 0 0 calc(50% - 6px) !important; }
-            }
-
             .vetrina-solo-img {
                 display: block !important;
                 width: 100% !important;
@@ -661,60 +642,13 @@ else:
             }
             .vetrina-solo-img:hover { transform: translateY(-4px) !important; box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important; }
 
-            /* Griglia a 2 colonne per gli annunci Showcase inferiori */
-            .showcase-grid-2columns {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                gap: 20px !important;
-                width: 100% !important;
-                margin-top: 15px !important;
-            }
-            @media (min-width: 992px) {
-                .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; }
-            }
-
-            .showcase-card-row {
-                display: flex !important;
-                background-color: #FFFFFF !important;
-                border: 1px solid #E2E8F0 !important;
-                border-radius: 12px !important;
-                overflow: hidden !important;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
-                transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-                width: 100% !important;
-                height: 382px !important;
-                max-height: 382px !important;
-            }
-            .showcase-card-row:hover {
-                transform: translateY(-3px) !important;
-                box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08) !important;
-            }
-            
-            .showcase-img-side {
-                width: 40% !important;
-                min-width: 40% !important;
-                height: 100% !important;
-                background-size: cover !important;
-                background-position: center !important;
-                background-repeat: no-repeat !important;
-                border-right: 1px solid #F1F5F9 !important;
-            }
-            
-            .showcase-content-side {
-                width: 60% !important;
-                padding: 20px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-                height: 100% !important;
-                overflow: hidden !important;
-            }
-            .showcase-scrollable-body {
-                overflow-y: auto !important;
-                flex-grow: 1 !important;
-                padding-right: 5px !important;
-                margin-bottom: 10px !important;
-            }
+            .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 15px !important; }
+            @media (min-width: 992px) { .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; } }
+            .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; max-height: 382px !important; }
+            .showcase-card-row:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08) !important; }
+            .showcase-img-side { width: 40% !important; min-width: 40% !important; height: 100% !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; border-right: 1px solid #F1F5F9 !important; }
+            .showcase-content-side { width: 60% !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; height: 100% !important; overflow: hidden !important; }
+            .showcase-scrollable-body { overflow-y: auto !important; flex-grow: 1 !important; padding-right: 5px !important; margin-bottom: 10px !important; }
             .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
             .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
             .showcase-title { font-size: 18px !important; font-weight: 700 !important; color: #0F172A !important; margin-bottom: 4px !important; line-height: 1.3 !important; }
@@ -732,26 +666,27 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA ORIZZONTALE REALE ED AFFIANCATA ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA DENTRO UN UNICO BOX ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                html_vetrina = "<div class='grid-8-annunci'>"
+                # Costruiamo l'intera stringa in blocco unico per bypassare le restrizioni di layout verticali di Streamlit
+                html_box_compilato = "<div class='box-obbligato-vetrina'>"
                 for a in annunci_flag_vetrina:
                     raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
-                    html_vetrina += f"""
-                    <div class='vetrina-item'>
+                    html_box_compilato += f"""
+                    <div class='vetrina-item-box'>
                         <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
                     </div>
                     """
-                html_vetrina += "</div>"
-                st.markdown(html_vetrina, unsafe_allow_html=True)
+                html_box_compilato += "</div>"
+                st.markdown(html_box_compilato, unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
@@ -773,21 +708,21 @@ else:
                 annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
             # --- GESTIONE DELLE PAGINE ---
-            CONTEGlIO_PER_PAGINA = 10  
+            CONTEGGIO_PER_PAGINA = 10  
             totale_annunci_filtrati = len(annunci_filtrati)
             
             if totale_annunci_filtrati == 0:
                 st.info("Nessun annuncio corrisponde ai criteri di ricerca selezionati.")
             else:
-                pagine_totali = max(1, (totale_annunci_filtrati + CONTEGlIO_PER_PAGINA - 1) // CONTEGlIO_PER_PAGINA)
+                pagine_totali = max(1, (totale_annunci_filtrati + CONTEGGIO_PER_PAGINA - 1) // CONTEGGIO_PER_PAGINA)
                 pagina_corrente = 1
                 if pagine_totali > 1:
                     col_pag1, col_pag2 = st.columns([4, 1])
                     with col_pag2:
                         pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1)
                 
-                inizio_index = (pagina_corrente - 1) * CONTEGlIO_PER_PAGINA
-                fine_index = inizio_index + CONTEGlIO_PER_PAGINA
+                inizio_index = (pagina_corrente - 1) * CONTEGGIO_PER_PAGINA
+                fine_index = inizio_index + CONTEGGIO_PER_PAGINA
                 annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
 
                 # --- GRIGLIA A DUE COLONNE CON CARD ALTEZZA FISSA 382PX ---
