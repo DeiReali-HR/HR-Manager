@@ -638,28 +638,33 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA ORIZZONTALE CORRETTA ---
+            # --- LIVELLO 1: TOP 8 IN VETRINA ORIZZONTALE REALE ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
+                # 1. APRIAMO il contenitore della griglia una volta sola PRIMA del ciclo
                 html_vetrina = "<div class='grid-8-annunci'>"
+                
                 for a in annunci_flag_vetrina:
                     raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     
-                    # CORREZIONE DI SICUREZZA: Rimuove spazi e lettere accentate accidentali incollate a fine URL
+                    # Pulizia automatica dell'URL da spazi o caratteri errati
                     img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
-                    
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
+                    # 2. Aggiungiamo solo l'item e chiudiamo SOLO il vetrina-item all'interno del ciclo
                     html_vetrina += f"""
                     <div class='vetrina-item'>
                         <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
                     </div>
                     """
+                
+                # 3. CHIUDIAMO il contenitore della griglia principale una volta sola FUORI dal ciclo
                 html_vetrina += "</div>"
+                
                 st.markdown(html_vetrina, unsafe_allow_html=True)
 
             st.markdown("---")
