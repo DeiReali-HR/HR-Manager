@@ -791,7 +791,7 @@ else:
                     st.write("")
 
     # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
-    with scelta_tab[8]:
+    with scelta_tab[9]:
         st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
         st.caption("Griglie ad alta densità con immagini verticali native tarate a 8 annunci per riga.")
 
