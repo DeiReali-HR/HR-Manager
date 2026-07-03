@@ -221,7 +221,7 @@ else:
         # --- LOGIN EFFETTUATO: MOSTRIAMO L'INTERFACCIA HR ---
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
-        # Inizializzazione dei Tab di navigazione principale (Assicurati che siano 9 voci!)
+        # Inizializzazione dei Tab di navigazione principale (Ora 9 elementi stabili)
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)"]
         scelta_tab = st.tabs(tab_nomi)
 
@@ -793,96 +793,95 @@ else:
     # --- TAB 9: VETRINA CARRIERE SIMULATA (HTML PUBBLICO) ---
     with scelta_tab[8]:
         st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-        st.caption("Layout geometrico: Griglie ad alta densità con immagini verticali native.")
+        st.caption("Griglie ad alta densità con immagini verticali native tarate a 8 annunci per riga.")
 
-        # CSS Avanzato per griglie a 8 colonne e proporzioni pixel-perfect
+        # CSS personalizzato per la disposizione geometrica fissa a 8 colonne
         st.markdown("""
         <style>
-        .grid-8-columns {
+        .grid-8-annunci {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
             margin-bottom: 35px;
             width: 100%;
         }
         @media (min-width: 1200px) {
-            .grid-8-columns {
+            .grid-8-annunci {
                 grid-template-columns: repeat(8, 1fr);
             }
         }
 
-        /* CARD VETRINA: Solo immagine verticale (395x704 px proporzionale) */
-        .card-vetrina-only-img {
+        /* BOX VETRINA: Solo immagine verticale proporzionata 395x704 px */
+        .vetrina-solo-img {
             display: block;
             width: 100%;
             aspect-ratio: 395 / 704;
             background-size: cover;
             background-position: center;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #E2E8F0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: transform 0.2s ease;
         }
-        .card-vetrina-only-img:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        .vetrina-solo-img:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
         }
 
-        /* CARD STANDARD: Immagine sopra (395x382 px) + Testo sotto = Totale 395x704 px proporzionale */
-        .card-standard-full {
+        /* CARD STANDARD: Immagine 395x382 px (~54%) + Testo sotto = Totale 395x704 px */
+        .card-standard-vetrina {
             display: flex;
             flex-direction: column;
             width: 100%;
             aspect-ratio: 395 / 704;
             background-color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #E2E8F0;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: transform 0.2s ease;
             text-decoration: none;
             color: inherit;
         }
-        .card-standard-full:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+        .card-standard-vetrina:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
         }
-        .card-standard-img {
+        .card-standard-img-half {
             width: 100%;
-            height: 54%; /* Rispetta la proporzione esatta dei 382px rispetto ai 704px totali */
+            height: 54%; 
             background-size: cover;
             background-position: center;
-            border-bottom: 1px solid #F1F5F9;
         }
-        .card-standard-content {
-            padding: 10px;
+        .card-standard-text-half {
+            padding: 8px;
             height: 46%;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+            background: #FFFFFF;
         }
-        .card-standard-title {
-            font-size: 12px;
+        .card-title-mini {
+            font-size: 11px;
             font-weight: 700;
             color: #0F172A;
-            line-height: 1.3;
-            margin-bottom: 4px;
+            line-height: 1.2;
+            margin-bottom: 3px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        .card-standard-text {
-            font-size: 10px;
+        .card-desc-mini {
+            font-size: 9px;
             color: #475569;
-            line-height: 1.3;
+            line-height: 1.2;
             display: -webkit-box;
-            -webkit-line-clamp: 4;
+            -webkit-line-clamp: 5;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        .card-standard-footer {
+        .card-footer-mini {
             margin-top: auto;
             font-size: 9px;
             font-weight: bold;
@@ -893,54 +892,54 @@ else:
         </style>
         """, unsafe_allow_html=True)
 
-        # Recupero annunci dal database cloud
+        # Caricamento dinamico dei dati da Supabase
         res_vetrina = supabase.table("annunci").select("*").execute()
         annunci_raw = res_vetrina.data if res_vetrina.data else []
         annunci_vivi = [a for a in annunci_raw if a.get("stato") != "Sospeso"]
 
-        # Separazione logica: i primi 8 vanno nel box Vetrina Orizzontale
-        annunci_in_vetrina = annunci_vivi[:8]
-        annunci_restanti = annunci_vivi[8:]
+        # Distribuzione: i primi 8 vanno nel Box Orizzontale Vetrina
+        annunci_box_vetrina = annunci_vivi[:8]
+        annunci_box_standard = annunci_vivi[8:]
 
-        # --- SEZIONE 1: BOX ORIZZONTALE VETRINA (SOLO IMMAGINE VERTICALE 395x704) ---
-        st.markdown("### 🌟 In Vetrina (Selezionati)")
-        if not annunci_in_vetrina:
-            st.info("Nessun annuncio contrassegnato in vetrina.")
+        # --- LIVELLO 1: VETRINA ORIZZONTALE (SOLO IMMAGINI 395x704) ---
+        st.markdown("### 🌟 In Vetrina")
+        if not annunci_box_vetrina:
+            st.info("Nessun annuncio disponibile.")
         else:
-            st.markdown("<div class='grid-8-columns'>", unsafe_allow_html=True)
-            for a in annunci_in_vetrina:
-                img = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                link_target = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+            st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+            for a in annunci_box_vetrina:
+                img_url = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                 
                 st.markdown(f"""
-                <a href="{link_target}" target="_blank" class="card-vetrina-only-img" style="background-image: url('{img}');" title="Apri {a['posizione']}">
+                <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_url}');" title="Candidati per {a['posizione']}">
                 </a>
                 """, unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # --- SEZIONE 2: IL RESTO DEGLI ANNUNCI (IMMAGINE 395x382 + TESTO SOTTO) ---
+        # --- LIVELLO 2: RESTO DEGLI ANNUNCI (IMMAGINE 395x382 + TESTO RIDOTTO SOTTO) ---
         st.markdown("---")
         st.markdown("### 📋 Altre Posizioni Aperte")
         
-        # Se ci sono meno di 8 annunci totali nell'app, li mostriamo tutti anche in versione estesa per non lasciare vuoti
-        annunci_mostra_standard = annunci_restanti if annunci_restanti else annunci_vivi
+        # Se nel database sono presenti meno di 8 annunci, duplichiamo la visualizzazione sotto per mostrare il layout completo
+        annunci_sotto = annunci_box_standard if annunci_box_standard else annunci_vivi
 
-        if not annunci_mostra_standard:
+        if not annunci_sotto:
             st.info("Nessun ulteriore annuncio presente in archivio.")
         else:
-            st.markdown("<div class='grid-8-columns'>", unsafe_allow_html=True)
-            for a in annunci_mostra_standard:
-                img = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                link_target = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                testo_breve = a.get("note", "Nessun dettaglio inserito.")
+            st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+            for a in annunci_sotto:
+                img_url = a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                estratto_testo = a.get("note", "Nessun dettaglio inserito.")
                 
                 st.markdown(f"""
-                <a href="{link_target}" target="_blank" class="card-standard-full">
-                    <div class="card-standard-img" style="background-image: url('{img}');"></div>
-                    <div class="card-standard-content">
-                        <div class="card-standard-title">{a['posizione']}</div>
-                        <div class="card-standard-text">{testo_breve}</div>
-                        <div class="card-standard-footer">
+                <a href="{link_candidatura}" target="_blank" class="card-standard-vetrina">
+                    <div class="card-standard-img-half" style="background-image: url('{img_url}');"></div>
+                    <div class="card-standard-text-half">
+                        <div class="card-title-mini">{a['posizione']}</div>
+                        <div class="card-desc-mini">{estratto_testo}</div>
+                        <div class="card-footer-mini">
                             <span>📍 {a.get('sede', 'Roma')}</span>
                             <span>{a.get('importo', 'N/D')} €</span>
                         </div>
