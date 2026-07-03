@@ -43,6 +43,14 @@ def init_gemini():
 supabase: Client = init_supabase()
 ai_client = init_gemini()
 
+# --- FUNZIONI DI SERVIZIO GLOBALI ---
+def ottieni_immagine_base64(percorso_file):
+    if os.path.exists(percorso_file):
+        with open(percorso_file, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    return ""
+
 def estrai_testo_pdf(file_caricato):
     try:
         reader = PdfReader(file_caricato)
@@ -107,6 +115,7 @@ st.markdown("""
     .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; padding: 15px; margin-top: 10px; }
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
     
+    /* Frame statico 395x704 per la colonna sinistra del portale pubblico */
     .public-left-img-frame {
         width: 100%;
         aspect-ratio: 395 / 704;
@@ -132,7 +141,7 @@ if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
 if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
-# --- PORTALE PUBBLICO (IMPOSTAZIONE ORIZZONTALE A 3 COLONNE RICHIESTA) ---
+# --- PORTALE PUBBLICO (IMPOSTAZIONE ORIZZONTALE A 3 COLONNE RIGIDE) ---
 if "job" in st.query_params:
     job_param = str(st.query_params["job"])
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
@@ -143,14 +152,18 @@ if "job" in st.query_params:
             st.warning("Selezioni momentaneamente chiuse per questa posizione.")
         else:
             st.markdown('<div class="public-card">', unsafe_allow_html=True)
+            
+            # Griglia orizzontale a tre blocchi
             col_sinistra, col_centro, col_destra = st.columns([1.1, 1.5, 1.4])
             
             with col_sinistra:
+                # Render nativo della Foto Vetrina verticale 395x704
                 img_v_view = annuncio_selezionato.get('foto_vetrina') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                 st.markdown(f'<div class="public-left-img-frame" style="background-image: url(\'{img_v_view}\');"></div>', unsafe_allow_html=True)
                 
             with col_centro:
                 st.markdown(f"<h1 style='color: #0F172A; margin-top: 0; font-size: 28px;'>{annuncio_selezionato['posizione']}</h1>", unsafe_allow_html=True)
+                
                 st.markdown(f"""
                     <div class="umana-grid">
                         <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
@@ -167,6 +180,8 @@ if "job" in st.query_params:
                     c_nome = st.text_input("Nome e Cognome *")
                     c_mail = st.text_input("E-mail *")
                     c_tel = st.text_input("Telefono *")
+                    
+                    # Caricamenti separati richiesti
                     c_file = st.file_uploader("Allega CV Principale (PDF) *", type=["pdf"])
                     c_generic = st.file_uploader("Carica altri file generici (Certificati, Cover Letter...)", type=["pdf", "png", "jpg", "doc", "docx"])
                     
@@ -370,7 +385,7 @@ else:
                 st.session_state.autenticato = False
                 st.rerun()
                 
-        # --- TAB 2: GESTIONE ANNUNCI (CORREZIONE BOOLEANA PER INVIO DATI) ---
+        # --- TAB 2: GESTIONE ANNUNCI (CON CORREZIONE BOOLEANA PER INVIO DATI) ---
         with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
             res_ann = supabase.table("annunci").select("*").execute()
@@ -382,7 +397,6 @@ else:
                 if job: 
                     def_pos, def_inq, def_imp, def_sede = job["posizione"], job["inquadramento"], job["importo"], job["sede"]
                     def_foto_v, def_foto_a, def_note = job.get("foto_vetrina", ""), job.get("foto_annuncio", ""), job["note"]
-                    # Verifica robusta sul flag sia se memorizzato come bool, sia come stringa/int
                     val_ev = job.get("in_evidenza")
                     def_evidenza = True if val_ev in [True, 1, "true", "True"] else False
             elif st.session_state.ai_generated_text: def_note = st.session_state.ai_generated_text
@@ -408,7 +422,6 @@ else:
                         st.rerun()
                 if st.session_state.edit_mode:
                     if st.button("💾 AGGIORNA ANNUNCIO", use_container_width=True):
-                        # Salvataggio esplicito come booleano nativo
                         supabase.table("annunci").update({
                             "posizione": t_pos, "inquadramento": t_inq, "importo": t_imp, "sede": t_sede, 
                             "note": t_note, "foto_vetrina": t_foto_v, "foto_annuncio": t_foto_a, "in_evidenza": bool(t_evidenza)
@@ -537,12 +550,10 @@ else:
             </style>
             """, unsafe_allow_html=True)
 
-            # Rilettura in tempo reale per svuotare la cache ad ogni interazione
             res_vetrina_live = supabase.table("annunci").select("*").execute()
             elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
             annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
 
-            # Confronto flessibile su valori booleani (copre True, 1 e stringhe "true")
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             annunci_standard_resto = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
 
