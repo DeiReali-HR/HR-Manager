@@ -645,13 +645,15 @@ else:
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                # Apertura contenitore griglia
                 html_vetrina = "<div class='grid-8-annunci'>"
                 for a in annunci_flag_vetrina:
-                    img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    
+                    # CORREZIONE DI SICUREZZA: Rimuove spazi e lettere accentate accidentali incollate a fine URL
+                    img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
+                    
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
-                    # Ogni link viene adesso avvolto in un div strutturale 'vetrina-item'
                     html_vetrina += f"""
                     <div class='vetrina-item'>
                         <a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url('{img_v_url}');"></a>
