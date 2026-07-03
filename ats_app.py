@@ -617,27 +617,17 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (OTTIMIZZAZIONE E RIDUZIONE SPAZI ATTIVI) ---
+        # --- TAB 9: PORTALE CARRIERE (STRUTTURA COMPATTA E OTTIMIZZATA) ---
         with scelta_tab[8]:
-            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
+            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
 
+            # Stili CSS per il layout di vetrina e schede
             st.markdown("""
             <style>
-            .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 15px !important; }
+            .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 10px !important; }
             @media (min-width: 992px) { .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; } }
-            .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; max-height: 382px !important; }
+            .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; }
             .showcase-card-row:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08) !important; }
-            .showcase-img-side { width: 40% !important; min-width: 40% !important; height: 100% !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; border-right: 1px solid #F1F5F9 !important; }
-            .showcase-content-side { width: 60% !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; height: 100% !important; overflow: hidden !important; }
-            .showcase-scrollable-body { overflow-y: auto !important; flex-grow: 1 !important; padding-right: 5px !important; margin-bottom: 10px !important; }
-            .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
-            .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
-            .showcase-title { font-size: 18px !important; font-weight: 700 !important; color: #0F172A !important; margin-bottom: 4px !important; line-height: 1.3 !important; }
-            .showcase-meta-grid { display: flex !important; flex-wrap: wrap !important; gap: 8px 12px !important; font-size: 12px !important; font-weight: 600 !important; color: #2563EB !important; margin-bottom: 10px !important; }
-            .showcase-text { font-size: 13px !important; color: #475569 !important; line-height: 1.5 !important; white-space: pre-line !important; }
-            .showcase-btn { align-self: flex-start !important; background-color: #0F172A !important; color: #FFFFFF !important; padding: 8px 16px !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 12px !important; text-decoration: none !important; transition: background-color 0.2s !important; margin-top: auto !important; width: 100% !important; text-align: center !important; }
-            .showcase-btn:hover { background-color: #1E293B !important; }
             </style>
             """, unsafe_allow_html=True)
 
@@ -645,94 +635,59 @@ else:
             elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
             annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
 
-            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
-
-            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA CON RIDUZIONE DEL MARGINE INFERIORE ---
+            # --- VETRINA (TOP 8) ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
-            st.markdown("<h3 style='margin-bottom:0px; padding-bottom:0px;'>🌟 In Vetrina (Selezionati)</h3>", unsafe_allow_html=True)
-            if not annunci_flag_vetrina:
-                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
-            else:
-                # Modificato aspect-ratio a 395/520 per limitare l'altezza complessiva ed evitare spazi vuoti verticali
-                html_sorgente_unito = """
-                <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 14px; width: 100%; overflow-x: auto; padding: 5px 0; margin-bottom: 0px;">
+            st.markdown("### 🌟 In Vetrina (Selezionati)")
+            if annunci_flag_vetrina:
+                # Contenitore vetrina isolato
+                html_sorgente = """
+                <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 12px; width: 100%; overflow-x: auto; padding: 5px 0; margin-bottom: 0;">
                 """
                 for a in annunci_flag_vetrina:
-                    raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    link = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
-                    html_sorgente_unito += f"""
-                    <div style="flex: 0 0 calc(12.5% - 13px); min-width: 110px; max-width: 165px; display: block;">
-                        <a href="{link_candidatura}" target="_blank" style="display: block; width: 100%; aspect-ratio: 395 / 520; background-image: url('{img_v_url}'); background-size: cover; background-repeat: no-repeat; background-position: center; background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'"></a>
+                    # Aspect ratio 395/704 mantiene le immagini dei tuoi flyer leggibili
+                    html_sorgente += f"""
+                    <div style="flex: 0 0 140px; min-width: 140px;">
+                        <a href="{link}" target="_blank" style="display: block; width: 100%; aspect-ratio: 395/704; background-image: url('{img_url}'); background-size: cover; border-radius: 8px; border: 1px solid #E2E8F0;"></a>
                     </div>
                     """
-                html_sorgente_unito += "</div>"
-                
-                # Ridotta l'altezza dell'iframe a 245px per eliminare lo spazio vuoto in eccesso sotto le foto
-                st.components.v1.html(html_sorgente_unito, height=245, scrolling=False)
+                html_sorgente += "</div>"
+                st.components.v1.html(html_sorgente, height=260, scrolling=False)
 
-            # Sostituito st.markdown("---") nativo con un divisore HTML/CSS compatto a margine ridotto
-            st.markdown("<hr style='margin: 5px 0 15px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-            st.markdown("<h3 style='margin-top:0px; padding-top:0px;'>📋 Tutte le Posizioni Aperte</h3>", unsafe_allow_html=True)
+            # --- SEZIONE ELENCO (COMPATTATA) ---
+            # Il margin-top negativo "risucchia" il titolo dell'elenco verso l'alto
+            st.markdown("""
+                <div style="margin-top: -30px;">
+                    <h3>📋 Tutte le Posizioni Aperte</h3>
+                </div>
+            """, unsafe_allow_html=True)
 
-            # --- BARRA DI RICERCA AVANZATA ---
-            col_search1, col_search2 = st.columns(2)
-            with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
-            with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
+            # --- LOGICA FILTRI E CARDS ---
+            c1, c2 = st.columns(2)
+            ruoli = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
+            citta = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+            
+            with c1: search_ruolo = st.selectbox("🔍 Qualifica", ["Tutti i Ruoli"] + ruoli)
+            with c2: search_citta = st.selectbox("📍 Città / Sede", ["Tutte le Sedi"] + citta)
 
             annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if not annunci_filtrati:
-                annunci_filtrati = annunci_vivi
+            if search_ruolo != "Tutti i Ruoli": annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
+            if search_citta != "Tutte le Sedi": annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
-            if search_ruolo != "Tutti i Ruoli":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
-            if search_citta != "Tutte le Sedi":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
-
-            # --- GESTIONE DELLE PAGINE ---
-            CONTEGGIO_PER_PAGINA = 10  
-            totale_annunci_filtrati = len(annunci_filtrati)
-            
-            if totale_annunci_filtrati == 0:
-                st.info("Nessun annuncio corrisponde ai criteri di ricerca selezionati.")
-            else:
-                pagine_totali = max(1, (totale_annunci_filtrati + CONTEGGIO_PER_PAGINA - 1) // CONTEGGIO_PER_PAGINA)
-                pagina_corrente = 1
-                if pagine_totali > 1:
-                    col_pag1, col_pag2 = st.columns([4, 1])
-                    with col_pag2:
-                        pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1)
-                
-                inizio_index = (pagina_corrente - 1) * CONTEGGIO_PER_PAGINA
-                fine_index = inizio_index + CONTEGGIO_PER_PAGINA
-                annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
-
-                # --- GRIGLIA A DUE COLONNE CON CARD ALTEZZA FISSA 382PX ---
-                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
-                for a in annunci_da_mostrare:
-                    img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    st.markdown(f"""
-                    <div class="showcase-card-row">
-                        <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
-                        <div class="showcase-content-side">
-                            <div class="showcase-scrollable-body">
-                                <div class="showcase-title">{a['posizione']}</div>
-                                <div class="showcase-meta-grid">
-                                    <span>📍 {a.get('sede', 'Roma')}</span>
-                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
-                                    <span>💸 {a.get('importo', 'N/D')} €</span>
-                                </div>
-                                <div class="showcase-text">{a.get('note', '')}</div>
-                            </div>
-                            <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
-                        </div>
+            st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
+            for a in annunci_filtrati:
+                st.markdown(f"""
+                <div class="showcase-card-row">
+                    <div class="showcase-img-side" style="background-image: url('{a.get('foto_annuncio') or a.get('immagine')}'); width: 40%; background-size: cover; background-position: center;"></div>
+                    <div class="showcase-content-side" style="width: 60%; padding: 20px;">
+                        <h4>{a['posizione']}</h4>
+                        <p style="font-size: 12px; color: #64748B;">📍 {a.get('sede')} • 💸 {a.get('importo')} €</p>
+                        <div style="font-size: 13px; height: 180px; overflow-y: auto;">{a.get('note')}</div>
+                        <a href="https://deireali-hr.streamlit.app/?job={a['id']}" target="_blank" style="display:block; text-align:center; background:#0F172A; color:#FFF; padding:10px; border-radius:6px; margin-top:10px; text-decoration:none;">CANDIDATI</a>
                     </div>
-                    """, unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
