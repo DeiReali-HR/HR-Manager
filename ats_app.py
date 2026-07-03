@@ -795,62 +795,72 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: VETRINA CARRIERE SIMULATA (L'INDICE CORRETTO È 8) ---
+        # --- TAB 9: VETRINA CARRIERE SIMULATA ---
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Griglie ad alta densità con immagini verticali native tarate a 8 annunci per riga.")
+            st.caption("Griglie bloccate: Immagini verticali tarate con precisione a 8 annunci per riga.")
 
-            # CSS personalizzato per la disposizione geometrica fissa a 8 colonne
+            # CSS Ultra-Rigoroso: blocca la larghezza delle card per evitare l'effetto gigante
             st.markdown("""
             <style>
+            /* Griglia a 8 colonne fisse e allineate */
             .grid-8-annunci {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                gap: 10px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
                 margin-bottom: 35px;
                 width: 100%;
             }
+            @media (min-width: 768px) {
+                .grid-8-annunci { grid-template-columns: repeat(4, 1fr); }
+            }
             @media (min-width: 1200px) {
-                .grid-8-annunci {
-                    grid-template-columns: repeat(8, 1fr);
+                .grid-8-annunci { 
+                    grid-template-columns: repeat(8, 1fr); 
                 }
             }
 
-            /* BOX VETRINA: Solo immagine verticale proporzionata 395x704 px */
+            /* CARD VETRINA BLOCCATA: Forza il rapporto verticale 395x704 e impedisce l'allargamento */
             .vetrina-solo-img {
                 display: block;
                 width: 100%;
+                max-width: 180px; /* Impedisce alle immagini landscape di allargarsi all'infinito */
                 aspect-ratio: 395 / 704;
-                background-size: cover;
+                background-size: contain; /* Cambiato da cover a contain per non tagliare loghi o scritte orizzontali */
+                background-repeat: no-repeat;
                 background-position: center;
-                border-radius: 6px;
+                background-color: #0F172A; /* Sfondo scuro elegante se l'immagine non è perfettamente verticale */
+                border-radius: 8px;
                 border: 1px solid #E2E8F0;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-                transition: transform 0.2s ease;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                margin: 0 auto; /* Centra la card nella sua colonna */
             }
             .vetrina-solo-img:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 16px rgba(0,0,0,0.12);
             }
 
-            /* CARD STANDARD: Immagine 395x382 px (~54%) + Testo sotto = Totale 395x704 px */
+            /* CARD STANDARD BLOCCATA: Immagine sopra (395x382) + Testo sotto */
             .card-standard-vetrina {
                 display: flex;
                 flex-direction: column;
                 width: 100%;
+                max-width: 180px;
                 aspect-ratio: 395 / 704;
                 background-color: #FFFFFF;
-                border-radius: 6px;
+                border-radius: 8px;
                 border: 1px solid #E2E8F0;
                 overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
                 transition: transform 0.2s ease;
                 text-decoration: none;
                 color: inherit;
+                margin: 0 auto;
             }
             .card-standard-vetrina:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 16px rgba(0,0,0,0.12);
             }
             .card-standard-img-half {
                 width: 100%;
@@ -859,19 +869,20 @@ else:
                 background-position: center;
             }
             .card-standard-text-half {
-                padding: 8px;
+                padding: 10px;
                 height: 46%;
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
                 background: #FFFFFF;
+                overflow: hidden;
             }
             .card-title-mini {
                 font-size: 11px;
                 font-weight: 700;
                 color: #0F172A;
                 line-height: 1.2;
-                margin-bottom: 3px;
+                margin-bottom: 4px;
                 display: -webkit-box;
                 -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
@@ -882,7 +893,7 @@ else:
                 color: #475569;
                 line-height: 1.2;
                 display: -webkit-box;
-                -webkit-line-clamp: 5;
+                -webkit-line-clamp: 4;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
             }
