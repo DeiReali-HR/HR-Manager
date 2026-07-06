@@ -164,10 +164,9 @@ if "job" in st.query_params:
                 c_tel = st.text_input("Telefono *")
                 c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
                 
-                # Questa riga deve essere allineata agli input sopra (16 spazi o 4 tab di rientro totali)
-                submitted = st.form_submit_button("INVIA CANDIDATURA")
-                
-                if submitted:
+                # Il bottone deve essere DENTRO il form
+                if st.form_submit_button("INVIA CANDIDATURA"):
+                    # CONTROLLO: SE i campi sono pieni, procedi al salvataggio
                     if c_nome and c_mail and c_tel and c_file:
                         with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
@@ -200,6 +199,7 @@ if "job" in st.query_params:
                             supabase.table("candidati").insert(payload_candidato).execute()
                             st.success("🎉 Candidatura inviata correttamente!")
                     else:
+                        # ERRORE: scatta solo se mancano dati
                         st.error("Compila tutti i campi obbligatori ed allega il CV in formato PDF.")
                         st.markdown('</div>', unsafe_allow_html=True)
                 else: st.error("Annuncio non trovato.")
