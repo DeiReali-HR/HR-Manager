@@ -617,62 +617,32 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (OTTIMIZZAZIONE E RIDUZIONE SPAZI ATTIVI) ---
-        with scelta_tab[8]:
-            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
-            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
+        # --- TAB 9: VETRINA CON MISURE 395x704 REALI ---
+with scelta_tab[8]:
+    st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
+    # ... (logica annunci_vivi)
 
-            st.markdown("""
-            <style>
-            .showcase-grid-2columns { display: grid !important; grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 15px !important; }
-            @media (min-width: 992px) { .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr) !important; } }
-            .showcase-card-row { display: flex !important; background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 12px !important; overflow: hidden !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; width: 100% !important; height: 382px !important; max-height: 382px !important; }
-            .showcase-card-row:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08) !important; }
-            .showcase-img-side { width: 40% !important; min-width: 40% !important; height: 100% !important; background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important; border-right: 1px solid #F1F5F9 !important; }
-            .showcase-content-side { width: 60% !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; height: 100% !important; overflow: hidden !important; }
-            .showcase-scrollable-body { overflow-y: auto !important; flex-grow: 1 !important; padding-right: 5px !important; margin-bottom: 10px !important; }
-            .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
-            .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
-            .showcase-title { font-size: 18px !important; font-weight: 700 !important; color: #0F172A !important; margin-bottom: 4px !important; line-height: 1.3 !important; }
-            .showcase-meta-grid { display: flex !important; flex-wrap: wrap !important; gap: 8px 12px !important; font-size: 12px !important; font-weight: 600 !important; color: #2563EB !important; margin-bottom: 10px !important; }
-            .showcase-text { font-size: 13px !important; color: #475569 !important; line-height: 1.5 !important; white-space: pre-line !important; }
-            .showcase-btn { align-self: flex-start !important; background-color: #0F172A !important; color: #FFFFFF !important; padding: 8px 16px !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 12px !important; text-decoration: none !important; transition: background-color 0.2s !important; margin-top: auto !important; width: 100% !important; text-align: center !important; }
-            .showcase-btn:hover { background-color: #1E293B !important; }
-            </style>
-            """, unsafe_allow_html=True)
-
-            res_vetrina_live = supabase.table("annunci").select("*").execute()
-            elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
-            annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
-
-            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
-
-            # --- LIVELLO 1: TOP 8 IN VETRINA BLINDATA CON RIDUZIONE DEL MARGINE INFERIORE ---
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-            
-            st.markdown("<h3 style='margin-bottom:0px; padding-bottom:0px;'>🌟 In Vetrina (Selezionati)</h3>", unsafe_allow_html=True)
-            if not annunci_flag_vetrina:
-                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
-            else:
-                # Modificato aspect-ratio a 395/520 per limitare l'altezza complessiva ed evitare spazi vuoti verticali
-                html_sorgente_unito = """
-                <div style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 14px; width: 100%; overflow-x: auto; padding: 5px 0; margin-bottom: 0px;">
-                """
-                for a in annunci_flag_vetrina:
-                    raw_img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    img_v_url = re.sub(r'[^a-zA-Z0-9_\-.:/&?=#%+~,;@!*()\[\]]', '', raw_img_url.strip())
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    html_sorgente_unito += f"""
-                    <div style="flex: 0 0 calc(12.5% - 13px); min-width: 110px; max-width: 165px; display: block;">
-                        <a href="{link_candidatura}" target="_blank" style="display: block; width: 100%; aspect-ratio: 395 / 520; background-image: url('{img_v_url}'); background-size: cover; background-repeat: no-repeat; background-position: center; background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'"></a>
-                    </div>
-                    """
-                html_sorgente_unito += "</div>"
-                
-                # Ridotta l'altezza dell'iframe a 245px per eliminare lo spazio vuoto in eccesso sotto le foto
-                st.components.v1.html(html_sorgente_unito, height=245, scrolling=False)
+    # VETRINA (TOP 8)
+    annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+    
+    st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
+    if annunci_flag_vetrina:
+        # Contenitore a scorrimento orizzontale
+        html_vetrina = '<div style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding: 10px 0;">'
+        for a in annunci_flag_vetrina:
+            img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
+            # flex: 0 0 395px; impone la larghezza esatta
+            # aspect-ratio: 395/704; impone l'altezza proporzionale
+            html_vetrina += f'''
+            <a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
+               style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
+               background-image: url(\'{img}\'); background-size: cover; 
+               border-radius: 12px; border: 2px solid #E2E8F0; display: block;">
+            </a>'''
+        html_vetrina += '</div>'
+        
+        # Altezza iframe aumentata per contenere i 704px proporzionati (calcolando il padding)
+        st.components.v1.html(html_vetrina, height=750, scrolling=True)
 
             # Sostituito st.markdown("---") nativo con un divisore HTML/CSS compatto a margine ridotto
             st.markdown("<hr style='margin: 5px 0 15px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
