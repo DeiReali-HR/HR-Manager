@@ -43,6 +43,11 @@ def init_gemini():
 supabase: Client = init_supabase()
 ai_client = init_gemini()
 
+def chunk_list(lst, n):
+    """Divide una lista in sottoliste di dimensione n."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
 def estrai_testo_pdf(file_caricato):
     try:
         reader = PdfReader(file_caricato)
@@ -134,31 +139,44 @@ if "job" in st.query_params:
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
     
     if annuncio_selezionato:
-        if annuncio_selezionato.get('stato') == 'Sospeso':
-            st.warning("Selezioni momentaneamente chiuse per questa posizione.")
-        else:
-            # Fallback intelligente: usa la foto_annuncio, altrimenti l'immagine principale, altrimenti Unsplash
+    if annuncio_selezionato.get('stato') == 'Sospeso':
+        st.warning("Selezioni momentaneamente chiuse per questa posizione.")
+    else:
+        st.markdown(f"## {annuncio_selezionato['posizione']}")
+        
+        # Creiamo le 3 colonne
+        col_img, col_info, col_form = st.columns([1, 1.5, 1.2])
+        
+        # 1. COLONNA SINISTRA: Immagine
+        with col_img:
             img_url = annuncio_selezionato.get('foto_annuncio') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
+            st.image(img_url, use_container_width=True)
             
-            st.markdown(f"""
-                <div class="umana-grid">
-                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
-                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
-                </div>
-            """, unsafe_allow_html=True)
+        # 2. COLONNA CENTRALE: Dettagli
+        with col_info:
+            st.markdown("### Dettagli Posizione")
+            st.markdown(f"*📍 Sede:* {annuncio_selezionato.get('sede','N/D')}")
+            st.markdown(f"*💼 Inquadramento:* {annuncio_selezionato.get('inquadramento','N/D')}")
+            st.markdown(f"*💸 Compenso:* {annuncio_selezionato.get('importo','0')} €")
+            st.markdown(f"*🔑 Rif:* DR-{annuncio_selezionato['id'].upper()[-4:]}")
+            st.markdown("---")
+            st.markdown("### Descrizione")
+            st.write(annuncio_selezionato['note'])
             
-            st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
-            with st.form("candidatura"):
+        # 3. COLONNA DESTRA: Form Candidatura
+        with col_form:
+            st.markdown("### 📩 Invia Candidatura")
+            with st.form("candidatura_form"):
                 c_nome = st.text_input("Nome e Cognome *")
                 c_mail = st.text_input("E-mail *")
                 c_tel = st.text_input("Telefono *")
-                c_file = st.file_uploader("Allega CV PDF *", type=["pdf"])
+                c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
                 
                 if st.form_submit_button("INVIA CANDIDATURA"):
-                    if c_nome and c_mail and c_tel and c_file:
+                     if c_nome and c_mail and c_tel and c_file:
+                        st.success("Candidatura inviata!")
+                    else:
+                        st.error("Compila i campi obbligatori.")
                         with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
                             try:
