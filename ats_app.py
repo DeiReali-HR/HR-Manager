@@ -43,11 +43,6 @@ def init_gemini():
 supabase: Client = init_supabase()
 ai_client = init_gemini()
 
-def chunk_list(lst, n):
-    """Divide una lista in sottoliste di dimensione n."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
 def estrai_testo_pdf(file_caricato):
     try:
         reader = PdfReader(file_caricato)
@@ -139,44 +134,31 @@ if "job" in st.query_params:
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
     
     if annuncio_selezionato:
-    if annuncio_selezionato.get('stato') == 'Sospeso':
-        st.warning("Selezioni momentaneamente chiuse per questa posizione.")
-    else:
-        st.markdown(f"## {annuncio_selezionato['posizione']}")
-        
-        # Creiamo le 3 colonne
-        col_img, col_info, col_form = st.columns([1, 1.5, 1.2])
-        
-        # 1. COLONNA SINISTRA: Immagine
-        with col_img:
+        if annuncio_selezionato.get('stato') == 'Sospeso':
+            st.warning("Selezioni momentaneamente chiuse per questa posizione.")
+        else:
+            # Fallback intelligente: usa la foto_annuncio, altrimenti l'immagine principale, altrimenti Unsplash
             img_url = annuncio_selezionato.get('foto_annuncio') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-            st.image(img_url, use_container_width=True)
+            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
             
-        # 2. COLONNA CENTRALE: Dettagli
-        with col_info:
-            st.markdown("### Dettagli Posizione")
-            st.markdown(f"*📍 Sede:* {annuncio_selezionato.get('sede','N/D')}")
-            st.markdown(f"*💼 Inquadramento:* {annuncio_selezionato.get('inquadramento','N/D')}")
-            st.markdown(f"*💸 Compenso:* {annuncio_selezionato.get('importo','0')} €")
-            st.markdown(f"*🔑 Rif:* DR-{annuncio_selezionato['id'].upper()[-4:]}")
-            st.markdown("---")
-            st.markdown("### Descrizione")
-            st.write(annuncio_selezionato['note'])
+            st.markdown(f"""
+                <div class="umana-grid">
+                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
+                </div>
+            """, unsafe_allow_html=True)
             
-        # 3. COLONNA DESTRA: Form Candidatura
-        with col_form:
-            st.markdown("### 📩 Invia Candidatura")
-            with st.form("candidatura_form"):
+            st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
+            with st.form("candidatura"):
                 c_nome = st.text_input("Nome e Cognome *")
                 c_mail = st.text_input("E-mail *")
                 c_tel = st.text_input("Telefono *")
-                c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
+                c_file = st.file_uploader("Allega CV PDF *", type=["pdf"])
                 
                 if st.form_submit_button("INVIA CANDIDATURA"):
-                     if c_nome and c_mail and c_tel and c_file:
-                        st.success("Candidatura inviata!")
-                    else:
-                        st.error("Compila i campi obbligatori.")
+                    if c_nome and c_mail and c_tel and c_file:
                         with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
                             try:
@@ -798,30 +780,19 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 7 IN VETRINA (Modificato per ingrandire le immagini) ---
-            # Limitiamo a 7 annunci per avere più spazio per ciascuno
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
+            # --- LIVELLO 1: TOP 8 IN VETRINA ---
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                # Creiamo 7 colonne invece di 8 per rendere le immagini più grandi
-                cols = st.columns(7)
-                
-                for index, a in enumerate(annunci_flag_vetrina):
+                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+                for a in annunci_flag_vetrina:
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    with cols[index]:
-                        st.markdown(f'''
-                            <a href="{link_candidatura}" target="_blank" 
-                               style="display: block; width: 100%; aspect-ratio: 395/704; 
-                               background-image: url(\'{img_v_url}\'); background-size: cover; 
-                               background-position: center; border-radius: 8px; border: 1px solid #E2E8F0;
-                               transition: transform 0.2s;">
-                            </a>
-                        ''', unsafe_allow_html=True)
+                    st.markdown(f'<a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
@@ -861,40 +832,27 @@ else:
                 fine_index = inizio_index + CONTEGGIO_PER_PAGINA
                 annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
 
-                # --- Sostituisci il blocco for a in annunci_da_mostrare: con questo ---
-
-# Raggruppa gli annunci in coppie
-def chunk_list(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
-
-# Iteriamo su coppie di annunci
-for pair in chunk_list(annunci_da_mostrare, 2):
-    # Creiamo una riga Streamlit per ogni coppia
-    cols = st.columns(2)
-    for i, a in enumerate(pair):
-        with cols[i]:
-            img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-            link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-            
-            st.markdown(f"""
-            <div class="showcase-card-row">
-                <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
-                <div class="showcase-content-side">
-                    <div class="showcase-scrollable-body">
-                        <div class="showcase-title">{a['posizione']}</div>
-                        <div class="showcase-meta-grid">
-                            <span>📍 {a.get('sede', 'Roma')}</span>
-                            <span>💼 {a.get('inquadramento', 'RAL')}</span>
-                            <span>💸 {a.get('importo', 'N/D')} €</span>
+                # --- GRIGLIA A DUE COLONNE AFFIANCATE ---
+                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
+                for a in annunci_da_mostrare:
+                    img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    
+                    st.markdown(f"""
+                    <div class="showcase-card-row">
+                        <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
+                        <div class="showcase-content-side">
+                            <div class="showcase-scrollable-body">
+                                <div class="showcase-title">{a['posizione']}</div>
+                                <div class="showcase-meta-grid">
+                                    <span>📍 {a.get('sede', 'Roma')}</span>
+                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                    <span>💸 {a.get('importo', 'N/D')} €</span>
+                                </div>
+                                <div class="showcase-text">{a.get('note', '')}</div>
+                            </div>
+                            <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
                         </div>
-                        <div class="showcase-text">{a.get('note', '')}</div>
                     </div>
-                    <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
