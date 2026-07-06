@@ -156,16 +156,23 @@ if "job" in st.query_params:
                 st.write(annuncio_selezionato['note'])
             
             with col_form:
-                st.markdown("### 📩 Invia Candidatura")
-                with st.form("candidatura_form"):
-                    c_nome = st.text_input("Nome e Cognome *")
-                    c_mail = st.text_input("E-mail *")
-                    c_tel = st.text_input("Telefono *")
-                    c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
+    st.markdown("### 📩 Invia Candidatura")
+    
+    # 1. Apri il form
+    with st.form("candidatura_form"):
+        # 2. Inserisci gli input DENTRO il blocco 'with'
+        c_nome = st.text_input("Nome e Cognome *")
+        c_mail = st.text_input("E-mail *")
+        c_tel = st.text_input("Telefono *")
+        c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
+        
+        # 3. Il bottone DEVE essere dentro il 'with st.form'
                     
                     # Inizio del form
-                if st.form_submit_button("INVIA CANDIDATURA"):
-                    # Verifica dei campi obbligatori
+                submitted = st.form_submit_button("INVIA CANDIDATURA")
+        
+        # 4. Gestione della logica DOPO il click
+        if submitted:
                     if c_nome and c_mail and c_tel and c_file:
                         with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
