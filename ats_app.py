@@ -619,89 +619,52 @@ else:
 
         # --- TAB 9: PORTALE CARRIERE (CORRETTO) ---
         with scelta_tab[8]:
+            with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
             
-            # Recupero dati
+            # Recupero dati una sola volta
             res = supabase.table("annunci").select("*").execute()
             annunci_vivi = [a for a in res.data if a.get("stato") != "Sospeso"]
             
-            # VETRINA (TOP 8)
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-            st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
-            
-            if annunci_flag_vetrina:
+            # VETRINA
+            vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+            st.markdown("### 🌟 In Vetrina")
+            if vetrina:
                 html = '<div style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 0;">'
-                for a in annunci_flag_vetrina:
+                for a in vetrina:
                     img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
-                    html += f'''<a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
+                    html += f'''<a href="?job={a["id"]}" target="_blank" 
                         style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
-                        background-image: url(\'{img}\'); background-size: cover; 
-                        border-radius: 12px; border: 2px solid #E2E8F0; display: block;"></a>'''
+                        background-image: url(\'{img}\'); background-size: cover; border-radius: 12px; border: 2px solid #E2E8F0; display: block;"></a>'''
                 html += '</div>'
                 st.components.v1.html(html, height=750, scrolling=True)
-# --- DIVISORE E TITOLO LISTA ---
-            st.markdown("<hr style='margin: 5px 0 15px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-            st.markdown("<h3 style='margin-top:0px; padding-top:0px;'>📋 Tutte le Posizioni Aperte</h3>", unsafe_allow_html=True)
-
-            # --- BARRA DI RICERCA AVANZATA ---
-            col_search1, col_search2 = st.columns(2)
-            # Recuperiamo i ruoli e le sedi dagli annunci non in vetrina
-            annunci_per_filtro = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            ruoli_disponibili = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci_per_filtro if a.get("posizione")])))
-            citta_disponibili = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci_per_filtro if a.get("sede")])))
-
-            with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ruoli_disponibili)
-            with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", citta_disponibili)
-
-            # --- FILTRAGGIO ---
-            annunci_filtrati = annunci_per_filtro
-            if search_ruolo != "Tutti i Ruoli":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
-            if search_citta != "Tutte le Sedi":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
-
-            # --- VISUALIZZAZIONE ELENCO ---
-            if not annunci_filtrati:
-                st.info("Nessun annuncio corrisponde ai criteri di ricerca selezionati.")
-            else:
-                for a in annunci_filtrati:
-                    with st.container():
-                        c1, c2 = st.columns([1, 4])
-                        with c1:
-                            st.image(a.get("foto_annuncio") or a.get("immagine"), use_container_width=True)
-                        with c2:
-                            st.markdown(f"**{a['posizione']}**<br>📍 {a.get('sede')} • 💸 {a.get('importo')} €", unsafe_allow_html=True)
-                            st.link_button("CANDIDATI ORA ↗", f"https://deireali-hr.streamlit.app/?job={a['id']}")
-                        st.divider()
-            st.markdown("<hr style='margin: 5px 0 15px 0;'>", unsafe_allow_html=True)
+            
+            st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
 
-            # DEFINIZIONE VARIABILI FILTRO
+            # FILTRI (Unica istanza)
+            col1, col2 = st.columns(2)
             ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
-            
-            col1, col2 = st.columns(2)
             with col1: f_ruolo = st.selectbox("🔍 Qualifica", ruoli)
             with col2: f_citta = st.selectbox("📍 Sede", citta)
 
-            # DEFINIZIONE ANNUNCI_FILTRATI (Qui risolviamo il NameError)
-            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if f_ruolo != "Tutti i Ruoli": annunci_filtrati = [a for a in annunci_filtrati if a["posizione"] == f_ruolo]
-            if f_citta != "Tutte le Sedi": annunci_filtrati = [a for a in annunci_filtrati if a["sede"] == f_citta]
+            # LOGICA DI FILTRAGGIO (Unica istanza)
+            elenco = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
+            if f_ruolo != "Tutti i Ruoli": elenco = [a for a in elenco if a["posizione"] == f_ruolo]
+            if f_citta != "Tutte le Sedi": elenco = [a for a in elenco if a["sede"] == f_citta]
 
-            # ELENCO
-            if not annunci_filtrati:
+            # ELENCO RISULTATI
+            if not elenco:
                 st.info("Nessun annuncio corrisponde ai criteri.")
             else:
-                for a in annunci_filtrati:
+                for a in elenco:
                     with st.container():
                         c1, c2 = st.columns([1, 4])
                         with c1: st.image(a.get("foto_annuncio") or a.get("immagine"), use_container_width=True)
                         with c2:
                             st.markdown(f"**{a['posizione']}**<br>📍 {a.get('sede')} • 💸 {a.get('importo')} €", unsafe_allow_html=True)
-                            st.link_button("Candidati", f"https://deireali-hr.streamlit.app/?job={a['id']}")
+                            st.link_button("Candidati", f"?job={a['id']}")
                         st.divider()
 
             # --- GESTIONE DELLE PAGINE ---
