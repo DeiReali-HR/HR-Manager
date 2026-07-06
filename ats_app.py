@@ -164,8 +164,8 @@ if "job" in st.query_params:
                     c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
                     
                     if st.form_submit_button("INVIA CANDIDATURA"):
-                        if c_nome and c_mail and c_tel and c_file:
-                            with st.spinner("Salvataggio e analisi in corso..."):
+                    if c_nome and c_mail and c_tel and c_file:
+                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
                             try:
                                 v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
@@ -187,22 +187,16 @@ if "job" in st.query_params:
                             url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
                             
                             payload_candidato = {
-                                "nome": c_nome,
-                                "email": c_mail,
-                                "telefono": c_tel,
+                                "nome": c_nome, "email": c_mail, "telefono": c_tel,
                                 "posizione": annuncio_selezionato['posizione'],
-                                "idoneita": str(v),
-                                "stelle": str(s),
-                                "orientamento": str(o),
-                                "stato": "In Screening",
-                                "testo_cv": testo_pdf,
-                                "immagine": url_download_pdf
+                                "idoneita": str(v), "stelle": str(s), "orientamento": str(o),
+                                "stato": "In Screening", "testo_cv": testo_pdf, "immagine": url_download_pdf
                             }
                             
                             supabase.table("candidati").insert(payload_candidato).execute()
-                            st.success("🎉 Candidatura inviata correttamente! Il tuo CV originale è stato acquisito nel Cloud.")
+                            st.success("🎉 Candidatura inviata correttamente!")
                     else:
-                        st.error("Compila tutti i campi obbligatori ed allega il tuo CV in formato PDF.")
+                        st.error("Compila tutti i campi obbligatori ed allega il CV in formato PDF.")
             st.markdown('</div>', unsafe_allow_html=True)
     else: st.error("Annuncio non trovato.")
 
