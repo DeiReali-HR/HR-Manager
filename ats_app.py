@@ -156,59 +156,59 @@ if "job" in st.query_params:
                 st.write(annuncio_selezionato['note'])
             
             with col_form:
-    st.markdown("### 📩 Invia Candidatura")
-    
-    # 1. Apri il form
-    with st.form("candidatura_form"):
-        # 2. Inserisci gli input DENTRO il blocco 'with'
-        c_nome = st.text_input("Nome e Cognome *")
-        c_mail = st.text_input("E-mail *")
-        c_tel = st.text_input("Telefono *")
-        c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
-        
-        # 3. Il bottone DEVE essere dentro il 'with st.form'
+                st.markdown("### 📩 Invia Candidatura")
+                
+                # 1. Apri il form
+                with st.form("candidatura_form"):
+                    # 2. Inserisci gli input DENTRO il blocco 'with'
+                    c_nome = st.text_input("Nome e Cognome *")
+                    c_mail = st.text_input("E-mail *")
+                    c_tel = st.text_input("Telefono *")
+                    c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
                     
-                    # Inizio del form
-                submitted = st.form_submit_button("INVIA CANDIDATURA")
-        
-        # 4. Gestione della logica DOPO il click
-        if submitted:
-                    if c_nome and c_mail and c_tel and c_file:
-                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
-                            testo_pdf = estrai_testo_pdf(c_file)
-                            try:
-                                v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
-                            except Exception:
-                                v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
-                            
-                            pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
-                            nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
-                            
-                            c_file.seek(0)
-                            file_bytes = c_file.read()
-                            
-                            supabase.storage.from_("curriculum").upload(
-                                path=nome_file_storage,
-                                file=file_bytes,
-                                file_options={"content-type": "application/pdf"}
-                            )
-                            
-                            url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
-                            
-                            payload_candidato = {
-                                "nome": c_nome, "email": c_mail, "telefono": c_tel,
-                                "posizione": annuncio_selezionato['posizione'],
-                                "idoneita": str(v), "stelle": str(s), "orientamento": str(o),
-                                "stato": "In Screening", "testo_cv": testo_pdf, "immagine": url_download_pdf
-                            }
-                            
-                            supabase.table("candidati").insert(payload_candidato).execute()
-                            st.success("🎉 Candidatura inviata correttamente!")
-                    else:
-                        # Gestione errore campi vuoti
-                        st.error("Compila tutti i campi obbligatori ed allega il CV in formato PDF.")
-            st.markdown('</div>', unsafe_allow_html=True)
-    else: st.error("Annuncio non trovato.")
+                    # 3. Il bottone DEVE essere dentro il 'with st.form'
+                                
+                                # Inizio del form
+                            submitted = st.form_submit_button("INVIA CANDIDATURA")
+                    
+                    # 4. Gestione della logica DOPO il click
+                    if submitted:
+                                if c_nome and c_mail and c_tel and c_file:
+                                    with st.spinner("Salvataggio file e analisi profilo in corso..."):
+                                        testo_pdf = estrai_testo_pdf(c_file)
+                                        try:
+                                            v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
+                                        except Exception:
+                                            v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
+                                        
+                                        pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
+                                        nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
+                                        
+                                        c_file.seek(0)
+                                        file_bytes = c_file.read()
+                                        
+                                        supabase.storage.from_("curriculum").upload(
+                                            path=nome_file_storage,
+                                            file=file_bytes,
+                                            file_options={"content-type": "application/pdf"}
+                                        )
+                                        
+                                        url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
+                                        
+                                        payload_candidato = {
+                                            "nome": c_nome, "email": c_mail, "telefono": c_tel,
+                                            "posizione": annuncio_selezionato['posizione'],
+                                            "idoneita": str(v), "stelle": str(s), "orientamento": str(o),
+                                            "stato": "In Screening", "testo_cv": testo_pdf, "immagine": url_download_pdf
+                                        }
+                                        
+                                        supabase.table("candidati").insert(payload_candidato).execute()
+                                        st.success("🎉 Candidatura inviata correttamente!")
+                                else:
+                                    # Gestione errore campi vuoti
+                                    st.error("Compila tutti i campi obbligatori ed allega il CV in formato PDF.")
+                        st.markdown('</div>', unsafe_allow_html=True)
+                else: st.error("Annuncio non trovato.")
 
 # --- AREA AMMINISTRATIVA / BACKOFFICE ---
 else:
