@@ -621,14 +621,15 @@ else:
         with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
             
-            # Recupero dati una sola volta
+            # Recupero dati (deve essere rientrato di 12 spazi)
             res = supabase.table("annunci").select("*").execute()
             annunci_vivi = [a for a in res.data if a.get("stato") != "Sospeso"]
             
             # VETRINA
-            vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             st.markdown("### 🌟 In Vetrina")
-            if vetrina:
+            
+            if annunci_flag_vetrina:
                 html = '<div style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 0;">'
                 for a in vetrina:
                     img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
