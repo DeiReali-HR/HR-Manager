@@ -780,19 +780,30 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA ---
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+            # --- LIVELLO 1: TOP 7 IN VETRINA (Modificato per ingrandire le immagini) ---
+            # Limitiamo a 7 annunci per avere più spazio per ciascuno
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
-                for a in annunci_flag_vetrina:
+                # Creiamo 7 colonne invece di 8 per rendere le immagini più grandi
+                cols = st.columns(7)
+                
+                for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    st.markdown(f'<a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    with cols[index]:
+                        st.markdown(f'''
+                            <a href="{link_candidatura}" target="_blank" 
+                               style="display: block; width: 100%; aspect-ratio: 395/704; 
+                               background-image: url(\'{img_v_url}\'); background-size: cover; 
+                               background-position: center; border-radius: 8px; border: 1px solid #E2E8F0;
+                               transition: transform 0.2s;">
+                            </a>
+                        ''', unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
