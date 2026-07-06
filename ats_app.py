@@ -787,11 +787,12 @@ else:
             # --- LIVELLO 1: TOP 8 IN VETRINA ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
             
-            st.markdown("### 🌟 In Vetrina (Selezionati)")
+            st.markdown("### 🌟 In Vetrina")
             if not annunci_flag_vetrina:
-                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
+                st.info("Spunta il flag 'In Vetrina' per aggiungere annunci qui.")
             else:
-                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+                # Modificato da grid-8-annunci a vetrina-orizzontale
+                st.markdown("<div class='vetrina-orizzontale'>", unsafe_allow_html=True)
                 for a in annunci_flag_vetrina:
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
