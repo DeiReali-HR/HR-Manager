@@ -617,53 +617,56 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: VETRINA CON MISURE 395x704 REALI ---
-with scelta_tab[8]:
-    st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
-    # ... (logica annunci_vivi)
+        # --- TAB 9: PORTALE CARRIERE ---
+        with scelta_tab[8]:
+            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
+            res_vetrina_live = supabase.table("annunci").select("*").execute()
+            elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
+            annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
 
-    # VETRINA (TOP 8)
-    annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-    
-    st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
-    if annunci_flag_vetrina:
-        # Contenitore a scorrimento orizzontale
-        html_vetrina = '<div style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding: 10px 0;">'
-        for a in annunci_flag_vetrina:
-            img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
-            # flex: 0 0 395px; impone la larghezza esatta
-            # aspect-ratio: 395/704; impone l'altezza proporzionale
-            html_vetrina += f'''
-            <a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
-               style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
-               background-image: url(\'{img}\'); background-size: cover; 
-               border-radius: 12px; border: 2px solid #E2E8F0; display: block;">
-            </a>'''
-        html_vetrina += '</div>'
-        
-        # Altezza iframe aumentata per contenere i 704px proporzionati (calcolando il padding)
-        st.components.v1.html(html_vetrina, height=750, scrolling=True)
-
-            # Sostituito st.markdown("---") nativo con un divisore HTML/CSS compatto a margine ridotto
+            # VETRINA (TOP 8)
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+            
+            st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
+            if annunci_flag_vetrina:
+                html_vetrina = '<div style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding: 10px 0;">'
+                for a in annunci_flag_vetrina:
+                    img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
+                    html_vetrina += f'''
+                    <a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
+                       style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
+                       background-image: url(\'{img}\'); background-size: cover; 
+                       border-radius: 12px; border: 2px solid #E2E8F0; display: block;">
+                    </a>'''
+                html_vetrina += '</div>'
+                st.components.v1.html(html_vetrina, height=750, scrolling=True)
+            
+            # DIVISORE E TITOLO LISTA
             st.markdown("<hr style='margin: 5px 0 15px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
             st.markdown("<h3 style='margin-top:0px; padding-top:0px;'>📋 Tutte le Posizioni Aperte</h3>", unsafe_allow_html=True)
 
-            # --- BARRA DI RICERCA AVANZATA ---
+            # FILTRI
             col_search1, col_search2 = st.columns(2)
-            with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
-            with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
+            ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
+            citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+            
+            with col_search1: search_ruolo = st.selectbox("Qualifica", ruoli)
+            with col_search2: search_citta = st.selectbox("Sede", citta)
 
-            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if not annunci_filtrati:
-                annunci_filtrati = annunci_vivi
+            # ELENCO
+            annunci_da_mostrare = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
+            if search_ruolo != "Tutti i Ruoli": annunci_da_mostrare = [a for a in annunci_da_mostrare if a.get("posizione") == search_ruolo]
+            if search_citta != "Tutte le Sedi": annunci_da_mostrare = [a for a in annunci_da_mostrare if a.get("sede") == search_citta]
 
-            if search_ruolo != "Tutti i Ruoli":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
-            if search_citta != "Tutte le Sedi":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
-
+            for a in annunci_da_mostrare:
+                with st.container():
+                    c1, c2 = st.columns([1, 4])
+                    with c1:
+                        st.image(a.get("foto_annuncio") or a.get("immagine"), use_container_width=True)
+                    with c2:
+                        st.markdown(f"**{a['posizione']}**<br>📍 {a.get('sede')} • 💸 {a.get('importo')} €", unsafe_allow_html=True)
+                        st.link_button("Candidati", f"https://deireali-hr.streamlit.app/?job={a['id']}")
+                    st.divider()
             # --- GESTIONE DELLE PAGINE ---
             CONTEGGIO_PER_PAGINA = 10  
             totale_annunci_filtrati = len(annunci_filtrati)
