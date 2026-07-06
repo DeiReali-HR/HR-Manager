@@ -834,25 +834,38 @@ else:
 
                 # --- GRIGLIA A DUE COLONNE AFFIANCATE ---
                 st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
-                for a in annunci_da_mostrare:
-                    img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    st.markdown(f"""
-                    <div class="showcase-card-row">
-                        <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
-                        <div class="showcase-content-side">
-                            <div class="showcase-scrollable-body">
-                                <div class="showcase-title">{a['posizione']}</div>
-                                <div class="showcase-meta-grid">
-                                    <span>📍 {a.get('sede', 'Roma')}</span>
-                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
-                                    <span>💸 {a.get('importo', 'N/D')} €</span>
+                # Raggruppa gli annunci in coppie
+                def chunk_list(lst, n):
+                    for i in range(0, len(lst), n):
+                        yield lst[i:i + n]
+                
+                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
+                
+                # Iteriamo su coppie di annunci
+                for pair in chunk_list(annunci_da_mostrare, 2):
+                    # Creiamo una riga Streamlit per ogni coppia
+                    cols = st.columns(2)
+                    for i, a in enumerate(pair):
+                        with cols[i]:
+                            img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                            link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                            
+                            st.markdown(f"""
+                            <div class="showcase-card-row">
+                                <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
+                                <div class="showcase-content-side">
+                                    <div class="showcase-scrollable-body">
+                                        <div class="showcase-title">{a['posizione']}</div>
+                                        <div class="showcase-meta-grid">
+                                            <span>📍 {a.get('sede', 'Roma')}</span>
+                                            <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                            <span>💸 {a.get('importo', 'N/D')} €</span>
+                                        </div>
+                                        <div class="showcase-text">{a.get('note', '')}</div>
+                                    </div>
+                                    <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗️</a>
                                 </div>
-                                <div class="showcase-text">{a.get('note', '')}</div>
                             </div>
-                            <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                            """, unsafe_allow_html=True)
+                
                 st.markdown("</div>", unsafe_allow_html=True)
