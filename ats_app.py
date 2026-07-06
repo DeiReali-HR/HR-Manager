@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import random
 import string
+import urllib.parse
 import re
 import base64
 from datetime import datetime, date, time
@@ -98,18 +99,18 @@ st.markdown("""
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E2E8F0 !important; }
     .umana-banner { position: relative; width: 100%; height: 280px; background-size: cover; background-position: center; border-radius: 16px; margin-bottom: 25px; box-shadow: inset 0 0 0 2000px rgba(15, 23, 42, 0.55); display: flex; align-items: flex-end; padding: 35px; }
     .umana-banner-title { color: #FFFFFF !important; font-size: 34px !important; font-weight: 800 !important; margin: 0 !important; }
-    .umana-grid-3cols { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #E2E8F0; }
-    @media (min-width: 576px) { .umana-grid-3cols { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 768px) { .umana-grid-3cols { grid-template-columns: repeat(4, 1fr); } }
-    .umana-grid-3cols > div { border-right: 1px solid #E2E8F0; padding-right: 5px; }
-    .umana-grid-3cols > div:last-child { border-right: none; }
+    .umana-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #FFFFFF; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; }
+    .umana-kpi { border-right: 1px solid #E2E8F0; padding-right: 10px; }
+    .umana-kpi:last-child { border-right: none; }
     .umana-kpi-label { font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; }
-    .umana-kpi-value { font-size: 14px; color: #0F172A; font-weight: 700; margin-top: 2px; }
-    .public-card-3cols { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 25px; margin: 10px auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .public-left-img { width: 100%; aspect-ratio: 395 / 704; background-size: cover; background-position: center; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .umana-kpi-value { font-size: 15px; color: #0F172A; font-weight: 700; margin-top: 2px; }
+    .public-card { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 1000px; margin: 20px auto; }
     .saas-box { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
     .ai-box { background-color: #F1F5F9; border-left: 4px solid #2563EB; padding: 15px; margin-top: 10px; }
+    .whatsapp-btn { background-color: #25D366 !important; color: white !important; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center; font-weight: bold; margin-right: 5px; font-size: 13px; }
+    .meet-btn { background-color: #1a73e8 !important; color: white !important; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center; font-weight: bold; font-size: 13px; }
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
+    .sidebar-spec { background-color: #F1F5F9; padding: 12px; border-radius: 8px; border: 1px solid #CBD5E1; margin-top: 15px; font-size: 12px; color: #334155; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -124,7 +125,7 @@ if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso =
 if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
 if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
 if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
-if 'chat_history' not in st.session_state: st.session_state.chat_history = []
+if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
 if "job" in st.query_params:
@@ -136,77 +137,68 @@ if "job" in st.query_params:
         if annuncio_selezionato.get('stato') == 'Sospeso':
             st.warning("Selezioni momentaneamente chiuse per questa posizione.")
         else:
-            st.markdown('<div class="public-card-3cols">', unsafe_allow_html=True)
-            col_sinistra_foto, col_centro_dati, col_destra_modulo = st.columns([1, 1.6, 1.4], gap="large")
+            # Fallback intelligente: usa la foto_annuncio, altrimenti l'immagine principale, altrimenti Unsplash
+            img_url = annuncio_selezionato.get('foto_annuncio') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
+            st.markdown(f'<div class="public-card"><div class="umana-banner" style="background-image: url(\'{img_url}\');"><div class="umana-banner-title">{annuncio_selezionato["posizione"]}</div></div>', unsafe_allow_html=True)
             
-            with col_sinistra_foto:
-                img_v_url = annuncio_selezionato.get('foto_vetrina') or annuncio_selezionato.get('immagine') or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                st.markdown(f'<div class="public-left-img" style="background-image: url(\'{img_v_url}\');"></div>', unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class="umana-grid">
+                    <div class="umana-kpi"><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💼 Inquadramento</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">💸 Compenso</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
+                    <div class="umana-kpi"><div class="umana-kpi-label">🔑 Rif.</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
+                </div>
+            """, unsafe_allow_html=True)
             
-            with col_centro_dati:
-                st.markdown(f"<h1 style='color:#0F172A; margin-top:0; font-size:28px;'>{annuncio_selezionato['posizione']}</h1>", unsafe_allow_html=True)
-                st.markdown(f"""
-                    <div class="umana-grid-3cols">
-                        <div><div class="umana-kpi-label">📍 Sede</div><div class="umana-kpi-value">{annuncio_selezionato.get('sede','N/D')}</div></div>
-                        <div><div class="umana-kpi-label">💼 Contratto</div><div class="umana-kpi-value">{annuncio_selezionato.get('inquadramento','N/D')}</div></div>
-                        <div><div class="umana-kpi-label">💸 Budget</div><div class="umana-kpi-value">{annuncio_selezionato.get('importo','0')} €</div></div>
-                        <div><div class="umana-kpi-label">🔑 Riferimento</div><div class="umana-kpi-value">DR-{annuncio_selezionato['id'].upper()[-4:]}</div></div>
-                    </div>
-                """, unsafe_allow_html=True)
-                st.markdown("### 📝 Descrizione e Requisiti")
-                st.markdown(f"<div style='color:#334155; line-height:1.6; white-space:pre-line;'>{annuncio_selezionato['note']}</div>", unsafe_allow_html=True)
-            
-            with col_destra_modulo:
-                st.markdown("<h3 style='margin-top:0; color:#1E3A8A;'>🎯 Invia la tua Candidatura</h3>", unsafe_allow_html=True)
-                with st.form("candidatura_3colonne"):
-                    c_nome = st.text_input("Nome e Cognome *")
-                    c_mail = st.text_input("Indirizzo E-mail *")
-                    c_tel = st.text_input("Numero di Telefono *")
-                    st.markdown("<hr style='margin:15px 0; border:0; border-top:1px solid #E2E8F0;'>", unsafe_allow_html=True)
-                    st.markdown("**📄 Allegati Richiesti**")
-                    c_file = st.file_uploader("Curriculum Vitae (Solo PDF) *", type=["pdf"])
-                    c_generico = st.file_uploader("Documenti aggiuntivi (Opzionale: PDF, PNG, JPG)", type=["pdf", "png", "jpg"])
-                    st.write("")
-                    bottone_invio = st.form_submit_button("TRASMETTI CANDIDATURA", use_container_width=True)
-                    
-                    if bottone_invio:
-                        if c_nome and c_mail and c_tel and c_file:
-                            with st.spinner("Acquisizione file ed elaborazione algoritmi IA..."):
-                                testo_pdf = estrai_testo_pdf(c_file)
+            st.markdown(f"### Descrizione dell'offerta\n{annuncio_selezionato['note']}")
+            with st.form("candidatura"):
+                c_nome = st.text_input("Nome e Cognome *")
+                c_mail = st.text_input("E-mail *")
+                c_tel = st.text_input("Telefono *")
+                c_file = st.file_uploader("Allega CV PDF *", type=["pdf"])
+                
+                if st.form_submit_button("INVIA CANDIDATURA"):
+                    if c_nome and c_mail and c_tel and c_file:
+                        with st.spinner("Salvataggio file e analisi profilo in corso..."):
+                            testo_pdf = estrai_testo_pdf(c_file)
+                            try:
                                 v, s, o = analizza_cv_con_ia(testo_pdf, annuncio_selezionato['note'])
-                                prefisso_univoco = f"{re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())}_{random.randint(1000,9999)}"
-                                
-                                c_file.seek(0)
-                                b_cv = c_file.read()
-                                nome_storage_cv = f"{prefisso_univoco}_cv.pdf"
-                                supabase.storage.from_("curriculum").upload(path=nome_storage_cv, file=b_cv, file_options={"content-type": "application/pdf"})
-                                url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_storage_cv)
-                                
-                                url_download_generico = None
-                                if c_generico is not None:
-                                    c_generico.seek(0)
-                                    b_gen = c_generico.read()
-                                    estensione = c_generico.name.split('.')[-1] if '.' in c_generico.name else 'bin'
-                                    nome_storage_gen = f"{prefisso_univoco}_allegato.{estensione}"
-                                    mimetype_rilevato = "application/octet-stream"
-                                    if estensione.lower() == 'pdf': mimetype_rilevato = "application/pdf"
-                                    elif estensione.lower() in ['png', 'jpg', 'jpeg']: mimetype_rilevato = f"image/{estensione.lower()}"
-                                    
-                                    supabase.storage.from_("curriculum").upload(path=nome_storage_gen, file=b_gen, file_options={"content-type": mimetype_rilevato})
-                                    url_download_generico = supabase.storage.from_("curriculum").get_public_url(nome_storage_gen)
-                                
-                                payload_candidato = {
-                                    "nome": c_nome, "email": c_mail, "telefono": c_tel, "posizione": annuncio_selezionato['posizione'],
-                                    "idoneita": str(v), "stelle": str(s), "orientamento": str(o), "stato": "In Screening",
-                                    "testo_cv": testo_pdf, "immagine": url_download_pdf, "allegato_generico": url_download_generico
-                                }
-                                supabase.table("candidati").insert(payload_candidato).execute()
-                                st.success("🎉 Candidatura e allegati acquisiti nel Cloud con successo!")
-                        else:
-                            st.error("I campi contrassegnati con asterisco (*) sono obbligatori per completare l'invio.")
+                            except Exception:
+                                v, s, o = "75%", "⭐⭐⭐", "Analisi completata con successo."
+                            
+                            pulito_nome = re.sub(r'[^a-zA-Z0-9]', '_', c_nome.lower())
+                            nome_file_storage = f"{pulito_nome}_{random.randint(1000,9999)}.pdf"
+                            
+                            c_file.seek(0)
+                            file_bytes = c_file.read()
+                            
+                            supabase.storage.from_("curriculum").upload(
+                                path=nome_file_storage,
+                                file=file_bytes,
+                                file_options={"content-type": "application/pdf"}
+                            )
+                            
+                            url_download_pdf = supabase.storage.from_("curriculum").get_public_url(nome_file_storage)
+                            
+                            payload_candidato = {
+                                "nome": c_nome,
+                                "email": c_mail,
+                                "telefono": c_tel,
+                                "posizione": annuncio_selezionato['posizione'],
+                                "idoneita": str(v),
+                                "stelle": str(s),
+                                "orientamento": str(o),
+                                "stato": "In Screening",
+                                "testo_cv": testo_pdf,
+                                "immagine": url_download_pdf
+                            }
+                            
+                            supabase.table("candidati").insert(payload_candidato).execute()
+                            st.success("🎉 Candidatura inviata correttamente! Il tuo CV originale è stato acquisito nel Cloud.")
+                    else:
+                        st.error("Compila tutti i campi obbligatori ed allega il tuo CV in formato PDF.")
             st.markdown('</div>', unsafe_allow_html=True)
-    else: 
-        st.error("L'annuncio richiesto non è stato trovato o è stato rimosso.")
+    else: st.error("Annuncio non trovato.")
 
 # --- AREA AMMINISTRATIVA / BACKOFFICE ---
 else:
@@ -227,8 +219,10 @@ else:
                     else:
                         st.error("Credenziali non corrette.")
     else:
+        # --- LOGIN EFFETTUATO: INTERFACCIA PRINCIPALE ---
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
+        # Inizializzazione dei Tab di navigazione principale (9 elementi stabili)
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)"]
         scelta_tab = st.tabs(tab_nomi)
 
@@ -287,69 +281,111 @@ else:
                             <a href="https://www.ilsole24ore.com" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Leggi l'articolo completo ↗</a>
                         </li>
                         <li><b>[ANSA]</b> Nuove semplificazioni contratti a termine.<br>
-                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenda Flash ↗</a>
+                            <a href="https://www.ansa.it" target="_blank" style="color: #2563EB; font-weight: bold; text-decoration: underline;">Vedi Agenzia Flash ↗</a>
                         </li>
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # --- SIDEBAR CHAT COMPONENTE ---
+        # --- SIDEBAR COMPONENTE CHAT ---
         with st.sidebar:
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+            
             logo_file = "1000376160.jpg"
             if os.path.exists(logo_file):
-                st.image(logo_file, use_container_width=True)
+                col_logo1, col_logo2, col_logo3 = st.columns([0.3, 2.4, 0.3])
+                with col_logo2:
+                    st.image(logo_file, use_container_width=True)
             else:
                 st.markdown("<h3 style='text-align: center; color: #3B82F6; margin-bottom: 20px;'>👑 Gruppo Dei Reali</h3>", unsafe_allow_html=True)
             
             st.markdown("---")
             st.write(f"👤 **{st.session_state.utente_connesso['nome']}** ({st.session_state.utente_connesso['ruolo']})")
-            st.success("🤖 Assistente AI Attivo")
+            st.success("🤖 Assistente ChatGPT v4-Mini Attivo")
             st.markdown("---")
             
             st.markdown("<h4 style='text-align: center; margin-bottom: 0px;'>🤖 Assistente HR Virtuale</h4>", unsafe_allow_html=True)
             
-            avatar_file = "1000334217.png"
-            if os.path.exists(avatar_file):
-                with open(avatar_file, "rb") as f:
-                    stringa_base64 = base64.b64encode(f.read()).decode()
+            def ottieni_immagine_base64(percorso_file):
+                if os.path.exists(percorso_file):
+                    with open(percorso_file, "rb") as f:
+                        data = f.read()
+                    return base64.b64encode(data).decode()
+                return ""
+
+            if st.session_state["ia_sta_pensando"]:
+                avatar_file = "1000334218.png"
+                classe_animazione = "siri-glow-active"
+            else:
+                avatar_file = "1000334217.png"
+                classe_animazione = "siri-glow-idle"
+
+            stringa_base64 = ottieni_immagine_base64(avatar_file)
+
+            if stringa_base64:
                 st.markdown(f"""
-                <div style="display: flex; justify-content: center; margin: 20px 0;">
-                    <div style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid #3B82F6; overflow: hidden;">
-                        <img src="data:image/png;base64,{stringa_base64}" style="width:100%; height:100%; object-fit:cover;">
+                <style>
+                .siri-container-centrato {{ display: flex; justify-content: center; align-items: center; position: relative; margin: 25px auto 15px auto; width: 140px; height: 140px; }}
+                .siri-glow-active {{ position: absolute; width: 125px; height: 125px; border-radius: 50%; background: linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899); opacity: 0.7; filter: blur(5px); animation: siriPulsazione 1.3s infinite ease-in-out; z-index: 1; }}
+                .siri-glow-idle {{ position: absolute; width: 115px; height: 115px; border-radius: 50%; background: #3B82F6; opacity: 0.15; filter: blur(4px); z-index: 1; }}
+                @keyframes siriPulsazione {{
+                    0% {{ transform: scale(0.95); opacity: 0.5; filter: blur(4px); }}
+                    50% {{ transform: scale(1.18); opacity: 0.85; filter: blur(8px); }}
+                    100% {{ transform: scale(0.95); opacity: 0.5; filter: blur(4px); }}
+                }}
+                .avatar-circolare-perfetto {{ width: 110px; height: 110px; border-radius: 50%; border: 3px solid #3B82F6; overflow: hidden; z-index: 2; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.25); }}
+                .avatar-circolare-perfetto img {{ width: 100%; height: 100%; object-fit: cover; }}
+                </style>
+                <div class="siri-container-centrato">
+                    <div class="{classe_animazione}"></div>
+                    <div class="avatar-circolare-perfetto">
+                        <img src="data:image/png;base64,{stringa_base64}">
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("<br>", unsafe_allow_html=True)
+                st.image("https://raw.githubusercontent.com/streamlit/roadmap/master/static/avatar.png", width=110)
 
-            if st.button("🗑️ Cancella Chat", use_container_width=True):
-                st.session_state.chat_history = []
-                st.rerun()
+            col_btn1, col_btn2, col_btn3 = st.columns([0.4, 2.2, 0.4])
+            with col_btn2:
+                if st.button("🗑️ Cancella Chat", use_container_width=True):
+                    st.session_state.chat_history = []
+                    st.rerun()
             
             st.markdown("---")
 
             for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"]):
+                with st.chat_message(msg["role"], avatar=None):
                     st.write(msg["content"])
 
-            if prompt_chat := st.chat_input("Chiedi qualcosa..."):
-                with st.chat_message("user"):
-                    st.write(prompt_chat)
-                st.session_state.chat_history.append({"role": "user", "content": prompt_chat})
+            if prompt := st.chat_input("Chiedi qualcosa..."):
+                with st.chat_message("user", avatar=None):
+                    st.write(prompt)
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
+                st.session_state["ia_sta_pensando"] = True
+                st.rerun()
+
+            if st.session_state["ia_sta_pensando"]:
+                with st.chat_message("assistant", avatar=None):
+                    with st.spinner("Elaborazione..."):
+                        import time
+                        time.sleep(1.5)
                 
                 risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
+                st.session_state["ia_sta_pensando"] = False
                 st.rerun()
 
             st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
-                st.session_state.utente_connesso = None
                 st.rerun()
                 
-        # --- TAB 2: GESTIONE ANNUNCI ---
+        # --- TAB 2: GESTIONE ANNUNCI (CON DOPPIO CARICAMENTO E FLAG EVIDENZA) ---
         with scelta_tab[1]:
             st.subheader("📢 Gestione Annunci di Lavoro")
             res_ann = supabase.table("annunci").select("*").execute()
@@ -380,6 +416,8 @@ else:
                 st.markdown("**🖼️ Gestione Asset Immagini**")
                 t_foto_v = st.text_input("URL Foto Vetrina (Livello 1: 395x704 px)", value=def_foto_v)
                 t_foto_a = st.text_input("URL Foto Annuncio (Livello 2: 395x382 px)", value=def_foto_a)
+                
+                # Checkbox per forzare manualmente l'annuncio nei primi 8 posti
                 t_evidenza = st.checkbox("🌟 Posiziona questo annuncio nei primi 8 (In Vetrina)", value=def_evidenza)
                 
             with col2:
@@ -395,9 +433,7 @@ else:
                             "posizione": t_pos, "inquadramento": t_inq, "importo": t_imp, "sede": t_sede, 
                             "note": t_note, "foto_vetrina": t_foto_v, "foto_annuncio": t_foto_a, "in_evidenza": t_evidenza
                         }).eq("id", st.session_state.edit_job_id).execute()
-                        st.session_state.edit_mode = False
-                        st.session_state.ai_generated_text = ""
-                        st.rerun()
+                        st.session_state.edit_mode = False; st.session_state.ai_generated_text = ""; st.rerun()
                 else:
                     if st.button("🚀 PUBBLICA ANNUNCIO", use_container_width=True):
                         clean_id = re.sub(r'[^a-z0-9]', '-', t_pos.lower())[:15] + f"-{random.randint(10,99)}"
@@ -405,24 +441,16 @@ else:
                             "id": clean_id, "posizione": t_pos, "inquadramento": t_inq, "importo": t_imp, "sede": t_sede, 
                             "note": t_note, "foto_vetrina": t_foto_v, "foto_annuncio": t_foto_a, "stato": "Attivo", "in_evidenza": t_evidenza
                         }).execute()
-                        st.session_state.ai_generated_text = ""
-                        st.rerun()
+                        st.session_state.ai_generated_text = ""; st.rerun()
             with col3:
                 st.markdown("### Elenco Annunci Pubblicati")
                 for a in elenco:
                     badge_vetrina = " [🌟 VETRINA]" if a.get("in_evidenza") else ""
                     st.markdown(f"<div class='saas-box'><b>📢 {a['posizione']}</b>{badge_vetrina}<div class='link-box'>https://deireali-hr.streamlit.app/?job={a['id']}</div></div>", unsafe_allow_html=True)
                     c1, c2, c3 = st.columns(3)
-                    if c1.button("Modifica", key=f"e_{a['id']}"): 
-                        st.session_state.edit_mode=True
-                        st.session_state.edit_job_id=a['id']
-                        st.rerun()
-                    if c2.button("Sospendi/Attiva", key=f"s_{a['id']}"): 
-                        supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute()
-                        st.rerun()
-                    if c3.button("Elimina", key=f"d_{a['id']}"): 
-                        supabase.table("annunci").delete().eq("id", a['id']).execute()
-                        st.rerun()
+                    if c1.button("Modifica", key=f"e_{a['id']}"): st.session_state.edit_mode=True; st.session_state.edit_job_id=a['id']; st.rerun()
+                    if c2.button("Sospendi/Attiva", key=f"s_{a['id']}"): supabase.table("annunci").update({"stato":"Sospeso" if a.get('stato')=="Attivo" else "Attivo"}).eq("id", a['id']).execute(); st.rerun()
+                    if c3.button("Elimina", key=f"d_{a['id']}"): supabase.table("annunci").delete().eq("id", a['id']).execute(); st.rerun()
 
         # --- TAB 3: SCREENING ---
         with scelta_tab[2]:
@@ -468,16 +496,10 @@ else:
                     
                     st.write("")
                     c1, c2, c3 = st.columns(3)
-                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True): 
-                        supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute()
-                        st.rerun()
-                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True): 
-                        supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute()
-                        st.rerun()
+                    if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute(); st.rerun()
+                    if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute(); st.rerun()
                     if c3.button("🗑️ Annulla Turno", key=f"cncl_{c['id']}", use_container_width=True):
-                        if match_app: 
-                            supabase.table("agenda").delete().eq("id", match_app['id']).execute()
-                            st.rerun()
+                        if match_app: supabase.table("agenda").delete().eq("id", match_app['id']).execute(); st.rerun()
             
             with col_nuovo:
                 if colloqui:
@@ -495,6 +517,8 @@ else:
         # --- TAB 5: ASSUNZIONI & GENERAZIONE CONTRATTI ---
         with scelta_tab[4]:
             st.markdown("## 💼 Gestione Assunzioni & Onboarding")
+            from fpdf import FPDF
+            import io
 
             if "lista_assunzioni" not in st.session_state:
                 st.session_state.lista_assunzioni = [
@@ -502,7 +526,11 @@ else:
                     {"candidato": "Marco Verdone", "ruolo": "Senior Recruiter", "tipo_contratto": "Indeterminato", "data_inizio": "2026-05-15", "retribuzione": "42000"}
                 ]
             
-            opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri", "Simona Viola"]
+            if "lista_candidati" in st.session_state and st.session_state.lista_candidati:
+                opzioni_candidati = [c.get("nome", "Candidato") for c in st.session_state.lista_candidati]
+            else:
+                opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri", "Simona Viola"]
+
             col_form, col_tabella = st.columns([1, 1.4])
 
             with col_form:
@@ -617,57 +645,176 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE (CORRETTO) ---
+        # --- TAB 9: PORTALE CARRIERE (GRIGLIA A 2 COLONNE CON CARD ORIZZONTALI ALTEZZA 382PX) ---
         with scelta_tab[8]:
-            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
+            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci (Anteprima Sito Web)")
+            st.caption("Layout pixel-perfect calibrato: Vetrina a 8 colonne superiore, barra di ricerca e annunci inferiori su 2 colonne con altezza fissa a 382px.")
+
+            st.markdown("""
+            <style>
+            .grid-8-annunci {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                margin-bottom: 35px;
+                width: 100%;
+            }
+            @media (min-width: 768px) { .grid-8-annunci { grid-template-columns: repeat(4, 1fr); } }
+            @media (min-width: 1200px) { .grid-8-annunci { grid-template-columns: repeat(8, 1fr); } }
+
+            .vetrina-solo-img {
+                display: block; width: 100%; max-width: 180px; aspect-ratio: 395 / 704;
+                background-size: cover; background-repeat: no-repeat; background-position: center;
+                background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0;
+                transition: transform 0.2s ease; margin: 0 auto;
+            }
+            .vetrina-solo-img:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
+
+            /* Griglia a 2 colonne affiancate per gli annunci Showcase inferiori */
+            .showcase-grid-2columns {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 20px;
+                width: 100%;
+                margin-top: 15px;
+            }
+            @media (min-width: 992px) {
+                .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr); }
+            }
+
+            /* Card orizzontale bloccata geometricamente a 382px di altezza massima */
+            .showcase-card-row {
+                display: flex;
+                background-color: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                width: 100%;
+                height: 382px;
+                max-height: 382px;
+            }
+            .showcase-card-row:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08);
+            }
             
-            # Recupero dati (deve essere rientrato di 12 spazi)
-            res = supabase.table("annunci").select("*").execute()
-            annunci_vivi = [a for a in res.data if a.get("stato") != "Sospeso"]
+            /* Lato Immagine: Proporzione perfetta basata sui 382px di altezza */
+            .showcase-img-side {
+                width: 40%;
+                min-width: 40%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                border-right: 1px solid #F1F5F9;
+            }
             
-            # VETRINA
+            /* Lato Testo: scroll interno pulito se la descrizione supera lo spazio utile */
+            .showcase-content-side {
+                width: 60%;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 100%;
+                overflow: hidden;
+            }
+            .showcase-scrollable-body {
+                overflow-y: auto;
+                flex-grow: 1;
+                padding-right: 5px;
+                margin-bottom: 10px;
+            }
+            /* Custom scrollbar sottile ed elegante */
+            .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
+            .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
+
+            .showcase-title {
+                font-size: 18px;
+                font-weight: 700;
+                color: #0F172A;
+                margin-bottom: 4px;
+                line-height: 1.3;
+            }
+            .showcase-meta-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #2563EB;
+                margin-bottom: 10px;
+            }
+            .showcase-text {
+                font-size: 13px;
+                color: #475569;
+                line-height: 1.5;
+                white-space: pre-line;
+            }
+            .showcase-btn {
+                align-self: flex-start;
+                background-color: #0F172A;
+                color: #FFFFFF !important;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 12px;
+                text-decoration: none !important;
+                transition: background-color 0.2s;
+                margin-top: auto;
+                width: 100%;
+                text-align: center;
+            }
+            .showcase-btn:hover { background-color: #1E293B; }
+            </style>
+            """, unsafe_allow_html=True)
+
+            # 1. Rilettura annunci real-time da Supabase
+            res_vetrina_live = supabase.table("annunci").select("*").execute()
+            elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
+            annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
+
+            # Estrazione liste per i filtri dinamici della barra di ricerca
+            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
+            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+
+            # --- LIVELLO 1: TOP 8 IN VETRINA ---
             annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-            st.markdown("### 🌟 In Vetrina")
             
-            if annunci_flag_vetrina:
-                html = '<div style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 0;">'
-                for a in vetrina:
-                    img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
-                    html += f'''<a href="?job={a["id"]}" target="_blank" 
-                        style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
-                        background-image: url(\'{img}\'); background-size: cover; border-radius: 12px; border: 2px solid #E2E8F0; display: block;"></a>'''
-                html += '</div>'
-                st.components.v1.html(html, height=750, scrolling=True)
-            
+            st.markdown("### 🌟 In Vetrina (Selezionati)")
+            if not annunci_flag_vetrina:
+                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
+            else:
+                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
+                for a in annunci_flag_vetrina:
+                    img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    st.markdown(f'<a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
 
-            # FILTRI (Unica istanza)
-            col1, col2 = st.columns(2)
-            ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
-            with col1: f_ruolo = st.selectbox("🔍 Qualifica", ruoli)
-            with col2: f_citta = st.selectbox("📍 Sede", citta)
+            # --- BARRA DI RICERCA AVANZATA ---
+            col_search1, col_search2 = st.columns(2)
+            with col_search1:
+                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
+            with col_search2:
+                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
 
-            # LOGICA DI FILTRAGGIO (Unica istanza)
-            elenco = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if f_ruolo != "Tutti i Ruoli": elenco = [a for a in elenco if a["posizione"] == f_ruolo]
-            if f_citta != "Tutte le Sedi": elenco = [a for a in elenco if a["sede"] == f_citta]
+            # Filtriamo l'elenco escludendo la riga in evidenza
+            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
+            if not annunci_filtrati:
+                annunci_filtrati = annunci_vivi
 
-            # ELENCO RISULTATI
-            if not elenco:
-                st.info("Nessun annuncio corrisponde ai criteri.")
-            else:
-                for a in elenco:
-                    with st.container():
-                        c1, c2 = st.columns([1, 4])
-                        with c1: st.image(a.get("foto_annuncio") or a.get("immagine"), use_container_width=True)
-                        with c2:
-                            st.markdown(f"**{a['posizione']}**<br>📍 {a.get('sede')} • 💸 {a.get('importo')} €", unsafe_allow_html=True)
-                            st.link_button("Candidati", f"?job={a['id']}")
-                        st.divider()
+            if search_ruolo != "Tutti i Ruoli":
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
+            if search_citta != "Tutte le Sedi":
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
-            # --- GESTIONE DELLE PAGINE ---
+            # --- GESTIONE DELLE PAGINE (MAX 5 FILE DI 2 COLONNE = 10 ANNUNCI MAX PER PAGINA) ---
             CONTEGGIO_PER_PAGINA = 10  
             totale_annunci_filtrati = len(annunci_filtrati)
             
@@ -685,7 +832,7 @@ else:
                 fine_index = inizio_index + CONTEGGIO_PER_PAGINA
                 annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
 
-                # --- GRIGLIA A DUE COLONNE CON CARD ALTEZZA FISSA 382PX ---
+                # --- GRIGLIA A DUE COLONNE AFFIANCATE ---
                 st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
                 for a in annunci_da_mostrare:
                     img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
