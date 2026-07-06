@@ -619,7 +619,6 @@ else:
 
         # --- TAB 9: PORTALE CARRIERE (CORRETTO) ---
         with scelta_tab[8]:
-            with scelta_tab[8]:
             st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
             
             # Recupero dati una sola volta
