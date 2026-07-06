@@ -652,126 +652,24 @@ else:
 
             st.markdown("""
             <style>
-            /* Contenitore orizzontale per la vetrina */
-            .vetrina-orizzontale {
+            .vetrina-container {
                 display: flex;
                 flex-wrap: nowrap;
                 overflow-x: auto;
-                gap: 15px;
-                padding-bottom: 10px;
+                gap: 12px;
+                padding: 10px 0;
                 width: 100%;
-                -webkit-overflow-scrolling: touch; /* Per fluidità su mobile */
             }
-
             .vetrina-solo-img {
-                flex: 0 0 160px; /* Larghezza fissa per ogni annuncio */
+                flex: 0 0 140px;
+                width: 140px;
                 aspect-ratio: 395 / 704;
                 background-size: cover;
                 background-position: center;
                 border-radius: 8px;
                 border: 1px solid #E2E8F0;
-                transition: transform 0.2s ease;
                 display: block;
             }
-            .vetrina-solo-img:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
-            /* Griglia a 2 colonne affiancate per gli annunci Showcase inferiori */
-            .showcase-grid-2columns {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 20px;
-                width: 100%;
-                margin-top: 15px;
-            }
-            @media (min-width: 992px) {
-                .showcase-grid-2columns { grid-template-columns: repeat(2, 1fr); }
-            }
-
-            /* Card orizzontale bloccata geometricamente a 382px di altezza massima */
-            .showcase-card-row {
-                display: flex;
-                background-color: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                width: 100%;
-                height: 382px;
-                max-height: 382px;
-            }
-            .showcase-card-row:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 20px -3px rgba(0,0,0,0.08);
-            }
-            
-            /* Lato Immagine: Proporzione perfetta basata sui 382px di altezza */
-            .showcase-img-side {
-                width: 40%;
-                min-width: 40%;
-                height: 100%;
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                border-right: 1px solid #F1F5F9;
-            }
-            
-            /* Lato Testo: scroll interno pulito se la descrizione supera lo spazio utile */
-            .showcase-content-side {
-                width: 60%;
-                padding: 20px;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                height: 100%;
-                overflow: hidden;
-            }
-            .showcase-scrollable-body {
-                overflow-y: auto;
-                flex-grow: 1;
-                padding-right: 5px;
-                margin-bottom: 10px;
-            }
-            /* Custom scrollbar sottile ed elegante */
-            .showcase-scrollable-body::-webkit-scrollbar { width: 4px; }
-            .showcase-scrollable-body::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 4px; }
-
-            .showcase-title {
-                font-size: 18px;
-                font-weight: 700;
-                color: #0F172A;
-                margin-bottom: 4px;
-                line-height: 1.3;
-            }
-            .showcase-meta-grid {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px 12px;
-                font-size: 12px;
-                font-weight: 600;
-                color: #2563EB;
-                margin-bottom: 10px;
-            }
-            .showcase-text {
-                font-size: 13px;
-                color: #475569;
-                line-height: 1.5;
-                white-space: pre-line;
-            }
-            .showcase-btn {
-                align-self: flex-start;
-                background-color: #0F172A;
-                color: #FFFFFF !important;
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-weight: 600;
-                font-size: 12px;
-                text-decoration: none !important;
-                transition: background-color 0.2s;
-                margin-top: auto;
-                width: 100%;
-                text-align: center;
-            }
-            .showcase-btn:hover { background-color: #1E293B; }
             </style>
             """, unsafe_allow_html=True)
 
@@ -784,20 +682,28 @@ else:
             ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
             citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 8 IN VETRINA ---
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-            
-            st.markdown("### 🌟 In Vetrina")
-            if not annunci_flag_vetrina:
-                st.info("Spunta il flag 'In Vetrina' per aggiungere annunci qui.")
-            else:
-                # Modificato da grid-8-annunci a vetrina-orizzontale
-                st.markdown("<div class='vetrina-orizzontale'>", unsafe_allow_html=True)
-                for a in annunci_flag_vetrina:
-                    img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    st.markdown(f'<a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("""
+            <style>
+            .vetrina-container {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 12px;
+                padding: 10px 0;
+                width: 100%;
+            }
+            .vetrina-solo-img {
+                flex: 0 0 140px;
+                width: 140px;
+                aspect-ratio: 395 / 704;
+                background-size: cover;
+                background-position: center;
+                border-radius: 8px;
+                border: 1px solid #E2E8F0;
+                display: block;
+            }
+            </style>
+            """, unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
