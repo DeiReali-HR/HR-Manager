@@ -648,24 +648,24 @@ else:
         # --- TAB 9: PORTALE CARRIERE (GRIGLIA A 2 COLONNE CON CARD ORIZZONTALI ALTEZZA 382PX) ---
         with scelta_tab[8]:
             st.markdown("""
-                <style>
-                .vetrina-container {
-                    display: flex;
-                    flex-wrap: nowrap;
-                    overflow-x: auto;
-                    gap: 12px;
-                    padding: 10px 0;
-                    width: 100%;
-                }
-                .vetrina-solo-img {
-                    flex: 0 0 140px;
-                    width: 140px;
-                    aspect-ratio: 395 / 704;
-                    background-size: cover;
-                    background-position: center;
-                    border-radius: 8px;
-                    border: 1px solid #E2E8F0;
-                    display: block;
-                }
-                </style>
-                """, unsafe_allow_html=True)
+            <style>
+            .vetrina-container {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 12px;
+                padding: 10px 0;
+                width: 100%;
+            }
+            .vetrina-solo-img {
+                flex: 0 0 140px;
+                width: 140px;
+                aspect-ratio: 395 / 704;
+                background-size: cover;
+                background-position: center;
+                border-radius: 8px;
+                border: 1px solid #E2E8F0;
+                display: block;
+            }
+            </style>
+            """, unsafe_allow_html=True)
