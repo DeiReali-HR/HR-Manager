@@ -652,24 +652,28 @@ else:
 
             st.markdown("""
             <style>
-            .grid-8-annunci {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-                margin-bottom: 35px;
+            /* Contenitore orizzontale per la vetrina */
+            .vetrina-orizzontale {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 15px;
+                padding-bottom: 10px;
                 width: 100%;
+                -webkit-overflow-scrolling: touch; /* Per fluidità su mobile */
             }
-            @media (min-width: 768px) { .grid-8-annunci { grid-template-columns: repeat(4, 1fr); } }
-            @media (min-width: 1200px) { .grid-8-annunci { grid-template-columns: repeat(8, 1fr); } }
 
             .vetrina-solo-img {
-                display: block; width: 100%; max-width: 180px; aspect-ratio: 395 / 704;
-                background-size: cover; background-repeat: no-repeat; background-position: center;
-                background-color: #0F172A; border-radius: 8px; border: 1px solid #E2E8F0;
-                transition: transform 0.2s ease; margin: 0 auto;
+                flex: 0 0 160px; /* Larghezza fissa per ogni annuncio */
+                aspect-ratio: 395 / 704;
+                background-size: cover;
+                background-position: center;
+                border-radius: 8px;
+                border: 1px solid #E2E8F0;
+                transition: transform 0.2s ease;
+                display: block;
             }
             .vetrina-solo-img:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
-
             /* Griglia a 2 colonne affiancate per gli annunci Showcase inferiori */
             .showcase-grid-2columns {
                 display: grid;
