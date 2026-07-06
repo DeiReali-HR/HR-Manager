@@ -164,6 +164,7 @@ if "job" in st.query_params:
                     c_file = st.file_uploader("Allega CV (PDF) *", type=["pdf"])
                     
                     if st.form_submit_button("INVIA CANDIDATURA"):
+                    # Verifichiamo se i campi sono pieni
                     if c_nome and c_mail and c_tel and c_file:
                         with st.spinner("Salvataggio file e analisi profilo in corso..."):
                             testo_pdf = estrai_testo_pdf(c_file)
@@ -196,6 +197,7 @@ if "job" in st.query_params:
                             supabase.table("candidati").insert(payload_candidato).execute()
                             st.success("🎉 Candidatura inviata correttamente!")
                     else:
+                        # Questo blocco scatta se i campi non sono pieni
                         st.error("Compila tutti i campi obbligatori ed allega il CV in formato PDF.")
             st.markdown('</div>', unsafe_allow_html=True)
     else: st.error("Annuncio non trovato.")
