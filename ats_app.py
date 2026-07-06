@@ -129,7 +129,7 @@ if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando =
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
 if "job" in st.query_params:
-    job_param = str(st.query_params["job"])
+    job_param = st.query_params["job"] 
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
     
