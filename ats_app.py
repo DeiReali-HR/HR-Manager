@@ -617,66 +617,91 @@ else:
                                 st.rerun()
                     st.write("")
 
-        # --- TAB 9: PORTALE CARRIERE CORRETTO ---
-        with scelta_tab[8]:
-            st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
-            
-            # Recupero dati (assumendo che annunci_vivi e variabili di filtro siano definiti sopra)
-            annunci_vivi = [a for a in supabase.table("annunci").select("*").execute().data if a.get("stato") != "Sospeso"]
-            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+        # --- TAB 9: VETRINA CON MISURE 395x704 REALI ---
+with scelta_tab[8]:
+    st.markdown("## 🌐 Portale Carriere & Vetrina Annunci")
+    # ... (logica annunci_vivi)
 
-            # VETRINA (TOP 8)
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
-            st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
-            
-            if annunci_flag_vetrina:
-                html_vetrina = '<div style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding: 10px 0;">'
-                for a in annunci_flag_vetrina:
-                    img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
-                    html_vetrina += f'''
-                    <a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
-                       style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
-                       background-image: url(\'{img}\'); background-size: cover; 
-                       border-radius: 12px; border: 2px solid #E2E8F0; display: block;">
-                    </a>'''
-                html_vetrina += '</div>'
-                st.components.v1.html(html_vetrina, height=720, scrolling=True)
-            
-            # DIVISORE E TITOLO LISTA
+    # VETRINA (TOP 8)
+    annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:8]
+    
+    st.markdown("### 🌟 In Vetrina (Dimensioni Reali 395x704)")
+    if annunci_flag_vetrina:
+        # Contenitore a scorrimento orizzontale
+        html_vetrina = '<div style="display: flex; flex-direction: row; gap: 20px; overflow-x: auto; padding: 10px 0;">'
+        for a in annunci_flag_vetrina:
+            img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
+            # flex: 0 0 395px; impone la larghezza esatta
+            # aspect-ratio: 395/704; impone l'altezza proporzionale
+            html_vetrina += f'''
+            <a href="https://deireali-hr.streamlit.app/?job={a["id"]}" target="_blank" 
+               style="flex: 0 0 395px; width: 395px; aspect-ratio: 395/704; 
+               background-image: url(\'{img}\'); background-size: cover; 
+               border-radius: 12px; border: 2px solid #E2E8F0; display: block;">
+            </a>'''
+        html_vetrina += '</div>'
+        
+        # Altezza iframe aumentata per contenere i 704px proporzionati (calcolando il padding)
+        st.components.v1.html(html_vetrina, height=750, scrolling=True)
+
+            # Sostituito st.markdown("---") nativo con un divisore HTML/CSS compatto a margine ridotto
             st.markdown("<hr style='margin: 5px 0 15px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
             st.markdown("<h3 style='margin-top:0px; padding-top:0px;'>📋 Tutte le Posizioni Aperte</h3>", unsafe_allow_html=True)
 
-            # BARRA DI RICERCA
+            # --- BARRA DI RICERCA AVANZATA ---
             col_search1, col_search2 = st.columns(2)
             with col_search1:
-                search_ruolo = st.selectbox("🔍 Qualifica", ["Tutti i Ruoli"] + ruoli_disponibili)
+                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
             with col_search2:
-                search_citta = st.selectbox("📍 Sede", ["Tutte le Sedi"] + citta_disponibili)
+                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
 
-            # FILTRI
             annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if search_ruolo != "Tutti i Ruoli": annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
-            if search_citta != "Tutte le Sedi": annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
-
-            # PAGINAZIONE E VISUALIZZAZIONE
-            CONTEGGIO_PER_PAGINA = 10  
             if not annunci_filtrati:
-                st.info("Nessun annuncio trovato.")
+                annunci_filtrati = annunci_vivi
+
+            if search_ruolo != "Tutti i Ruoli":
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
+            if search_citta != "Tutte le Sedi":
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
+
+            # --- GESTIONE DELLE PAGINE ---
+            CONTEGGIO_PER_PAGINA = 10  
+            totale_annunci_filtrati = len(annunci_filtrati)
+            
+            if totale_annunci_filtrati == 0:
+                st.info("Nessun annuncio corrisponde ai criteri di ricerca selezionati.")
             else:
-                inizio_index = 0 # Puoi aggiungere qui la logica di st.number_input per la pagina
-                fine_index = inizio_index + CONTEGGIO_PER_PAGINA
+                pagine_totali = max(1, (totale_annunci_filtrati + CONTEGGIO_PER_PAGINA - 1) // CONTEGGIO_PER_PAGINA)
+                pagina_corrente = 1
+                if pagine_totali > 1:
+                    col_pag1, col_pag2 = st.columns([4, 1])
+                    with col_pag2:
+                        pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1)
                 
+                inizio_index = (pagina_corrente - 1) * CONTEGGIO_PER_PAGINA
+                fine_index = inizio_index + CONTEGGIO_PER_PAGINA
+                annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
+
+                # --- GRIGLIA A DUE COLONNE CON CARD ALTEZZA FISSA 382PX ---
                 st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
-                for a in annunci_filtrati[inizio_index:fine_index]:
-                    link_c = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                for a in annunci_da_mostrare:
+                    img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    
                     st.markdown(f"""
                     <div class="showcase-card-row">
-                        <div class="showcase-img-side" style="background-image: url('{a.get('foto_annuncio') or a.get('immagine')}');"></div>
+                        <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
                         <div class="showcase-content-side">
-                            <div class="showcase-title">{a['posizione']}</div>
-                            <div class="showcase-text">{a.get('note', '')}</div>
-                            <a href="{link_c}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
+                            <div class="showcase-scrollable-body">
+                                <div class="showcase-title">{a['posizione']}</div>
+                                <div class="showcase-meta-grid">
+                                    <span>📍 {a.get('sede', 'Roma')}</span>
+                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                    <span>💸 {a.get('importo', 'N/D')} €</span>
+                                </div>
+                                <div class="showcase-text">{a.get('note', '')}</div>
+                            </div>
+                            <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗</a>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
