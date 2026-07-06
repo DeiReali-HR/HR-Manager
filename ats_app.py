@@ -787,12 +787,22 @@ else:
             if not annunci_flag_vetrina:
                 st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                st.markdown("<div class='grid-8-annunci'>", unsafe_allow_html=True)
-                for a in annunci_flag_vetrina:
+                # Creiamo 8 colonne per ospitare fino a 8 annunci
+                cols = st.columns(8)
+                
+                for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
                     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    st.markdown(f'<a href="{link_candidatura}" target="_blank" class="vetrina-solo-img" style="background-image: url(\'{img_v_url}\');"></a>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Usiamo la colonna specifica per mantenere l'allineamento
+                    with cols[index]:
+                        st.markdown(f'''
+                            <a href="{link_candidatura}" target="_blank" 
+                               style="display: block; width: 100%; aspect-ratio: 395/704; 
+                               background-image: url(\'{img_v_url}\'); background-size: cover; 
+                               background-position: center; border-radius: 8px; border: 1px solid #E2E8F0;">
+                            </a>
+                        ''', unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
