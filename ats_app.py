@@ -141,16 +141,13 @@ def gestisci_autenticazione():
             st.query_params.clear() 
             st.rerun()
 
-# 3. ESECUZIONE DEL CONTROLLO
+, # 3. ESECUZIONE DEL CONTROLLO
 gestisci_autenticazione()
-# --- LOGICA DI PROTEZIONE ACCESSO GUEST ---
-# Verifica se l'utente è un Visitor e non sta accedendo a un annuncio specifico
-if st.session_state.get('ruolo_utente') == "Visitor":
-    # Controlliamo se è presente il parametro 'job' nell'URL (come nel tuo portale pubblico)
-    # Se NON è presente, blocchiamo l'accesso al backoffice
-    if "job" not in st.query_params:
-        st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
-        st.stop()
+
+# --- BLOCCO DI PROTEZIONE CORRETTO ---
+if st.session_state.get('ruolo_utente') == "Visitor" and "job" not in st.query_params:
+    st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
+    st.stop()
     else:
         # Se è un Guest e ha un ID, lasciamo proseguire verso la visualizzazione dell'annuncio
         # (Il resto del codice mostrerà l'annuncio normalmente)
