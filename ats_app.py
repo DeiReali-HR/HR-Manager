@@ -117,16 +117,35 @@ st.markdown("""
 OPERATORI = {
     "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
     "adv.hr@deireali.it": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
-    "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
+    "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"},
     "guest@guest.ap": {"nome": "Guest", "pw": "guest2026", "ruolo": "Visitor"}
 }
 
-if 'autenticato' not in st.session_state: st.session_state.autenticato = False
-if 'utente_connesso' not in st.session_state: st.session_state.utente_connesso = None
-if 'edit_mode' not in st.session_state: st.session_state.edit_mode = False
-if 'edit_job_id' not in st.session_state: st.session_state.edit_job_id = None
-if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_text = ""
-if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
+stati_iniziali = {
+    'autenticato': False, 'utente_connesso': None, 'ruolo_utente': None,
+    'edit_mode': False, 'edit_job_id': None, 'ai_generated_text': "", 'ia_sta_pensando': False
+}
+for k, v in stati_iniziali.items():
+    if k not in st.session_state: st.session_state[k] = v
+
+# 2. FUNZIONE DI AUTENTICAZIONE (La funzione che legge l'auto-login)
+def gestisci_autenticazione():
+    params = st.query_params
+    if params.get("auto") == "true" and not st.session_state.autenticato:
+        user = params.get("user")
+        pw = params.get("pw")
+        if user in OPERATORI and OPERATORI[user]["pw"] == pw:
+            st.session_state.autenticato = True
+            st.session_state.utente_connesso = OPERATORI[user]["nome"]
+            st.session_state.ruolo_utente = OPERATORI[user]["ruolo"]
+            st.query_params.clear() 
+            st.rerun()
+
+# 3. ESECUZIONE DEL CONTROLLO
+gestisci_autenticazione()
+
+# 4. CONFIGURAZIONE PAGINA E RESTO DEL CODICE
+st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
 if "job" in st.query_params:
