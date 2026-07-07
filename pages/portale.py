@@ -5,73 +5,65 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# CSS Editoriale "Blindato"
+# CSS Professionale
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
-    
-    .epigrafe { font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #475569; font-style: italic; margin-bottom: 20px; }
-    .titolo-editoriale { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #0F172A; margin-bottom: 40px; }
-    
-    /* Fascia azzurra protetta */
-    .fascia-azzurra { 
-        background-color: #EFF6FF !important; 
-        padding: 30px !important; 
-        border-radius: 12px !important; 
-        margin-bottom: 40px !important; 
-        border: 1px solid #DBEAFE !important; 
-        display: block !important;
-    }
-    
-    .grid-vetrina { display: flex; flex-wrap: wrap; gap: 15px; }
-    .card-vetrina { width: 130px; aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    
-    /* Stile lista */
-    .card-editoriale { display: flex; border-bottom: 1px solid #E2E8F0; padding: 40px 0; align-items: flex-start; }
-    .img-box { width: 200px; min-width: 200px; height: 280px; background-size: cover; background-position: center; border-radius: 4px; margin-right: 30px; }
-    .testo-box { flex: 1; }
+    /* Stile per la striscia dei 7 annunci in evidenza */
+    .vetrina-top { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 30px; }
+    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 8px; border: 1px solid #E2E8F0; transition: transform 0.2s; }
+    .card-vetrina:hover { transform: scale(1.02); }
+
+    /* Stile per la lista in basso */
+    .card-orizzontale { display: flex; border: 1px solid #E2E8F0; border-radius: 12px; height: 380px; margin-bottom: 25px; overflow: hidden; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .img-lato { width: 40%; background-size: cover; background-position: center; border-right: 1px solid #E2E8F0; background-color: #f0f0f0; }
+    .testo-lato { width: 60%; padding: 20px; display: flex; flex-direction: column; }
+    .contenuto-scroll { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }
+    .btn-black { background: #0F172A; color: white !important; padding: 12px; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; width: 100%; display: block; }
 </style>
 """, unsafe_allow_html=True)
 
 def mostra_portale():
-    # Intestazione
-    st.markdown('<p class="epigrafe">Abbiamo dato spazio al valore e messo le persone al centro: ora tocca a te. Esplora le nostre opportunità d\'impiego sempre aggiornate e trova la posizione ideale per le tue competenze.</p>', unsafe_allow_html=True)
-    st.markdown('<h1 class="titolo-editoriale">🌍 Portale Carriera & Opportunità</h1>', unsafe_allow_html=True)
+    st.title("📋 Tutte le Posizioni Aperte")
     
+    # Recupero dati
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # 1. STRISCIA AZZURRA
+    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
-        st.markdown('<div class="fascia-azzurra">', unsafe_allow_html=True)
-        st.markdown('### 🌟 In Vetrina', unsafe_allow_html=True)
-        # Usiamo un contenitore HTML flex per le immagini invece delle colonne Streamlit
-        html_cards = '<div class="grid-vetrina">'
-        for a in evidenza:
-            img = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-            html_cards += f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img}\');"></div></a>'
-        html_cards += '</div></div>'
-        st.markdown(html_cards, unsafe_allow_html=True)
+        st.subheader("🌟 In Vetrina")
+        cols = st.columns(7)
+        for i, a in enumerate(evidenza):
+            img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+            cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
+        st.markdown("---")
 
-    # 2. LISTA EDITORIALE
-    st.markdown("---")
-    st.header("Tutte le posizioni")
-    for a in annunci_vivi:
-        img_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-        st.markdown(f"""
-        <div class="card-editoriale">
-            <div class="img-box" style="background-image: url('{img_url}');"></div>
-            <div class="testo-box">
-                <h2 style="font-family: 'Playfair Display', serif; margin-top:0;">{a.get('posizione', 'Posizione')}</h2>
-                <p style="color: #64748B; font-weight: 600;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
-                <div style="margin: 15px 0; font-family: 'Inter', sans-serif; line-height:1.6;">{a.get('note', '')[:300] + '...'}</div>
-                <a href="?job={a['id']}" style="color: #0F172A; font-weight: bold; text-decoration: underline;">Leggi l'offerta completa ↗</a>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # 2. LISTA COMPLETA IN BASSO
+    st.subheader("Tutte le posizioni")
+    for i in range(0, len(annunci_vivi), 2):
+        row = st.columns(2)
+        for j in range(2):
+            if i + j < len(annunci_vivi):
+                a = annunci_vivi[i + j]
+                img_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                with row[j]:
+                    st.markdown(f"""
+                    <div class="card-orizzontale">
+                        <div class="img-lato" style="background-image: url('{img_url}');"></div>
+                        <div class="testo-lato">
+                            <div class="contenuto-scroll">
+                                <h3>{a.get('posizione', 'Posizione Aperta')}</h3>
+                                <p style="font-size:12px; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
+                                <div style="font-size:13px;">{a.get('note', '')}</div>
+                            </div>
+                            <a href="?job={a['id']}" class="btn-black">CANDIDATI ORA ↗️</a>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
+# Gestione navigazione
 if "job" in st.query_params:
-    st.write("Redirect al form...")
+    st.write("Redirect al form di candidatura...")
 else:
     mostra_portale()
