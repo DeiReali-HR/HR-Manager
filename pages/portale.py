@@ -28,22 +28,26 @@ def mostra_portale():
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (CON BOX AZZURRO INTEGRATO)
+    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (BOX AZZURRO INTEGRATO)
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.subheader("🌟 In Vetrina")
         
-        # Apriamo il div azzurro
-        st.markdown('<div style="background-color: #EFF6FF; padding: 25px; border-radius: 12px; border: 1px solid #DBEAFE; margin-bottom: 30px;">', unsafe_allow_html=True)
+        # Creiamo un unico blocco HTML che contiene sfondo e immagini
+        html_vetrina = '<div style="background-color: #EFF6FF; padding: 25px; border-radius: 12px; border: 1px solid #DBEAFE; margin-bottom: 30px; display: flex; gap: 15px;">'
         
-        # Creiamo le colonne DENTRO il div
-        cols = st.columns(7)
-        for i, a in enumerate(evidenza):
+        for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-            cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
+            # Ogni immagine è un link cliccabile
+            html_vetrina += f'''
+                <a href="?job={a['id']}" style="flex: 1; text-decoration: none;">
+                    <div style="aspect-ratio: 395/704; background-image: url(\'{img_url}\'); background-size: cover; background-position: center; border-radius: 8px; border: 1px solid #E2E8F0; transition: transform 0.2s;">
+                    </div>
+                </a>
+            '''
         
-        # Chiudiamo il div
-        st.markdown('</div>', unsafe_allow_html=True)
+        html_vetrina += '</div>'
+        st.markdown(html_vetrina, unsafe_allow_html=True)
         st.markdown("---")
         
     # 2. LISTA COMPLETA IN BASSO
