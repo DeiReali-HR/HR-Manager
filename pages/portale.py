@@ -28,27 +28,26 @@ def mostra_vetrina():
     filtrati = [a for a in annunci if (search_ruolo == "Tutti i Ruoli" or a["posizione"] == search_ruolo) and 
                                      (search_citta == "Tutte le Sedi" or a["sede"] == search_citta)]
 
-    # Griglia manuale a 2 colonne
-    it = iter(filtrati)
-    for coppia in zip(it, it): # Prende a due a due
-        c1, c2 = st.columns(2)
-        for col, a in zip([c1, c2], coppia):
-            with col:
-                st.markdown(f"""
-                <div class="card">
-                    <div class="img-box" style="background-image: url('{a.get('immagine')}');"></div>
-                    <h3>{a['posizione']}</h3>
-                    <p>📍 {a.get('sede')} | 💸 {a.get('importo', '0')}€</p>
-                    <p style="height: 100px; overflow-y: auto;">{a.get('note', '')}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"CANDIDATI ORA", key=f"btn_{a['id']}"):
+    # Ciclo per creare righe da 2 colonne
+    for i in range(0, len(filtrati), 2):
+        colonne = st.columns(2)
+        # Primo annuncio della riga
+        with colonne[0]:
+            a = filtrati[i]
+            st.markdown(f"### {a['posizione']}")
+            st.markdown(f"📍 {a.get('sede', 'N/D')} | 💸 {a.get('importo', '0')}€")
+            st.write(a.get('note', '')[:150] + "...")
+            if st.button("CANDIDATI ORA", key=f"btn_{a['id']}"):
+                st.query_params["job"] = a['id']
+                st.rerun()
+        
+        # Secondo annuncio della riga (se esiste)
+        if i + 1 < len(filtrati):
+            with colonne[1]:
+                a = filtrati[i+1]
+                st.markdown(f"### {a['posizione']}")
+                st.markdown(f"📍 {a.get('sede', 'N/D')} | 💸 {a.get('importo', '0')}€")
+                st.write(a.get('note', '')[:150] + "...")
+                if st.button("CANDIDATI ORA", key=f"btn_{a['id']}"):
                     st.query_params["job"] = a['id']
                     st.rerun()
-
-# --- LOGICA NAVIGAZIONE ---
-if "job" in st.query_params:
-    # Qui richiameresti la funzione mostra_dettaglio che avevamo già
-    st.write("Dettaglio in caricamento...") 
-else:
-    mostra_vetrina()
