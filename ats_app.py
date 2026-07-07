@@ -134,7 +134,7 @@ def gestisci_autenticazione():
     if params.get("auto") == "true" and not st.session_state.autenticato:
         user = params.get("user")
         pw = params.get("pw")
-        if user in OPERATORI and OPERATORI[user]["pw"] == pw:
+        if user in OPERATORI and OPERATORI[user].get("pw") == pw:
             st.session_state.autenticato = True
             st.session_state.utente_connesso = OPERATORI[user]
             st.session_state.ruolo_utente = OPERATORI[user]["ruolo"]
