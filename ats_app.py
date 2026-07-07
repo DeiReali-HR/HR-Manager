@@ -128,7 +128,7 @@ stati_iniziali = {
 for k, v in stati_iniziali.items():
     if k not in st.session_state: st.session_state[k] = v
 
-# 2. FUNZIONE DI AUTENTICAZIONE (La funzione che legge l'auto-login)
+, # 2. FUNZIONE DI AUTENTICAZIONE
 def gestisci_autenticazione():
     params = st.query_params
     if params.get("auto") == "true" and not st.session_state.autenticato:
@@ -136,18 +136,18 @@ def gestisci_autenticazione():
         pw = params.get("pw")
         if user in OPERATORI and OPERATORI[user]["pw"] == pw:
             st.session_state.autenticato = True
-            st.session_state.utente_connesso = OPERATORI[user]["nome"]
+            st.session_state.utente_connesso = OPERATORI[user]
             st.session_state.ruolo_utente = OPERATORI[user]["ruolo"]
             st.query_params.clear() 
             st.rerun()
 
-, # 3. ESECUZIONE DEL CONTROLLO
+# 3. ESECUZIONE DEL CONTROLLO
 gestisci_autenticazione()
 
-# --- BLOCCO DI PROTEZIONE CORRETTO ---
+# BLOCCO DI PROTEZIONE
 if st.session_state.get('ruolo_utente') == "Visitor" and "job" not in st.query_params:
-   st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
-   st.stop()
+    st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
+    st.stop()
     else:
         # Se è un Guest e ha un ID, lasciamo proseguire verso la visualizzazione dell'annuncio
         # (Il resto del codice mostrerà l'annuncio normalmente)
