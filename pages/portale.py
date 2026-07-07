@@ -12,7 +12,7 @@ st.markdown("""
     
     .main .block-container { padding-top: 1rem !important; }
     
-    /* Riga blu di separazione */
+    /* Righe blu di separazione */
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
@@ -22,24 +22,26 @@ st.markdown("""
     .grid-vetrina { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; max-width: 1400px; margin: auto; }
     .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; }
     
-    /* Annunci compatti e allineati */
+    /* Annunci con scrolling interno */
     .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 10px; height: 350px; overflow: hidden; }
     .img-lato { width: 35%; height: 100%; background-size: cover; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
-    .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
-    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; }
+    .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+    .contenuto-scrollabile { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
+    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; }
 </style>
 """, unsafe_allow_html=True)
 
 def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
+    note_testo = str(a.get('note', ''))
     return f"""
     <div class="card-orizzontale">
         <div class="img-lato" style="background-image: url('{img_url}');"></div>
         <div class="testo-lato">
-            <div style="flex-grow: 1;">
+            <div class="contenuto-scrollabile">
                 <h3 style="font-family: 'Playfair Display', serif; margin-top:0; font-size:1.2rem;">{a.get('posizione', 'Posizione')}</h3>
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
-                <p style="font-size:0.85rem;">{str(a.get('note', ''))[:110] + '...'}</p>
+                <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
             <a href="?job={a['id']}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
