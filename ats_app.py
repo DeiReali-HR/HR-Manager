@@ -128,7 +128,7 @@ stati_iniziali = {
 for k, v in stati_iniziali.items():
     if k not in st.session_state: st.session_state[k] = v
 
-, # 2. FUNZIONE DI AUTENTICAZIONE
+# 2. FUNZIONE DI AUTENTICAZIONE
 def gestisci_autenticazione():
     params = st.query_params
     if params.get("auto") == "true" and not st.session_state.autenticato:
