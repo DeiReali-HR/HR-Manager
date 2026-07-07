@@ -1,84 +1,60 @@
 import streamlit as st
-import pandas as pd
 from supabase import create_client
 
 # Configurazione
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(page_title="Lavora con Noi - Dei Reali", layout="wide")
 
+# CSS per il layout professionale a card orizzontale
+st.markdown("""
+<style>
+.card-container { display: flex; border: 1px solid #E2E8F0; border-radius: 12px; height: 350px; margin-bottom: 20px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.card-img { width: 40%; height: 100%; background-size: cover; background-position: center; border-right: 1px solid #E2E8F0; }
+.card-content { width: 60%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+.btn-candidati { background-color: #0F172A; color: white !important; padding: 12px; border-radius: 6px; text-align: center; text-decoration: none; font-weight: bold; font-size: 14px; }
+.btn-candidati:hover { background-color: #1E293B; }
+h3 { margin: 0 0 10px 0; font-size: 20px; }
+p { margin: 5px 0; font-size: 14px; color: #475569; }
+</style>
+""", unsafe_allow_html=True)
+
 def mostra_vetrina():
     st.title("📋 Tutte le Posizioni Aperte")
+    # Recupero dati dal database
+    annunci = supabase.table("annunci").select("*").execute().data
     
-    # Recupero annunci
-    try:
-        res = supabase.table("annunci").select("*").execute()
-        annunci = res.data if res.data else []
-    except Exception as e:
-        st.error(f"Errore caricamento database: {e}")
-        return
-
     # Filtri
-    col_f1, col_f2 = st.columns(2)
-    ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci if a.get("posizione")])))
-    citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci if a.get("sede")])))
-    
-    search_ruolo = col_f1.selectbox("🔍 Qualifica", ruoli)
-    search_citta = col_f2.selectbox("📍 Sede", citta)
+    col1, col2 = st.columns(2)
+    ruoli = ["Tutti i Ruoli"] + sorted(list(set([a["posizione"] for a in annunci])))
+    citta = ["Tutte le Sedi"] + sorted(list(set([a["sede"] for a in annunci])))
+    s_ruolo = col1.selectbox("🔍 Qualifica", ruoli)
+    s_citta = col2.selectbox("📍 Sede", citta)
 
-    # Logica filtro
-    filtrati = [a for a in annunci if (search_ruolo == "Tutti i Ruoli" or a.get("posizione") == search_ruolo) and 
-                                     (search_citta == "Tutte le Sedi" or a.get("sede") == search_citta)]
+    filtrati = [a for a in annunci if (s_ruolo == "Tutti i Ruoli" or a["posizione"] == s_ruolo) and (s_citta == "Tutte le Sedi" or a["sede"] == s_citta)]
 
-    if not filtrati:
-        st.info("Nessun annuncio trovato.")
-        return
+    # Layout a 2 colonne dinamiche
+    it = iter(filtrati)
+    for coppia in zip(it, it):
+        cols = st.columns(2)
+        for i, a in enumerate(coppia):
+            with cols[i]:
+                st.markdown(f"""
+                <div class="card-container">
+                    <div class="card-img" style="background-image: url('{a.get('immagine')}');"></div>
+                    <div class="card-content">
+                        <div>
+                            <h3>{a['posizione']}</h3>
+                            <p>📍 {a.get('sede')} | 💼 {a.get('inquadramento')} | 💸 {a.get('importo')}€</p>
+                            <p style="height: 120px; overflow-y: auto;">{a.get('note')}</p>
+                        </div>
+                        <a href="?job={a['id']}" class="btn-candidati">CANDIDATI ORA ↗️</a>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
-    # Griglia dinamica a 2 colonne (Metodo nativo Streamlit)
-    for i in range(0, len(filtrati), 2):
-        row = st.columns(2)
-        for j in range(2):
-            if i + j < len(filtrati):
-                a = filtrati[i + j]
-                with row[j]:
-                    with st.container(border=True):
-                        # Immagine
-                        img_url = a.get("immagine") or "https://via.placeholder.com/600x300?text=Dei+Reali"
-                        st.image(img_url, use_container_width=True)
-                        
-                        # Info
-                        st.subheader(a.get('posizione', 'Senza titolo'))
-                        st.markdown(f"**📍 Sede:** {a.get('sede', 'N/D')} | **💸 Compenso:** {a.get('importo', '0')} €")
-                        st.markdown(f"**💼 Inquadramento:** {a.get('inquadramento', 'N/D')}")
-                        
-                        # Descrizione limitata
-                        note = a.get('note', '')
-                        st.write(note[:200] + "..." if len(note) > 200 else note)
-                        
-                        # Bottone
-                        if st.button("CANDIDATI ORA ↗️", key=f"btn_{a['id']}"):
-                            st.query_params["job"] = a['id']
-                            st.rerun()
-
-# --- LOGICA NAVIGAZIONE E DETTAGLIO ---
-def mostra_dettaglio(job_id):
-    res = supabase.table("annunci").select("*").eq("id", job_id).execute()
-    a = res.data[0] if res.data else None
-    if a:
-        st.markdown(f"## {a['posizione']}")
-        st.image(a.get('immagine'), use_container_width=True)
-        st.write(a.get('note'))
-        
-        # Form di candidatura qui dentro
-        with st.form("candidatura"):
-            nome = st.text_input("Nome e Cognome")
-            mail = st.text_input("E-mail")
-            if st.form_submit_button("INVIA ORA"):
-                st.success("Candidatura inviata!")
-        if st.button("⬅️ Torna alla lista"):
-            st.query_params.clear()
-            st.rerun()
-
+# Gestione navigazione
 if "job" in st.query_params:
-    mostra_dettaglio(st.query_params["job"])
+    st.write("Redirect al form di candidatura...")
+    st.rerun()
 else:
     mostra_vetrina()
