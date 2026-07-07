@@ -60,15 +60,24 @@ def mostra_dettaglio(job_id):
 
 def mostra_vetrina():
     st.title("💼 Posizioni Aperte - Dei Reali")
-    annunci = supabase.table("annunci").select("*").eq("stato", "Pubblico").execute().data
-    cols = st.columns(3)
-    for i, a in enumerate(annunci):
-        with cols[i % 3]:
-            st.image(a.get('immagine'), use_container_width=True)
-            st.subheader(a['posizione'])
-            if st.button("DETTAGLI", key=a['id']):
-                st.query_params["job"] = a['id']
-                st.rerun()
+    st.markdown("---")
+    
+    # Rimuoviamo il filtro .eq("stato", "Pubblico") per vedere tutto ciò che c'è
+    res = supabase.table("annunci").select("*").execute()
+    annunci = res.data
+    
+    if not annunci:
+        st.warning("Nessun annuncio trovato nel database.")
+    else:
+        cols = st.columns(3)
+        for i, a in enumerate(annunci):
+            with cols[i % 3]:
+                st.image(a.get('immagine') or "https://via.placeholder.com/300", use_container_width=True)
+                st.subheader(a.get('posizione', 'Senza titolo'))
+                st.write(f"📍 {a.get('sede', 'N/D')}")
+                if st.button("DETTAGLI", key=a['id']):
+                    st.query_params["job"] = a['id']
+                    st.rerun()
 
 if "job" in st.query_params:
     mostra_dettaglio(st.query_params["job"])
