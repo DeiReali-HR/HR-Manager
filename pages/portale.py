@@ -23,7 +23,7 @@ st.markdown("""
     .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; }
     
     /* Annunci compatti e allineati */
-    .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 20px; height: 350px; overflow: hidden; }
+    .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 10px; height: 350px; overflow: hidden; }
     .img-lato { width: 35%; height: 100%; background-size: cover; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
     .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
     .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; }
@@ -44,6 +44,7 @@ def render_card(a):
             <a href="?job={a['id']}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
     </div>
+    <div class="riga-blu"></div>
     """
 
 def mostra_portale():
@@ -51,7 +52,6 @@ def mostra_portale():
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
     st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
     
-    # Riga blu inserita qui
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     annunci = supabase.table("annunci").select("*").execute().data or []
