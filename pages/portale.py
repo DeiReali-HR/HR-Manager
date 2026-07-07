@@ -5,15 +5,21 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# CSS Professionale
+# CSS aggiornato
 st.markdown("""
 <style>
-    /* Stile per la striscia dei 7 annunci in evidenza */
-    .vetrina-top { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 30px; }
-    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 8px; border: 1px solid #E2E8F0; transition: transform 0.2s; }
-    .card-vetrina:hover { transform: scale(1.02); }
+    /* Stile per la frase introduttiva e titolo */
+    .intro-text { font-size: 1.1rem; color: #475569; margin-bottom: 5px; font-weight: 300; }
+    .main-title { font-size: 2.5rem; font-weight: 800; color: #0F172A; margin-bottom: 30px; }
+    
+    /* Stile per la striscia azzurra */
+    .fascia-azzurra { background-color: #EFF6FF; padding: 30px 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #DBEAFE; }
+    
+    /* Stile per le card in vetrina e lista */
+    .vetrina-top { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
+    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 8px; border: 1px solid #BFDBFE; transition: transform 0.2s; }
+    .card-vetrina:hover { transform: scale(1.03); }
 
-    /* Stile per la lista in basso */
     .card-orizzontale { display: flex; border: 1px solid #E2E8F0; border-radius: 12px; height: 380px; margin-bottom: 25px; overflow: hidden; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     .img-lato { width: 40%; background-size: cover; background-position: center; border-right: 1px solid #E2E8F0; background-color: #f0f0f0; }
     .testo-lato { width: 60%; padding: 20px; display: flex; flex-direction: column; }
@@ -23,23 +29,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def mostra_portale():
-    st.title("📋 Tutte le Posizioni Aperte")
+    # Intestazione
+    st.markdown('<p class="intro-text">Abbiamo dato spazio al valore e messo le persone al centro: ora tocca a te. Esplora le nostre opportunità d\'impiego sempre aggiornate e trova la posizione ideale per le tue competenze.</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">🌍 Portale Carriera & Opportunità</h1>', unsafe_allow_html=True)
     
     # Recupero dati
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA
+    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (FASCIA AZZURRA)
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
+        st.markdown('<div class="fascia-azzurra">', unsafe_allow_html=True)
         st.subheader("🌟 In Vetrina")
         cols = st.columns(7)
         for i, a in enumerate(evidenza):
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
             cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
-        st.markdown("---")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. LISTA COMPLETA IN BASSO
+    # 2. LISTA COMPLETA
     st.subheader("Tutte le posizioni")
     for i in range(0, len(annunci_vivi), 2):
         row = st.columns(2)
@@ -62,7 +71,6 @@ def mostra_portale():
                     </div>
                     """, unsafe_allow_html=True)
 
-# Gestione navigazione
 if "job" in st.query_params:
     st.write("Redirect al form di candidatura...")
 else:
