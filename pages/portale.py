@@ -12,7 +12,7 @@ st.markdown("""
     
     .main .block-container { padding-top: 1rem !important; }
     
-    /* Righe blu di separazione */
+    /* Riga blu di separazione */
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
@@ -34,6 +34,12 @@ st.markdown("""
 def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
     note_testo = str(a.get('note', ''))
+    
+    # URL di auto-login per passare le credenziali guest e reindirizzare all'annuncio
+    # Assicurati che 'percorso_annuncio' corrisponda alla pagina dove risiede il form
+    target_url = f"/annuncio?id={a['id']}"
+    login_url = f"/login?auto=true&user=guest@guest.ap&pw=guest2026&next={target_url}"
+    
     return f"""
     <div class="card-orizzontale">
         <div class="img-lato" style="background-image: url('{img_url}');"></div>
@@ -43,7 +49,7 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <a href="?job={a['id']}" class="btn-black">CANDIDATI ORA ↗</a>
+            <a href="{login_url}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
     </div>
     <div class="riga-blu"></div>
