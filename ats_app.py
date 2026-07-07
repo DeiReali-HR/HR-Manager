@@ -146,8 +146,8 @@ gestisci_autenticazione()
 
 # --- BLOCCO DI PROTEZIONE CORRETTO ---
 if st.session_state.get('ruolo_utente') == "Visitor" and "job" not in st.query_params:
-    st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
-    st.stop()
+   st.error("Accesso limitato: non hai i permessi per visualizzare il portale HR.")
+   st.stop()
     else:
         # Se è un Guest e ha un ID, lasciamo proseguire verso la visualizzazione dell'annuncio
         # (Il resto del codice mostrerà l'annuncio normalmente)
