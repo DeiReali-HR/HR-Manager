@@ -59,9 +59,26 @@ def mostra_vetrina():
                             st.query_params["job"] = a['id']
                             st.rerun()
 
-# --- LOGICA NAVIGAZIONE ---
+# --- LOGICA NAVIGAZIONE E DETTAGLIO ---
+def mostra_dettaglio(job_id):
+    res = supabase.table("annunci").select("*").eq("id", job_id).execute()
+    a = res.data[0] if res.data else None
+    if a:
+        st.markdown(f"## {a['posizione']}")
+        st.image(a.get('immagine'), use_container_width=True)
+        st.write(a.get('note'))
+        
+        # Form di candidatura qui dentro
+        with st.form("candidatura"):
+            nome = st.text_input("Nome e Cognome")
+            mail = st.text_input("E-mail")
+            if st.form_submit_button("INVIA ORA"):
+                st.success("Candidatura inviata!")
+        if st.button("⬅️ Torna alla lista"):
+            st.query_params.clear()
+            st.rerun()
+
 if "job" in st.query_params:
-    st.write("Redirect in corso...")
-    st.rerun() # In un'app reale qui richiameresti la funzione mostra_dettaglio
+    mostra_dettaglio(st.query_params["job"])
 else:
     mostra_vetrina()
