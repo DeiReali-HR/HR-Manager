@@ -8,12 +8,19 @@ st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 # CSS Professionale
 st.markdown("""
 <style>
-    /* Box azzurro per la vetrina */
-    .box-vetrina { background-color: #EFF6FF; padding: 20px; border-radius: 12px; border: 1px solid #DBEAFE; margin-bottom: 30px; }
-    
-    /* Stile per le card in vetrina */
+    /* Stile per la striscia dei 7 annunci in evidenza */
+    .vetrina-top { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 30px; }
     .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 8px; border: 1px solid #E2E8F0; transition: transform 0.2s; }
     .card-vetrina:hover { transform: scale(1.02); }
+
+    /* Box azzurro che racchiude la vetrina */
+    .box-azzurro-vetrina { 
+        background-color: #EFF6FF !important; 
+        padding: 25px !important; 
+        border-radius: 12px !important; 
+        border: 1px solid #DBEAFE !important; 
+        margin-bottom: 30px !important; 
+    }
 
     /* Stile per la lista in basso */
     .card-orizzontale { display: flex; border: 1px solid #E2E8F0; border-radius: 12px; height: 380px; margin-bottom: 25px; overflow: hidden; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -31,16 +38,17 @@ def mostra_portale():
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (CON BOX AZZURRO)
+    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (DENTRO BOX AZZURRO)
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.subheader("🌟 In Vetrina")
-        st.markdown('<div class="box-vetrina">', unsafe_allow_html=True)
+        st.markdown('<div class="box-azzurro-vetrina">', unsafe_allow_html=True)
         cols = st.columns(7)
         for i, a in enumerate(evidenza):
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
             cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("---")
 
     # 2. LISTA COMPLETA IN BASSO
     st.subheader("Tutte le posizioni")
