@@ -129,9 +129,12 @@ if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando =
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
 if "job" in st.query_params:
+    # Se entriamo qui, non dobbiamo mostrare nient'altro dopo
+    # Mostra l'annuncio senza chiedere il login
     job_param = st.query_params["job"] 
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
+    st.stop()
     
     if annuncio_selezionato:
         if annuncio_selezionato.get('stato') == 'Sospeso':
