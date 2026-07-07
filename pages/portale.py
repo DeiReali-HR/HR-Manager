@@ -28,23 +28,24 @@ def mostra_portale():
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (CON BOX AZZURRO CORRETTO)
+    # 1. STRISCIA 7 ANNUNCI IN EVIDENZA (CON BOX AZZURRO INTEGRATO)
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.subheader("🌟 In Vetrina")
-        # Utilizziamo un contenitore con background azzurro
-        with st.container():
-            st.markdown(
-                '<div style="background-color: #EFF6FF; padding: 25px; border-radius: 12px; border: 1px solid #DBEAFE; margin-bottom: 30px;">', 
-                unsafe_allow_html=True
-            )
-            cols = st.columns(7)
-            for i, a in enumerate(evidenza):
-                img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Apriamo il div azzurro
+        st.markdown('<div style="background-color: #EFF6FF; padding: 25px; border-radius: 12px; border: 1px solid #DBEAFE; margin-bottom: 30px;">', unsafe_allow_html=True)
+        
+        # Creiamo le colonne DENTRO il div
+        cols = st.columns(7)
+        for i, a in enumerate(evidenza):
+            img_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+            cols[i].markdown(f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>', unsafe_allow_html=True)
+        
+        # Chiudiamo il div
+        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("---")
-
+        
     # 2. LISTA COMPLETA IN BASSO
     st.subheader("Tutte le posizioni")
     for i in range(0, len(annunci_vivi), 2):
