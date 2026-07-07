@@ -118,7 +118,6 @@ OPERATORI = {
     "d.algozzino@deireali.it": {"nome": "Danilo", "pw": "Danilo2026", "ruolo": "Senior Recruiter"},
     "adv.hr@deireali.it": {"nome": "Dionisio", "pw": "Dionisio2026", "ruolo": "HR Director"},
     "dr.controlloazienda@gmail.com": {"nome": "Amministratore", "pw": "DeiReali2026", "ruolo": "Super Admin"}
-    "guest@guest.ap": {"nome": "Guest", "pw": "guest2026", "ruolo": "Visitor"}
 }
 
 if 'autenticato' not in st.session_state: st.session_state.autenticato = False
