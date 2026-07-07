@@ -5,7 +5,7 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# CSS Professionale per allineamento perfetto
+# CSS Professionale
 st.markdown("""
 <style>
     .card-orizzontale {
@@ -54,7 +54,6 @@ st.markdown("""
 def mostra_vetrina():
     st.title("📋 Tutte le Posizioni Aperte")
     
-    # Recupero dati
     try:
         annunci = supabase.table("annunci").select("*").execute().data or []
     except:
@@ -76,8 +75,13 @@ def mostra_vetrina():
         for j in range(2):
             if i + j < len(filtrati):
                 a = filtrati[i + j]
+                
+                # Gestione immagine: usa il link inserito o un backup professionale
+                img_url = a.get('immagine')
+                if not img_url or img_url.strip() == "":
+                    img_url = "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=600"
+                
                 with row[j]:
-                    img_url = a.get('immagine', '')
                     st.markdown(f"""
                     <div class="card-orizzontale">
                         <div class="img-lato" style="background-image: url('{img_url}');"></div>
