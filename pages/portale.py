@@ -10,8 +10,10 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
     
-    /* Elimina spazio bianco superiore */
     .main .block-container { padding-top: 1rem !important; }
+    
+    /* Riga blu di separazione */
+    .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
     
@@ -47,7 +49,10 @@ def render_card(a):
 def mostra_portale():
     # Intestazione compatta
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 25px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    
+    # Riga blu inserita qui
+    st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
