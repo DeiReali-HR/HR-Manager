@@ -786,7 +786,7 @@ else:
                 
                 for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    link_candidatura = f"/?job={a['id']}"
                     
                     with cols[index]:
                         st.markdown(f'''
