@@ -35,10 +35,8 @@ def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
     note_testo = str(a.get('note', ''))
     
-    # URL di auto-login per passare le credenziali guest e reindirizzare all'annuncio
-    # Assicurati che 'percorso_annuncio' corrisponda alla pagina dove risiede il form
-    target_url = f"/annuncio?id={a['id']}"
-    login_url = f"/login?auto=true&user=guest@guest.ap&pw=guest2026&next={target_url}"
+    # Link diretto e pulito (bypass del login)
+    link_candidatura = f"/?job={a['id']}"
     
     return f"""
     <div class="card-orizzontale">
@@ -49,7 +47,7 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <a href="{login_url}" class="btn-black">CANDIDATI ORA ↗</a>
+            <a href="{link_candidatura}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
     </div>
     <div class="riga-blu"></div>
@@ -84,7 +82,9 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
+# LOGICA DI VISUALIZZAZIONE
 if "job" in st.query_params:
     st.write("Redirect al form...")
+    # Qui andrà il tuo codice che carica il modulo di candidatura
 else:
     mostra_portale()
