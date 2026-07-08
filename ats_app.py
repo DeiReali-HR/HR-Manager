@@ -39,8 +39,8 @@ def init_openai():
     except Exception as e:
         st.error(f"Errore di configurazione OpenAI: {e}")
         st.stop()
-
-# Rinomina la variabile globale qui sotto
+        
+supabase = init_supabase()
 ai_client = init_openai()
 
 def estrai_testo_pdf(file_caricato):
