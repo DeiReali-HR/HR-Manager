@@ -375,7 +375,7 @@ else:
                 messages=[{"role": "user", "content": ultimo_messaggio}]
             )
             risposta_ia = response.choices[0].message.content.strip()
-        except Exception as e:
+            except Exception as e:
             # Anche questa riga deve essere rientrata
             risposta_ia = f"Errore di connessione IA: {str(e)}"
                 
