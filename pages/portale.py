@@ -4,6 +4,18 @@ from supabase import create_client
 # Configurazione
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
+st.markdown("""
+<style>
+    /* Nasconde il menu di Streamlit (i tre puntini) */
+    #MainMenu {visibility: hidden;}
+    /* Nasconde il footer 'Made with Streamlit' */
+    footer {visibility: hidden;}
+    /* Nasconde la barra superiore (header) */
+    header {visibility: hidden;}
+    /* Rimuove lo spazio vuoto in alto lasciato dall'header nascosto */
+    .block-container { padding-top: 0rem !important; }
+</style>
+""", unsafe_allow_html=True)
 
 # CSS Compattato e allineato
 st.markdown("""
