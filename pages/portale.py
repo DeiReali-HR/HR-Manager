@@ -24,7 +24,7 @@ st.markdown("""
     
     /* Annunci con scrolling interno */
     .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 10px; height: 350px; overflow: hidden; }
-    .img-lato { width: 35%; height: 100%; background-size: cover; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
+    .img-lato {width: 35%;height: 100%; background-size: contain; /* Cambiato da cover a contain */background-repeat: no-repeat; /* Evita che l'immagine si ripeta se piccola */background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
     .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
     .contenuto-scrollabile { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
     .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; }
