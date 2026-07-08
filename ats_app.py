@@ -369,14 +369,15 @@ else:
                 ultimo_messaggio = st.session_state.chat_history[-1]["content"]
                 
                 try:
-                    # Chiamata VERA a Gemini
-                    response = ai_client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                return response.choices[0].message.content.strip()
-                except Exception as e:
-                    risposta_ia = f"Errore di connessione IA: {str(e)}"
+            # Chiamata VERA a OpenAI
+            response = ai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": ultimo_messaggio}]
+            )
+            # Assegniamo il valore alla variabile corretta
+            risposta_ia = response.choices[0].message.content.strip()
+            except Exception as e:
+            risposta_ia = f"Errore di connessione IA: {str(e)}"
                 
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
