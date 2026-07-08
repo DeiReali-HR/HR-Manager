@@ -368,15 +368,15 @@ else:
                 # Recuperiamo l'ultimo messaggio dell'utente
                 ultimo_messaggio = st.session_state.chat_history[-1]["content"]
                 
-                try:
-            # Chiamata VERA a OpenAI
+            try:
+            # Chiamata VERA a OpenAI (sposta queste righe verso destra con il tasto TAB)
             response = ai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": ultimo_messaggio}]
             )
-            # Assegniamo il valore alla variabile corretta
             risposta_ia = response.choices[0].message.content.strip()
-            except Exception as e:
+        except Exception as e:
+            # Anche questa riga deve essere rientrata
             risposta_ia = f"Errore di connessione IA: {str(e)}"
                 
                 with st.chat_message("assistant", avatar=None):
