@@ -361,14 +361,22 @@ else:
                 st.rerun()
 
             if st.session_state["ia_sta_pensando"]:
-                with st.chat_message("assistant", avatar=None):
-                    with st.spinner("Elaborazione..."):
-                        import time
-                        time.sleep(1.5)
+                # Recuperiamo l'ultimo messaggio dell'utente
+                ultimo_messaggio = st.session_state.chat_history[-1]["content"]
                 
-                risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
+                try:
+                    # Chiamata VERA a Gemini
+                    response = ai_client.models.generate_content(
+                        model='gemini-2.0-flash', 
+                        contents=ultimo_messaggio
+                    )
+                    risposta_ia = response.text
+                except Exception as e:
+                    risposta_ia = f"Errore di connessione IA: {str(e)}"
+                
                 with st.chat_message("assistant", avatar=None):
                     st.write(risposta_ia)
+                
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
