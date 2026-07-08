@@ -370,7 +370,7 @@ else:
                 
             try:
             # Chiamata VERA a OpenAI (sposta queste righe verso destra con il tasto TAB)
-            response = ai_client.chat.completions.create(
+                response = ai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": ultimo_messaggio}]
             )
