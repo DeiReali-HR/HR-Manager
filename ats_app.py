@@ -61,7 +61,7 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     
     prompt = f"Analizza questo CV per la posizione {requisiti_annuncio}: {testo_cv}. Rispondi in 3 righe precise senza asterischi o formattazione complessa. Riga 1: solo la percentuale (es: 85%). Riga 2: solo le stelle (es: ⭐⭐⭐⭐). Riga 3: una breve sintesi."
     try:
-        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         linee = [line.strip() for line in response.text.strip().split('\n') if line.strip()]
         p_id = linee[0] if len(linee) > 0 else "80%"
         p_st = linee[1] if len(linee) > 1 else "⭐⭐⭐"
@@ -75,7 +75,7 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
         return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
     prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
     try:
-        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
@@ -360,10 +360,18 @@ else:
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
-            File "/mount/src/hr-manager/ats_app.py", line 364
-      try:
-     ^
-IndentationError: expected an indented block after 'if' statement on line 363
+            if st.session_state["ia_sta_pensando"]:
+                with st.chat_message("assistant", avatar=None):
+                    with st.spinner("Elaborazione..."):
+                        import time
+                        time.sleep(1.5)
+                
+                risposta_ia = f"Ricevuto! Sono l'assistente di {st.session_state.utente_connesso['nome']}. Come posso aiutarti con la gestione della plancia?"
+                with st.chat_message("assistant", avatar=None):
+                    st.write(risposta_ia)
+                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
+                st.session_state["ia_sta_pensando"] = False
+                st.rerun()
 
             st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
