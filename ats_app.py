@@ -21,23 +21,22 @@ st.set_page_config(
 
 # 2. Connessione Sicura a Supabase e OpenAI tramite Secrets
 @st.cache_resource
-def init_openai():
+def init_supabase():
     try:
-        # Leggiamo la chiave OpenAI dai Secrets
-        api_key = st.secrets["openai"]["api_key"]
-        return OpenAI(api_key=api_key)
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        return create_client(url, key)
     except Exception as e:
-        st.error(f"Errore configurazione OpenAI: {e}")
+        st.error(f"Errore Supabase: {e}")
         st.stop()
 
 @st.cache_resource
 def init_openai():
     try:
-        # Legge la chiave dal pannello Secrets di Streamlit
         api_key = st.secrets["openai"]["api_key"]
         return OpenAI(api_key=api_key)
     except Exception as e:
-        st.error(f"Errore di configurazione OpenAI: {e}")
+        st.error(f"Errore OpenAI: {e}")
         st.stop()
         
 supabase = init_supabase()
