@@ -786,7 +786,7 @@ else:
                 
                 for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"/?job={a['id']}"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
                     with cols[index]:
                         st.markdown(f'''
@@ -855,10 +855,21 @@ else:
                             link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                             
                             st.markdown(f"""
-    <a href="#" onclick="window.location.href='/?job={a['id']}'; return false;" 
-       class="showcase-btn" style="text-decoration: none;">
-       CANDIDATI ORA ↗️
-    </a>
-""", unsafe_allow_html=True)
+                            <div class="showcase-card-row">
+                                <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
+                                <div class="showcase-content-side">
+                                    <div class="showcase-scrollable-body">
+                                        <div class="showcase-title">{a['posizione']}</div>
+                                        <div class="showcase-meta-grid">
+                                            <span>📍 {a.get('sede', 'Roma')}</span>
+                                            <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                            <span>💸 {a.get('importo', 'N/D')} €</span>
+                                        </div>
+                                        <div class="showcase-text">{a.get('note', '')}</div>
+                                    </div>
+                                    <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗️</a>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
                 
                 st.markdown("</div>", unsafe_allow_html=True)
