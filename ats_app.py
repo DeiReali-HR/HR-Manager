@@ -361,22 +361,20 @@ else:
                 st.rerun()
 
             if st.session_state["ia_sta_pensando"]:
-                # Recuperiamo l'ultimo messaggio dell'utente
-                ultimo_messaggio = st.session_state.chat_history[-1]["content"]
-                
-                try:
-                    # Chiamata VERA a Gemini
-                    response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=ultimo_messaggio)
-                    risposta_ia = response.text
-                except Exception as e:
-                    risposta_ia = f"Errore di connessione IA: {str(e)}"
-                
-                with st.chat_message("assistant", avatar=None):
-                    st.write(risposta_ia)
-                
-                st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
-                st.session_state["ia_sta_pensando"] = False
-                st.rerun()
+    try:
+        # Chiamiamo l'elenco dei modelli disponibili
+        models = ai_client.models.list()
+        elenco = [m.name for m in models]
+        st.write("Modelli trovati:", elenco)
+        
+        # Facciamo una prova con il primo modello trovato nella lista
+        risposta_ia = f"Primo modello disponibile: {elenco[0]}"
+    except Exception as e:
+        risposta_ia = f"Errore: {str(e)}"
+    
+    st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
+    st.session_state["ia_sta_pensando"] = False
+    st.rerun()
 
             st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
