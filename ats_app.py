@@ -360,21 +360,10 @@ else:
                 st.session_state["ia_sta_pensando"] = True
                 st.rerun()
 
-            if st.session_state["ia_sta_pensando"]:
-    try:
-        # Chiamiamo l'elenco dei modelli disponibili
-        models = ai_client.models.list()
-        elenco = [m.name for m in models]
-        st.write("Modelli trovati:", elenco)
-        
-        # Facciamo una prova con il primo modello trovato nella lista
-        risposta_ia = f"Primo modello disponibile: {elenco[0]}"
-    except Exception as e:
-        risposta_ia = f"Errore: {str(e)}"
-    
-    st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
-    st.session_state["ia_sta_pensando"] = False
-    st.rerun()
+            File "/mount/src/hr-manager/ats_app.py", line 364
+      try:
+     ^
+IndentationError: expected an indented block after 'if' statement on line 363
 
             st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
