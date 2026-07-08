@@ -75,7 +75,7 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
         return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
     prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
     try:
-        response = ai_client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
@@ -361,20 +361,23 @@ else:
                 st.rerun()
 
             if st.session_state["ia_sta_pensando"]:
-                try:  # Questa riga deve essere rientrata rispetto a 'if'
-                    # Chiamiamo l'elenco dei modelli disponibili
-                    models = ai_client.models.list()
-                    elenco = [m.name for m in models]
-                    st.write("Modelli trovati:", elenco)
-                    
-                    # Facciamo una prova con il primo modello trovato
-                    risposta_ia = f"Primo modello disponibile: {elenco[0]}"
+                # Recuperiamo l'ultimo messaggio dell'utente
+                ultimo_messaggio = st.session_state.chat_history[-1]["content"]
+                
+                try:
+                    # Chiamata VERA a Gemini
+                    response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=ultimo_messaggio)
+                    risposta_ia = response.text
                 except Exception as e:
-                    risposta_ia = f"Errore: {str(e)}"
+                    risposta_ia = f"Errore di connessione IA: {str(e)}"
+                
+                with st.chat_message("assistant", avatar=None):
+                    st.write(risposta_ia)
                 
                 st.session_state.chat_history.append({"role": "assistant", "content": risposta_ia})
                 st.session_state["ia_sta_pensando"] = False
                 st.rerun()
+                
             st.markdown("---")
             if st.button("🔒 Disconnetti", use_container_width=True):
                 st.session_state.autenticato = False
