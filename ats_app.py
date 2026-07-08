@@ -61,7 +61,7 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
     
     prompt = f"Analizza questo CV per la posizione {requisiti_annuncio}: {testo_cv}. Rispondi in 3 righe precise senza asterischi o formattazione complessa. Riga 1: solo la percentuale (es: 85%). Riga 2: solo le stelle (es: ⭐⭐⭐⭐). Riga 3: una breve sintesi."
     try:
-        response = ai_client.models.generate_content(model='models/gemini-1.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         linee = [line.strip() for line in response.text.strip().split('\n') if line.strip()]
         p_id = linee[0] if len(linee) > 0 else "80%"
         p_st = linee[1] if len(linee) > 1 else "⭐⭐⭐"
@@ -75,7 +75,7 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
         return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
     prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
     try:
-        response = ai_client.models.generate_content(model='models/gemini-1.5-flash', contents=prompt)
+        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
@@ -366,7 +366,7 @@ else:
                 
                 try:
                     # Chiamata VERA a Gemini
-                    response = ai_client.models.generate_content(model='models/gemini-1.5-flash', contents=ultimo_messaggio)
+                    response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=ultimo_messaggio)
                     risposta_ia = response.text
                 except Exception as e:
                     risposta_ia = f"Errore di connessione IA: {str(e)}"
