@@ -9,8 +9,8 @@ import base64
 from datetime import datetime, date, time
 from supabase import create_client, Client
 from pypdf import PdfReader
-from google import genai
-from google.genai import types
+import streamlit as st
+from openai import OpenAI
 
 # 1. Configurazione della pagina Enterprise
 st.set_page_config(
@@ -19,29 +19,29 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Connessione Sicura a Supabase e Gemini tramite Secrets
+# 2. Connessione Sicura a Supabase e OpenAI tramite Secrets
 @st.cache_resource
-def init_supabase() -> Client:
+def init_openai():
     try:
-        url = st.secrets["supabase"]["url"]
-        key = st.secrets["supabase"]["key"]
-        return create_client(url, key)
-    except Exception:
-        st.error("❌ Errore nei Secrets: configurazione di Supabase mancante.")
+        # Leggiamo la chiave OpenAI dai Secrets
+        api_key = st.secrets["openai"]["api_key"]
+        return OpenAI(api_key=api_key)
+    except Exception as e:
+        st.error(f"Errore configurazione OpenAI: {e}")
         st.stop()
 
 @st.cache_resource
-def init_gemini():
+def init_openai():
     try:
-        if "gemini" in st.secrets and "api_key" in st.secrets["gemini"]:
-            api_key = st.secrets["gemini"]["api_key"]
-            return genai.Client(api_key=api_key)
-    except Exception:
-        pass
-    return None
+        # Legge la chiave dal pannello Secrets di Streamlit
+        api_key = st.secrets["openai"]["api_key"]
+        return OpenAI(api_key=api_key)
+    except Exception as e:
+        st.error(f"Errore di configurazione OpenAI: {e}")
+        st.stop()
 
-supabase: Client = init_supabase()
-ai_client = init_gemini()
+# Rinomina la variabile globale qui sotto
+ai_client = init_openai()
 
 def estrai_testo_pdf(file_caricato):
     try:
@@ -75,8 +75,12 @@ def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
         return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
     prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
     try:
-        response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-        return response.text.strip()
+        response = ai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        testo_risposta = response.choices[0].message.content
+        linee = [line.strip() for line in testo_risposta.strip().split('\n') if line.strip()]
     except Exception as e:
         return f"Errore: {str(e)}"
 
@@ -366,8 +370,11 @@ else:
                 
                 try:
                     # Chiamata VERA a Gemini
-                    response = ai_client.models.generate_content(model='gemini-1.5-flash', contents=ultimo_messaggio)
-                    risposta_ia = response.text
+                    response = ai_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                return response.choices[0].message.content.strip()
                 except Exception as e:
                     risposta_ia = f"Errore di connessione IA: {str(e)}"
                 
