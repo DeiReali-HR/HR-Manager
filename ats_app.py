@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as stcurriculum
 import pandas as pd
 import os
 import random
@@ -53,6 +53,44 @@ def estrai_testo_pdf(file_caricato):
         return ""
 
 def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
+    """
+    Invia il CV e i requisiti all'IA per ottenere valutazione, punteggio e feedback.
+    """
+    prompt = f"""
+    Agisci come un selezionatore esperto per l'Ospedale di Tor Vergata. 
+    Analizza il seguente CV in base ai requisiti dell'annuncio.
+    
+    REQUISITI ANNUNCIO: {requisiti_annuncio}
+    
+    TESTO DEL CV: {testo_cv[:5000]} # Limitiamo il testo per sicurezza
+    
+    Restituisci la risposta in questo formato esatto (senza altro testo):
+    VALUTAZIONE: [es. 85%]
+    STELLE: [es. ⭐⭐⭐⭐]
+    ORIENTAMENTO: [Breve commento sulle competenze principali e perché è adatto o meno]
+    """
+    
+    response = ai_client.chat.completions.create(
+        model="gpt-4o", # O il modello che preferisci
+        messages=[{"role": "system", "content": "Sei un esperto HR."}, {"role": "user", "content": prompt}]
+    )
+    
+    risultato = response.choices[0].message.content
+    
+    # Estraiamo i dati dalla risposta (semplice parsing)
+    v = "N/D"
+    s = "⭐⭐⭐"
+    o = "Analisi generica"
+    
+    # Logica per dividere la risposta dell'IA nelle variabili che il tuo form si aspetta
+    # (Questo è un esempio, puoi affinarlo in base a come risponde l'IA)
+    lines = risultato.split('\n')
+    for line in lines:
+        if "VALUTAZIONE:" in line: v = line.replace("VALUTAZIONE:", "").strip()
+        if "STELLE:" in line: s = line.replace("STELLE:", "").strip()
+        if "ORIENTAMENTO:" in line: o = line.replace("ORIENTAMENTO:", "").strip()
+        
+    return v, s, o
     if not testo_cv:
         return "50%", "⭐⭐", "Il PDF non contiene testo estraibile."
     if not ai_client:
