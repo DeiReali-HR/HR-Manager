@@ -109,17 +109,28 @@ def analizza_cv_con_ia(testo_cv, requisiti_annuncio):
 
 def genera_testo_annuncio_ia(titolo, inquadramento, importo, sede, note_brevi):
     if not ai_client:
-        return f"Ricerca per {titolo} a {sede}. Inquadramento {inquadramento}."
-    prompt = f"Sei HR Dei Reali. Scrivi annuncio elegante per {titolo} a {sede}, budget {importo}€. Note: {note_brevi if note_brevi else 'Nessuna'}. Dividi in: Chi Siamo, Requisiti, Cosa Offriamo."
+        return "Errore: Connessione IA non disponibile."
+        
+    prompt = f"""
+    Sei un HR Expert dell'Ospedale di Tor Vergata. 
+    Scrivi un annuncio di lavoro professionale, elegante e formale.
+    Titolo: {titolo}
+    Inquadramento: {inquadramento}
+    Budget/RAL: {importo}
+    Sede: {sede}
+    Note Aggiuntive: {note_brevi}
+    
+    Struttura l'annuncio con questi titoli in grassetto: **Chi Siamo**, **Il Ruolo**, **Requisiti**, **Cosa Offriamo**.
+    """
+    
     try:
         response = ai_client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "system", "content": "Sei un copywriter esperto HR."}, {"role": "user", "content": prompt}]
         )
-        testo_risposta = response.choices[0].message.content
-        linee = [line.strip() for line in testo_risposta.strip().split('\n') if line.strip()]
+        return response.choices[0].message.content
     except Exception as e:
-        return f"Errore: {str(e)}"
+        return f"Errore nella generazione: {str(e)}"
 
 def mostra_logo_aziendale():
     if os.path.exists("1000376160.jpeg"):
