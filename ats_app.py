@@ -18,6 +18,15 @@ st.set_page_config(
     page_icon="👑",
     layout="wide"
 )
+# Nasconde il menu a scomparsa (sidebar) e l'header per l'integrazione
+st.markdown("""
+<style>
+    [data-testid="stSidebar"] { display: none; }
+    header { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+    .block-container { padding-top: 0rem !important; }
+</style>
+""", unsafe_allow_html=True)
 
 # 2. Connessione Sicura a Supabase e OpenAI tramite Secrets
 @st.cache_resource
