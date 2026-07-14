@@ -1,4 +1,5 @@
 import streamlit as st
+import random  # <--- AGGIUNTO
 from supabase import create_client
 
 # Configurazione
@@ -85,7 +86,14 @@ def mostra_portale():
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
     # VETRINA
-    evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
+    evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]]
+    
+    # Mescola la lista casualmente
+    random.shuffle(evidenza)
+    
+    # Prendi solo i primi 7 dopo averli mescolati
+    evidenza = evidenza[:7]
+    
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
         html_vetrina = '<div class="vetrina-full-width"><div class="grid-vetrina">'
