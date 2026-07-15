@@ -1,4 +1,4 @@
-import streamlit as stcurriculum
+import streamlit as st
 import pandas as pd
 import os
 import random
@@ -9,8 +9,73 @@ import base64
 from datetime import datetime, date, time
 from supabase import create_client, Client
 from pypdf import PdfReader
-import streamlit as st
 from openai import OpenAI
+
+# 1. Configurazione della pagina Enterprise
+st.set_page_config(page_title="Dei Reali - Suite Enterprise Risorse Umane", page_icon="👑", layout="wide")
+st.markdown("""
+<style>
+    [data-testid="stSidebar"] { display: none; }
+    header { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+    .block-container { padding-top: 0rem !important; }
+</style>
+""", unsafe_allow_html=True)
+def mostra_form_assunzione():
+    st.markdown("""
+        <style>
+            .box-assunzione { background-color: #0f172a; color: white; padding: 40px; border-radius: 15px; }
+            .testo-bianco { color: white !important; }
+        </style>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="box-assunzione">', unsafe_allow_html=True)
+    mostra_logo_aziendale() 
+    st.markdown('<h2 class="testo-bianco">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
+    with st.form("form_assunzione_completo"):
+        col1, col2 = st.columns(2)
+        with col1:
+            nome = st.text_input("Nome e Cognome")
+            nascita = st.text_input("Luogo di Nascita")
+            stato = st.text_input("Stato di Nascita (se straniero)")
+            prov = st.text_input("Provincia")
+            data_nascita = st.date_input("Data di Nascita")
+        with col2:
+            residenza = st.text_input("Indirizzo Residenza (Via/Civico/CAP/Città/Prov)")
+            domicilio = st.text_input("Domicilio (se diverso)")
+            titolo = st.text_input("Titolo di Studio")
+            tel = st.text_input("Recapito Telefonico")
+            mail = st.text_input("Mail")
+        st.write("---")
+        note = st.text_area("Note categorie protette")
+        st.subheader("Documenti")
+        doc_att = st.file_uploader("Upload documentazione attestante")
+        id_f = st.file_uploader("Carta Identità (Fronte/Retro)")
+        cf = st.file_uploader("Codice Fiscale")
+        perm = st.file_uploader("Permesso di soggiorno (se estero)")
+        st.subheader("Dati Fiscali")
+        iban = st.text_input("IBAN")
+        intestatario = st.text_input("Intestatario")
+        consenso = st.checkbox("Consenso al trattamento dati personali")
+        firma = st.text_input("Firma per accettazione (Nome e Cognome)")
+        if st.form_submit_button("INVIO"):
+            if consenso and firma: st.success("Dati inviati con successo!")
+            else: st.error("Devi accettare il consenso e firmare.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# 2. LOGICA PRIORITARIA: AREA ASSUNZIONI
+if "area_assunzione" in st.query_params:
+    if "autenticato_assunzione" not in st.session_state: st.session_state.autenticato_assunzione = False
+    
+    if not st.session_state.autenticato_assunzione:
+        codice_input = st.text_input("Inserisci il codice di accesso:", type="password")
+        if st.button("Accedi"):
+            if codice_input == "AS2026Reali@":
+                st.session_state.autenticato_assunzione = True
+                st.rerun()
+            else: st.error("Codice non valido.")
+    else:
+        mostra_form_assunzione()
+    st.stop() # FERMA LO SCRIPT QUI
 
 # 1. Configurazione della pagina Enterprise
 st.set_page_config(
@@ -189,7 +254,25 @@ if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_te
 if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
-if "job" in st.query_params:
+# AGGIUNTA LOGICA ASSUNZIONE
+if "area_assunzione" in st.query_params:
+    st.subheader("Area Riservata Assunzioni")
+    if "autenticato_assunzione" not in st.session_state:
+        st.session_state.autenticato_assunzione = False
+    
+    if not st.session_state.autenticato_assunzione:
+        codice_input = st.text_input("Inserisci il codice di accesso:", type="password")
+        if st.button("Accedi"):
+            if codice_input == "AS2026Reali@":
+                st.session_state.autenticato_assunzione = True
+                st.rerun()
+            else:
+                st.error("Codice non valido.")
+    else:
+        mostra_form_assunzione() # Qui richiami la funzione con il form blu
+
+# SE NON È RICHIESTA L'AREA ASSUNZIONE, MOSTRA IL PORTALE STANDARD
+elif "job" in st.query_params:
     job_param = st.query_params["job"] 
     res_annuncio = supabase.table("annunci").select("*").eq("id", job_param).execute()
     annuncio_selezionato = res_annuncio.data[0] if res_annuncio.data else None
