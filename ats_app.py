@@ -45,17 +45,9 @@ def mostra_form_assunzione():
     # Inserimento della tua immagine di testata
     if os.path.exists("testata.png"):
         st.image("testata.png", use_column_width=True)
-    
-    # Visualizzazione Logo con div personalizzato
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    percorso_logo = "logo_aziendale.jpg"
-    if os.path.exists(percorso_logo):
-        st.image(percorso_logo)
     else:
         st.markdown("<h2>👑 DEI REALI</h2>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown("<h2>Processo di Assunzione - Dei Reali</h2>", unsafe_allow_html=True)
    
     # FORM UNICO
     with st.form("form_assunzione_completo"):
