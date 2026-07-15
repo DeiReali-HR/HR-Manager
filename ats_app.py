@@ -786,11 +786,11 @@ else:
                             st.error("❌ Compila i campi obbligatori.")
 
             with col_tabella:
-            st.markdown("### 📋 Registro Assunzioni Attive")
+                st.markdown("### 📋 Registro Assunzioni Attive")
     
-            # Recupera i dati da Supabase
-            response = supabase.table("assunzioni_attive").select("*").execute()
-            data = response.data
+                # Recupera i dati da Supabase
+                response = supabase.table("assunzioni_attive").select("*").execute()
+                data = response.data
     
     if data:
         # Trasforma in DataFrame
