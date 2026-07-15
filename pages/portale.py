@@ -6,13 +6,18 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# Stili CSS
+# Iniezione CSS
 st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
-    .block-container { padding-top: 1rem !important; }
+    .block-container { padding-top: 0rem !important; }
+    
+    @media (max-width: 600px) {
+        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+        div[data-testid="stDecoration"] { display: none; }
+    }
     
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
     
@@ -21,21 +26,22 @@ st.markdown("""
     
     .vetrina-full-width { background-color: #f1f5f9; margin-left: -500px; margin-right: -500px; padding: 30px 500px; margin-bottom: 30px; }
     .grid-vetrina { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; max-width: 1400px; margin: auto; }
-    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer; }
+    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; }
     
     .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 10px; height: 350px; overflow: hidden; }
     .img-lato { width: 35%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
     .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
     .contenuto-scrollabile { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
-    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; }
+    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; }
 </style>
 """, unsafe_allow_html=True)
 
 def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
     note_testo = str(a.get('note', ''))
-    # Link alla radice con slash iniziale
-    link_candidatura = f"/?job={a['id']}"
+    
+    # URL assoluto per forzare il reindirizzamento corretto fuori dall'iframe
+    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
     
     return f"""
     <div class="card-orizzontale">
@@ -54,23 +60,26 @@ def render_card(a):
 
 def mostra_portale():
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # VETRINA
+    # VETRINA con casualità
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]]
-    random.shuffle(evidenza)
-    evidenza = evidenza[:7]
-    
+    random.shuffle(evidenza) # Mescola i risultati
+    evidenza = evidenza[:7] # Prende i primi 7
+
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
         html_vetrina = '<div class="vetrina-full-width"><div class="grid-vetrina">'
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
-            # Link alla radice con slash iniziale
-            html_vetrina += f'<a href="/?job={a["id"]}" target="_top"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
+            # URL assoluto con target="_top"
+            link_vetrina = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+            html_vetrina += f'<a href="{link_vetrina}" target="_top"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
