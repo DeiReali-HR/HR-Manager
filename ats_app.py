@@ -22,35 +22,26 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 def mostra_form_assunzione():
-    # CSS per il box Blu Navy con scritte bianche
+    # CSS per il box Blu Navy
     st.markdown("""
         <style>
-            .box-assunzione { 
-                background-color: #0f172a; 
-                color: white; 
-                padding: 30px; 
-                border-radius: 15px; 
-                margin-bottom: 20px;
-            }
-            .box-assunzione h2 { color: white !important; }
-            .box-assunzione label { color: white !important; }
+            .box-assunzione { background-color: #0f172a; color: white; padding: 40px; border-radius: 15px; }
+            .testo-bianco { color: white !important; }
         </style>
     """, unsafe_allow_html=True)
     
     st.markdown('<div class="box-assunzione">', unsafe_allow_html=True)
-    mostra_logo_aziendale() 
-    st.markdown('<h2 style="color:white; text-align:center;">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
     
-    # Qui inizia il form
-    with st.form("form_assunzione_completo"):
-
-    # Assicurati che queste righe siano spostate verso destra (indentate)
-        percorso_logo = "logo_aziendale.jpg"
+    # LOGO E TITOLO
+    percorso_logo = "logo_aziendale.jpg"
+    if os.path.exists(percorso_logo):
+        st.image(percorso_logo)
+    else:
+        st.markdown("<h2 style='text-align:center; color:white;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
+        
+    st.markdown('<h2 class="testo-bianco" style="text-align:center;">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
     
-        if os.path.exists(percorso_logo):
-            st.image(percorso_logo)
-        else:
-            st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
+    # FORM UNICO
     with st.form("form_assunzione_completo"):
         col1, col2 = st.columns(2)
         with col1:
@@ -60,26 +51,35 @@ def mostra_form_assunzione():
             prov = st.text_input("Provincia")
             data_nascita = st.date_input("Data di Nascita")
         with col2:
-            residenza = st.text_input("Indirizzo Residenza (Via/Civico/CAP/Città/Prov)")
+            residenza = st.text_input("Indirizzo Residenza")
             domicilio = st.text_input("Domicilio (se diverso)")
             titolo = st.text_input("Titolo di Studio")
             tel = st.text_input("Recapito Telefonico")
             mail = st.text_input("Mail")
+        
         st.write("---")
         note = st.text_area("Note categorie protette")
+        
+        # Area Upload
         st.subheader("Documenti")
-        doc_att = st.file_uploader("Upload documentazione attestante")
-        id_f = st.file_uploader("Carta Identità (Fronte/Retro)")
+        doc_att = st.file_uploader("Documentazione attestante")
+        id_f = st.file_uploader("Carta Identità")
         cf = st.file_uploader("Codice Fiscale")
-        perm = st.file_uploader("Permesso di soggiorno (se estero)")
+        perm = st.file_uploader("Permesso di soggiorno")
+        
         st.subheader("Dati Fiscali")
         iban = st.text_input("IBAN")
         intestatario = st.text_input("Intestatario")
+        
         consenso = st.checkbox("Consenso al trattamento dati personali")
-        firma = st.text_input("Firma per accettazione (Nome e Cognome)")
+        firma = st.text_input("Firma per accettazione")
+        
         if st.form_submit_button("INVIO"):
-            if consenso and firma: st.success("Dati inviati con successo!")
-            else: st.error("Devi accettare il consenso e firmare.")
+            if consenso and firma:
+                st.success("Dati inviati con successo!")
+            else:
+                st.error("Devi accettare il consenso e firmare.")
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # 2. LOGICA PRIORITARIA: AREA ASSUNZIONI
