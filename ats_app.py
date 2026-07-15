@@ -29,7 +29,7 @@ def mostra_form_assunzione():
             
             /* Logo: forzato a 150px di larghezza per non essere invadente */
             .logo-container { text-align: center; margin-bottom: 20px; }
-            .logo-container img { width: 300px !important; height: auto !important; }
+            .logo-container img { width: 150px !important; height: auto !important; }
             
             /* Form e Etichette bianche */
             .stForm { background-color: #0f172a !important; border: none !important; }
