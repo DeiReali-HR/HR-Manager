@@ -24,19 +24,27 @@ st.markdown("""
 def mostra_form_assunzione():
     st.markdown("""
         <style>
-            /* Sfondo pagina */
+            /* Sfondo blu navy per tutta la pagina */
             .stApp { background-color: #0f172a !important; }
             
-            /* Logo: forzato a 150px di larghezza per non essere invadente */
-            .logo-container { text-align: center; margin-bottom: 20px; }
-            .logo-container img { width: 150px !important; height: auto !important; }
+            /* Larghezza fissa centrata per Form e Testata */
+            .main-container { 
+                max-width: 950px !important; 
+                margin: 0 auto !important; 
+            }
             
-            /* Form e Etichette bianche */
-            .stForm { background-color: #0f172a !important; border: none !important; }
-            label { color: white !important; font-weight: bold !important; }
-            h2 { color: white !important; text-align: center; }
+            /* Stile per le etichette */
+            label { color: white !important; font-weight: 600 !important; }
+            .stForm { background-color: #0f172a !important; border: 1px solid #1e293b !important; }
         </style>
     """, unsafe_allow_html=True)
+
+    # Contenitore centrato
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    
+    # Inserimento della tua immagine di testata
+    if os.path.exists("testata.png"):
+        st.image("testata.png", use_column_width=True)
     
     # Visualizzazione Logo con div personalizzato
     st.markdown('<div class="logo-container">', unsafe_allow_html=True)
