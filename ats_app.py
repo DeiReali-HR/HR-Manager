@@ -27,7 +27,7 @@ def mostra_form_assunzione():
             /* Sfondo pagina */
             .stApp { background-color: #0f172a !important; }
             
-            /* Logo: forzato a 300px di larghezza per non essere invadente */
+            /* Logo: forzato a 150px di larghezza per non essere invadente */
             .logo-container { text-align: center; margin-bottom: 20px; }
             .logo-container img { width: 300px !important; height: auto !important; }
             
