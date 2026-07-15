@@ -1,5 +1,4 @@
 import streamlit as st
-import random  # <--- AGGIUNTO
 from supabase import create_client
 
 # Configurazione
@@ -58,10 +57,10 @@ def render_card(a):
     note_testo = str(a.get('note', ''))
     
     # Link diretto e pulito (bypass del login)
-    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+    link_candidatura = f"/?job={a['id']}"
     
     return f"""
-    <div class="card-orizzontale" style="position: relative;">
+    <div class="card-orizzontale">
         <div class="img-lato" style="background-image: url('{img_url}');"></div>
         <div class="testo-lato">
             <div class="contenuto-scrollabile">
@@ -69,9 +68,7 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <div style="position: relative; z-index: 20;">
-                <a href="{link_candidatura}" target="_parent" class="btn-black" style="position: relative; z-index: 20;">CANDIDATI ORA ↗</a>
-            </div>
+            <a href="{link_candidatura}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
     </div>
     <div class="riga-blu"></div>
@@ -88,26 +85,13 @@ def mostra_portale():
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
     # VETRINA
-    evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]]
-    
-    # Mescola la lista casualmente
-    random.shuffle(evidenza)
-    
-    # Prendi solo i primi 7 dopo averli mescolati
-    evidenza = evidenza[:7]
-    
+    evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
         html_vetrina = '<div class="vetrina-full-width"><div class="grid-vetrina">'
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
-            link_completo = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-            
-            html_vetrina += f'''
-            <div class="card-vetrina" style="background-image: url('{img_url}'); position: relative;">
-                <a href="{link_completo}" target="_parent" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;"></a>
-            </div>
-            '''
+            html_vetrina += f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
