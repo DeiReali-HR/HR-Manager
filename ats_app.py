@@ -763,29 +763,57 @@ else:
                     
                     if submit_assunzione:
                         if candidato_scelto and ruolo_aziendale and data_inizio:
-                            nuova_ass = {"candidato": candidato_scelto, "ruolo": ruolo_aziendale, "tipo_contratto": tipo_contratto, "data_inizio": str(data_inizio), "retribuzione": str(ral_proposta)}
-                            st.session_state.lista_assunzioni.append(nuova_ass)
-                            st.success(f"✔️ Assunzione di {candidato_scelto} inserita!")
+                            # 1. Gestione Upload File (se presente)
+                            percorso_file = None
+                            if Documentazione:
+                                percorso_file = f"assunzioni/{candidato_scelto}_{data_inizio}.pdf"
+                                supabase.storage.from_("documenti-candidati").upload(percorso_file, Documentazione.getvalue())
+
+                            # 2. Inserimento nel Database Supabase
+                            nuova_ass = {
+                                "nome_dipendente": candidato_scelto, 
+                                "ruolo": ruolo_aziendale, 
+                                "tipo_contratto": tipo_contratto, 
+                                "data_inizio": str(data_inizio), 
+                                "ral": float(ral_proposta), # Assicurati che sia numerico
+                                "documenti_path": percorso_file
+                            }
+                            supabase.table("assunzioni_attive").insert(nuova_ass).execute()
+                            
+                            st.success(f"✔️ Assunzione di {candidato_scelto} salvata nel database!")
                             st.rerun()
                         else:
-                            st.error("❌ Compila i campi obbligatori (Candidato, Ruolo e Data Inizio).")
+                            st.error("❌ Compila i campi obbligatori.")
 
             with col_tabella:
-                st.markdown("### 📋 Registro Assunzioni Attive")
-                if st.session_state.lista_assunzioni:
-                    df_assunzioni = pd.DataFrame(st.session_state.lista_assunzioni)
-                    df_ass_modificato = st.data_editor(
-                        df_assunzioni, use_container_width=True, num_rows="dynamic",
-                        column_config={
-                            "candidato": "Dipendente", "ruolo": "Ruolo / Mansione",
-                            "tipo_contratto": st.column_config.SelectboxColumn("Contratto", options=["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"]),
-                            "data_inizio": "Data Inizio", "retribuzione": "RAL (€)"
-                        }, key="editor_assunzioni_v2"
-                    )
-                    if not df_ass_modificato.equals(df_assunzioni):
-                        st.session_state.lista_assunzioni = df_ass_modificato.to_dict(orient="records")
-                        st.success("🔄 Archivio aggiornato!")
-                        st.rerun()
+    st.markdown("### 📋 Registro Assunzioni Attive")
+    
+    # Recupera i dati da Supabase
+    response = supabase.table("assunzioni_attive").select("*").execute()
+    data = response.data
+    
+    if data:
+        # Trasforma in DataFrame
+        df_assunzioni = pd.DataFrame(data)
+        
+        # Usa il data_editor per visualizzare e permettere modifiche
+        df_ass_modificato = st.data_editor(
+            df_assunzioni, use_container_width=True, num_rows="dynamic",
+            column_config={
+                "nome_dipendente": "Dipendente", 
+                "ruolo": "Ruolo / Mansione",
+                "tipo_contratto": st.column_config.SelectboxColumn("Contratto", options=["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"]),
+                "data_inizio": "Data Inizio", 
+                "ral": "RAL (€)"
+            }, key="editor_assunzioni_db"
+        )
+        
+        # Logica opzionale per salvare le modifiche fatte nella tabella
+        if not df_ass_modificato.equals(df_assunzioni):
+            # Qui potresti aggiungere la logica per fare l'update su Supabase
+            st.warning("Nota: Le modifiche in tabella richiedono una funzione di 'Update' dedicata.")
+    else:
+        st.info("Nessuna assunzione registrata nel database.")
 
         # --- TAB 6: REPORT ---
         with scelta_tab[5]:
