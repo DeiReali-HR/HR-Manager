@@ -6,18 +6,14 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# CSS aggiornato con cursor: pointer per rendere cliccabili i div
+# Stili CSS
 st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
-    .block-container { padding-top: 0rem !important; }
-    @media (max-width: 600px) {
-        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
-        div[data-testid="stDecoration"] { display: none; }
-    }
-
+    .block-container { padding-top: 1rem !important; }
+    
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
     
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
@@ -31,14 +27,14 @@ st.markdown("""
     .img-lato { width: 35%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
     .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
     .contenuto-scrollabile { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
-    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; cursor: pointer; }
+    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; }
 </style>
 """, unsafe_allow_html=True)
 
 def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
     note_testo = str(a.get('note', ''))
-    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+    link_candidatura = f"/?job={a['id']}"
     
     return f"""
     <div class="card-orizzontale">
@@ -49,7 +45,7 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <div onclick="window.top.location.href='{link_candidatura}';" class="btn-black">CANDIDATI ORA ↗</div>
+            <a href="{link_candidatura}" class="btn-black">CANDIDATI ORA ↗</a>
         </div>
     </div>
     <div class="riga-blu"></div>
@@ -57,13 +53,12 @@ def render_card(a):
 
 def mostra_portale():
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # VETRINA CON CASUALITÀ
+    # VETRINA
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]]
     random.shuffle(evidenza)
     evidenza = evidenza[:7]
@@ -73,8 +68,7 @@ def mostra_portale():
         html_vetrina = '<div class="vetrina-full-width"><div class="grid-vetrina">'
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
-            link_url = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-            html_vetrina += f'<div class="card-vetrina" style="background-image: url(\'{img_url}\');" onclick="window.top.location.href=\'{link_url}\';"></div>'
+            html_vetrina += f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
@@ -86,6 +80,7 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
+# LOGICA
 if "job" in st.query_params:
     st.write("Redirect al form...")
 else:
