@@ -786,45 +786,43 @@ else:
                             st.error("❌ Compila i campi obbligatori.")
 
             with col_tabella:
-    st.markdown("### 📋 Registro Assunzioni Attive")
-
-    # Recupera i dati da Supabase
-    response = supabase.table("assunzioni_attive").select("*").execute()
-    data = response.data
-
-    if data:
-        # Trasforma in DataFrame
-        df_assunzioni = pd.DataFrame(data)
-
-        df_ass_modificato = st.data_editor(
-            df_assunzioni,
-            use_container_width=True,
-            num_rows="dynamic",
-            column_config={
-                "nome_dipendente": "Dipendente",
-                "ruolo": "Ruolo / Mansione",
-                "tipo_contratto": st.column_config.SelectboxColumn(
-                    "Contratto",
-                    options=[
-                        "Indeterminato",
-                        "Determinato",
-                        "Apprendistato",
-                        "Stage / Tirocinio"
-                    ]
-                ),
-                "data_inizio": "Data Inizio",
-                "ral": "RAL (€)"
-            },
-            key="editor_assunzioni_db"
-        )
-
-        if not df_ass_modificato.equals(df_assunzioni):
-            st.warning(
-                "Nota: Le modifiche in tabella richiedono una funzione di update dedicata."
-            )
-
-    else:
-        st.info("Nessuna assunzione registrata nel database.")
+                st.markdown("### 📋 Registro Assunzioni Attive")
+            
+                # Recupera i dati da Supabase
+                response = supabase.table("assunzioni_attive").select("*").execute()
+                data = response.data
+            
+                if data:
+                    df_assunzioni = pd.DataFrame(data)
+            
+                    df_ass_modificato = st.data_editor(
+                        df_assunzioni,
+                        use_container_width=True,
+                        num_rows="dynamic",
+                        column_config={
+                            "nome_dipendente": "Dipendente",
+                            "ruolo": "Ruolo / Mansione",
+                            "tipo_contratto": st.column_config.SelectboxColumn(
+                                "Contratto",
+                                options=[
+                                    "Indeterminato",
+                                    "Determinato",
+                                    "Apprendistato",
+                                    "Stage / Tirocinio"
+                                ]
+                            ),
+                            "data_inizio": "Data Inizio",
+                            "ral": "RAL (€)"
+                        },
+                        key="editor_assunzioni_db"
+                    )
+            
+                    if not df_ass_modificato.equals(df_assunzioni):
+                        st.warning(
+                            "Nota: Le modifiche richiedono una funzione di update."
+                        )
+                else:
+                    st.info("Nessuna assunzione registrata nel database.")
         
         # --- TAB 6: REPORT ---
         with scelta_tab[5]:
