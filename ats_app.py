@@ -33,8 +33,11 @@ def mostra_form_assunzione():
                 margin: 0 auto !important; 
             }
             
-            /* Stile per le etichette */
+            /* Stile per le etichette e i subheader */
             label { color: white !important; font-weight: 600 !important; }
+            h3 { color: white !important; } 
+            
+            /* Stile del form */
             .stForm { background-color: #0f172a !important; border: 1px solid #1e293b !important; }
         </style>
     """, unsafe_allow_html=True)
