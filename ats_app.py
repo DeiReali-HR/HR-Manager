@@ -22,14 +22,28 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 def mostra_form_assunzione():
+    # CSS per il box Blu Navy con scritte bianche
     st.markdown("""
         <style>
-            .box-assunzione { background-color: #0f172a; color: white; padding: 40px; border-radius: 15px; }
-            .testo-bianco { color: white !important; }
+            .box-assunzione { 
+                background-color: #0f172a; 
+                color: white; 
+                padding: 30px; 
+                border-radius: 15px; 
+                margin-bottom: 20px;
+            }
+            .box-assunzione h2 { color: white !important; }
+            .box-assunzione label { color: white !important; }
         </style>
     """, unsafe_allow_html=True)
+    
     st.markdown('<div class="box-assunzione">', unsafe_allow_html=True)
-    def mostra_logo_aziendale():
+    mostra_logo_aziendale() 
+    st.markdown('<h2 style="color:white; text-align:center;">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
+    
+    # Qui inizia il form
+    with st.form("form_assunzione_completo"):
+
     # Assicurati che queste righe siano spostate verso destra (indentate)
         percorso_logo = "logo_aziendale.jpg"
     
