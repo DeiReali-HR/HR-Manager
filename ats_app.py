@@ -22,24 +22,44 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 def mostra_form_assunzione():
-    # CSS per il box Blu Navy
+    # CSS per il box e sfondo Blu Navy
     st.markdown("""
         <style>
-            .box-assunzione { background-color: #0f172a; color: white; padding: 40px; border-radius: 15px; }
-            .testo-bianco { color: white !important; }
+            /* Colora tutto lo sfondo della pagina di blu navy */
+            .stApp { background-color: #0f172a !important; }
+            
+            .box-assunzione { 
+                background-color: #0f172a; 
+                color: white; 
+                padding: 30px; 
+                border-radius: 15px;
+            }
+            /* Centra il logo e forza l'altezza a 600px */
+            .logo-centrato { 
+                display: flex; 
+                justify-content: center; 
+                margin-bottom: 20px; 
+            }
+            .logo-centrato img { 
+                max-height: 600px !important; 
+                width: auto !important; 
+            }
         </style>
     """, unsafe_allow_html=True)
     
+    # Contenitore blu
     st.markdown('<div class="box-assunzione">', unsafe_allow_html=True)
     
-    # LOGO E TITOLO
+    # LOGO CENTRATO
     percorso_logo = "logo_aziendale.jpg"
     if os.path.exists(percorso_logo):
+        st.markdown('<div class="logo-centrato">', unsafe_allow_html=True)
         st.image(percorso_logo)
+        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown("<h2 style='text-align:center; color:white;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
         
-    st.markdown('<h2 class="testo-bianco" style="text-align:center;">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:white; text-align:center;">Processo di Assunzione - Dei Reali</h2>', unsafe_allow_html=True)
     
     # FORM UNICO
     with st.form("form_assunzione_completo"):
