@@ -6,15 +6,12 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# CSS e Stili
+# CSS aggiornato con cursor: pointer per rendere cliccabili i div
 st.markdown("""
 <style>
-    /* Nasconde elementi di sistema Streamlit */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
-    
-    /* Rimozione spazio in alto e ottimizzazione Mobile */
     .block-container { padding-top: 0rem !important; }
     @media (max-width: 600px) {
         .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
@@ -28,13 +25,13 @@ st.markdown("""
     
     .vetrina-full-width { background-color: #f1f5f9; margin-left: -500px; margin-right: -500px; padding: 30px 500px; margin-bottom: 30px; }
     .grid-vetrina { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; max-width: 1400px; margin: auto; }
-    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; }
+    .card-vetrina { aspect-ratio: 395/704; background-size: cover; background-position: center; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer; }
     
     .card-orizzontale { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 10px; height: 350px; overflow: hidden; }
     .img-lato { width: 35%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; border-right: 1px solid #e2e8f0; background-color: #f1f5f9; }
     .testo-lato { width: 65%; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
     .contenuto-scrollabile { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
-    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; }
+    .btn-black { background: #0f172a; color: white !important; padding: 12px; border-radius: 4px; text-align: center; text-decoration: none; font-weight: bold; display: block; font-size: 0.9rem; flex-shrink: 0; cursor: pointer; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,7 +49,7 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <a href="{link_candidatura}" target="_top" class="btn-black">CANDIDATI ORA ↗</a>
+            <div onclick="window.top.location.href='{link_candidatura}';" class="btn-black">CANDIDATI ORA ↗</div>
         </div>
     </div>
     <div class="riga-blu"></div>
@@ -77,7 +74,7 @@ def mostra_portale():
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
             link_url = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-            html_vetrina += f'<a href="{link_url}" target="_top"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
+            html_vetrina += f'<div class="card-vetrina" style="background-image: url(\'{img_url}\');" onclick="window.top.location.href=\'{link_url}\';"></div>'
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
@@ -89,7 +86,6 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
-# LOGICA
 if "job" in st.query_params:
     st.write("Redirect al form...")
 else:
