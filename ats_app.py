@@ -87,9 +87,46 @@ def mostra_form_assunzione():
         
         if st.form_submit_button("INVIO"):
             if consenso and firma:
-                st.success("Dati inviati con successo!")
+                # 1. Dati Anagrafici
+                dati_candidato = {
+                    "nome_cognome": nome,
+                    "luogo_nascita": nascita,
+                    "stato_nascita": stato,
+                    "provincia": prov,
+                    "data_nascita": str(data_nascita),
+                    "indirizzo_residenza": residenza,
+                    "domicilio": domicilio,
+                    "titolo_studio": titolo,
+                    "recapito_telefonico": tel,
+                    "email": mail,
+                    "iban": iban,
+                    "intestatario": intestatario
+                }
+                
+                # 2. Inserimento nel DB
+                risposta = supabase.table("candidati").insert(dati_candidato).execute()
+                candidato_id = risposta.data[0]['id']
+                
+                # 3. Funzione per upload singolo per evitare ripetizioni
+                def carica_file(file_obj, tipo, nome_file):
+                    if file_obj:
+                        path = f"{candidato_id}/{nome_file}"
+                        supabase.storage.from_("documenti-candidati").upload(path, file_obj.getvalue())
+                        supabase.table("documenti_assunzione").insert({
+                            "candidato_id": candidato_id,
+                            "tipo_documento": tipo,
+                            "percorso_file": path
+                        }).execute()
+
+                # Eseguiamo l'upload per i file che hai definito tu
+                carica_file(doc_att, "Documentazione Attestante", "doc_att.pdf")
+                carica_file(id_f, "Carta Identità", "carta_identita.pdf")
+                carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
+                carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
+                
+                st.success("Candidatura inviata con successo!")
             else:
-                st.error("Devi accettare il consenso e firmare.")
+                st.error("Per favore, firma e dai il consenso al trattamento dati.")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
