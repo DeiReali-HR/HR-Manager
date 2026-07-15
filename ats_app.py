@@ -31,12 +31,12 @@ def mostra_form_assunzione():
     st.markdown('<div class="box-assunzione">', unsafe_allow_html=True)
     def mostra_logo_aziendale():
     # Assicurati che queste righe siano spostate verso destra (indentate)
-    percorso_logo = "logo_aziendale.jpg"
+        percorso_logo = "logo_aziendale.jpg"
     
-    if os.path.exists(percorso_logo):
-        st.image(percorso_logo)
-    else:
-        st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
+        if os.path.exists(percorso_logo):
+            st.image(percorso_logo)
+        else:
+            st.markdown("<h2 style='text-align:center; color:#1E3A8A;'>👑 DEI REALI</h2>", unsafe_allow_html=True)
     with st.form("form_assunzione_completo"):
         col1, col2 = st.columns(2)
         with col1:
