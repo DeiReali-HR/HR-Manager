@@ -69,7 +69,8 @@ def render_card(a):
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
                 <p style="font-size:0.85rem;">{note_testo}</p>
             </div>
-            <a href="{link_candidatura}" class="btn-black">CANDIDATI ORA ↗</a>
+            <!-- Aggiungi target="_parent" anche qui -->
+            <a href="{link_candidatura}" class="btn-black" target="_parent">CANDIDATI ORA ↗️</a>
         </div>
     </div>
     <div class="riga-blu"></div>
@@ -99,7 +100,7 @@ def mostra_portale():
         html_vetrina = '<div class="vetrina-full-width"><div class="grid-vetrina">'
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
-            html_vetrina += f'<a href="?job={a["id"]}"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
+            html_vetrina += f'<a href="/?job={a["id"]}" target="_parent"><div class="card-vetrina" style="background-image: url(\'{img_url}\');"></div></a>'
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
