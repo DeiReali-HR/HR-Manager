@@ -73,7 +73,7 @@ def mostra_form_assunzione():
         
         # Area Upload
         st.subheader("Documenti")
-        doc_att = st.file_uploader("Documentazione attestante")
+        doc_att = st.file_uploader("documentazione attestante")
         id_f = st.file_uploader("Carta Identità")
         cf = st.file_uploader("Codice Fiscale")
         perm = st.file_uploader("Permesso di soggiorno")
@@ -119,7 +119,7 @@ def mostra_form_assunzione():
                         }).execute()
 
                 # Eseguiamo l'upload per i file che hai definito tu
-                carica_file(doc_att, "Documentazione Attestante", "doc_att.pdf")
+                carica_file(doc_att, "documentazione Attestante", "doc_att.pdf")
                 carica_file(id_f, "Carta Identità", "carta_identita.pdf")
                 carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
                 carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
@@ -765,9 +765,9 @@ else:
                         if candidato_scelto and ruolo_aziendale and data_inizio:
                             # 1. Gestione Upload File (se presente)
                             percorso_file = None
-                            if Documentazione:
+                            if documentazione:
                                 percorso_file = f"assunzioni/{candidato_scelto}_{data_inizio}.pdf"
-                                supabase.storage.from_("documenti-candidati").upload(percorso_file, Documentazione.getvalue())
+                                supabase.storage.from_("documenti-candidati").upload(percorso_file, documentazione.getvalue())
 
                             # 2. Inserimento nel Database Supabase
                             nuova_ass = {
