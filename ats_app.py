@@ -77,49 +77,90 @@ def mostra_form_assunzione():
         firma = st.text_input("Firma per accettazione")
         
         if st.form_submit_button("INVIO"):
-            if consenso and firma:
-                dati_candidato = {
-                    "nome_cognome": nome,
-                    "luogo_nascita": nascita,
-                    "stato_nascita": stato,
-                    "provincia": prov,
-                    "data_nascita": str(data_nascita),
-                    "indirizzo_residenza": residenza,
-                    "domicilio": domicilio,
-                    "titolo_studio": titolo,
-                    "recapito_telefonico": tel,
-                    "email": mail,
-                    "iban": iban,
-                    "intestatario": intestatario
-                }
-                st.json(dati_candidato)
-                
-                try:
-                    # Inserimento nel DB
-                    risposta = supabase.table("candidati2").insert(dati_candidato).execute()
-                    candidato_id = risposta.data[0]['id']
-                    st.success("Candidatura inviata con successo!")
-                except Exception as e:
-                    # Questo comando mostrerà l'errore specifico inviato da Supabase
-                    st.error(f"Errore tecnico dettagliato: {e}")
-                    st.stop()
-                
-                def carica_file(file_obj, tipo, nome_file):
-                    if file_obj:
-                        path = f"{candidato_id}/{nome_file}"
-                        supabase.storage.from_("documenti-candidati").upload(path, file_obj.getvalue())
-                        supabase.table("documenti_assunzione").insert({
-                            "candidato_id": candidato_id,
-                            "tipo_documento": tipo,
-                            "percorso_file": path
-                        }).execute()
 
-                carica_file(doc_att, "documentazione Attestante", "doc_att.pdf")
-                carica_file(id_f, "Carta Identità", "carta_identita.pdf")
-                carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
-                carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
-                
-                st.success("Candidatura inviata con successo!")
+    if not consenso:
+        st.error("Devi accettare il consenso al trattamento dati.")
+        st.stop()
+
+    if not firma.strip():
+        st.error("Inserisci la firma.")
+        st.stop()
+
+    # Controllo data
+    if data_nascita is None:
+        st.error("Seleziona la data di nascita.")
+        st.stop()
+
+    dati_candidato = {
+        "nome_cognome": nome.strip(),
+        "luogo_nascita": nascita.strip(),
+        "stato_nascita": stato.strip(),
+        "provincia": prov.strip(),
+        "data_nascita": data_nascita.isoformat(),
+        "indirizzo_residenza": residenza.strip(),
+        "domicilio": domicilio.strip(),
+        "titolo_studio": titolo.strip(),
+        "recapito_telefonico": tel.strip(),
+        "email": mail.strip(),
+        "iban": iban.strip(),
+        "intestatario": intestatario.strip()
+    }
+
+    # DEBUG
+    st.subheader("DEBUG DATI INVIATI")
+    st.json(dati_candidato)
+
+    try:
+
+        risposta = (
+            supabase
+            .table("candidati2")
+            .insert(dati_candidato)
+            .execute()
+        )
+
+        if not risposta.data:
+            st.error("Supabase non ha restituito alcun record.")
+            st.stop()
+
+        candidato_id = risposta.data[0]["id"]
+
+        st.success("Candidato salvato correttamente.")
+
+    except Exception as e:
+        st.error("ERRORE SUPABASE")
+        st.exception(e)
+        st.stop()
+
+    def carica_file(file_obj, tipo, nome_file):
+        if file_obj is None:
+            return
+
+        try:
+
+            path = f"{candidato_id}/{nome_file}"
+
+            supabase.storage.from_("documenti-candidati").upload(
+                path,
+                file_obj.getvalue()
+            )
+
+            supabase.table("documenti_assunzione").insert({
+                "candidato_id": candidato_id,
+                "tipo_documento": tipo,
+                "percorso_file": path
+            }).execute()
+
+        except Exception as e:
+            st.warning(f"Errore caricamento {tipo}")
+            st.exception(e)
+
+    carica_file(doc_att, "Documentazione Attestante", "doc_att.pdf")
+    carica_file(id_f, "Carta Identità", "carta_identita.pdf")
+    carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
+    carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
+
+    st.success("✅ Procedura di assunzione completata.")
             else:
                 st.error("Per favore, firma e dai il consenso al trattamento dati.")
     
