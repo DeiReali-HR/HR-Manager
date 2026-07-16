@@ -91,9 +91,15 @@ def mostra_form_assunzione():
                     "intestatario": intestatario
                 }
                 
-                # 2. Inserimento nel DB (Aggiornato alla nuova tabella)
-                risposta = supabase.table("candidati2").insert(dati_candidato).execute()
-                candidato_id = risposta.data[0]['id']
+                try:
+                    # Inserimento nel DB
+                    risposta = supabase.table("candidati2").insert(dati_candidato).execute()
+                    candidato_id = risposta.data[0]['id']
+                    st.success("Candidatura inviata con successo!")
+                except Exception as e:
+                    # Questo comando mostrerà l'errore specifico inviato da Supabase
+                    st.error(f"Errore tecnico dettagliato: {e}")
+                    st.stop()
                 
                 def carica_file(file_obj, tipo, nome_file):
                     if file_obj:
