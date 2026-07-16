@@ -726,22 +726,68 @@ else:
 
     # Funzione interna per generare il PDF
     def genera_lettera_pdf(nome, ruolo, ral, data):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, txt="LETTERA DI ASSUNZIONE", ln=True, align='C')
-        pdf.ln(10)
-        pdf.set_font("Arial", size=12)
-        testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sarà pari a € {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
-        pdf.multi_cell(0, 10, txt=testo)
-        return pdf.output(dest='S').encode('latin-1')
+    from fpdf import FPDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="LETTERA DI ASSUNZIONE", ln=True, align='C')
+    pdf.ln(10)
+    pdf.set_font("Arial", size=12)
+    testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sarà pari a € {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
+    pdf.multi_cell(0, 10, txt=testo)
+    return pdf.output(dest='S').encode('latin-1')
 
-    # Recupero dinamico candidati da Supabase (Tabella 'candidati2')
+# --- TAB 4: COLLOQUI ---
+with scelta_tab[3]:
+    st.subheader("🤝 Calendario e Agenda Live")
+    col_agenda, col_nuovo = st.columns([2, 1.2])
+    res_agenda_db = supabase.table("agenda").select("*").execute()
+    agenda_list = res_agenda_db.data if res_agenda_db.data else []
+    
+    with col_agenda:
+        res_col = supabase.table("candidati").select("*").eq("stato", "Approvato per Colloquio").execute()
+        colloqui = res_col.data if res_col.data else []
+        if not colloqui: st.info("Nessun colloquio pianificato.")
+        for c in colloqui:
+            match_app = next((a for a in agenda_list if a.get('candidato') == c['nome']), None)
+            d_c = match_app['data'] if match_app else 'Da pianificare'
+            o_c = match_app['ora'] if match_app else 'N/D'
+            meet_url = match_app['meet_link'] if match_app and match_app.get('meet_link') else "https://meet.google.com/new"
+            
+            st.markdown(f"<div class='saas-box'><h4>👤 {c['nome']}</h4>🗓️ {d_c} | ⏰ {o_c}</div>", unsafe_allow_html=True)
+            cb1, cb2 = st.columns(2)
+            cb1.link_button("💬 WhatsApp", f"https://wa.me/{c['telefono']}", use_container_width=True)
+            cb2.link_button("📹 Videochiamata", meet_url, use_container_width=True, type="primary")
+            
+            c1, c2, c3 = st.columns(3)
+            if c1.button("🎉 Promuovi", key=f"ass_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Assunto"}).eq("id", c['id']).execute(); st.rerun()
+            if c2.button("❌ Rifiuta", key=f"rif_{c['id']}", use_container_width=True): supabase.table("candidati").update({"stato":"Rifiutato"}).eq("id", c['id']).execute(); st.rerun()
+            if c3.button("🗑️ Annulla Turno", key=f"cncl_{c['id']}", use_container_width=True):
+                if match_app: supabase.table("agenda").delete().eq("id", match_app['id']).execute(); st.rerun()
+    
+    with col_nuovo:
+        if colloqui:
+            candidato_sel = st.selectbox("Schedula risorsa", [c['nome'] for c in colloqui])
+            c_obj = next(c for c in colloqui if c['nome'] == candidato_sel)
+            nuova_data = st.date_input("Data", date.today())
+            nuova_ora = st.time_input("Orario", time(15, 45))
+            if st.button("Salva Appuntamento", use_container_width=True):
+                match_ex = next((a for a in agenda_list if a.get('candidato') == c_obj['nome']), None)
+                payload = {"candidato": c_obj['nome'], "data": str(nuova_data), "ora": nuova_ora.strftime("%H:%M"), "meet_link": genera_codice_meet_statico(), "telefono": c_obj.get('telefono','')}
+                if match_ex: supabase.table("agenda").update(payload).eq("id", match_ex['id']).execute()
+                else: supabase.table("agenda").insert(payload).execute()
+                st.rerun()
+
+# --- TAB 5: ASSUNZIONI & GENERAZIONE CONTRATTI ---
+with scelta_tab[4]:
+    st.markdown("## 💼 Gestione Assunzioni & Onboarding")
+    
+    # Recupero candidati da Supabase
     try:
         res_cand = supabase.table("candidati2").select("nome_cognome").execute()
         opzioni_candidati = [c['nome_cognome'] for c in res_cand.data]
     except:
-        opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri"]
+        opzioni_candidati = ["Daniele Rossi", "Elena Bianchi"]
 
     col_form, col_tabella = st.columns([1, 1.4])
 
@@ -761,13 +807,13 @@ else:
             
             if submit_assunzione:
                 if candidato_scelto and ruolo_aziendale and data_inizio:
-                    # 1. Upload File
+                    # Upload
                     percorso_file = None
                     if documentazione:
                         percorso_file = f"assunzioni/{candidato_scelto}_{data_inizio}.pdf"
                         supabase.storage.from_("documenti-candidati").upload(percorso_file, documentazione.getvalue())
 
-                    # 2. Inserimento Database
+                    # Salva DB
                     nuova_ass = {
                         "nome_dipendente": candidato_scelto, 
                         "ruolo": ruolo_aziendale, 
@@ -777,42 +823,26 @@ else:
                         "documenti_path": percorso_file
                     }
                     supabase.table("assunzioni_attive").insert(nuova_ass).execute()
+                    st.success("✔️ Assunzione salvata!")
                     
-                    st.success(f"✔️ Assunzione di {candidato_scelto} registrata!")
-                    
-                    # 3. Generazione e Download PDF
+                    # Download PDF
                     pdf_bytes = genera_lettera_pdf(candidato_scelto, ruolo_aziendale, ral_proposta, str(data_inizio))
-                    st.download_button(
-                        label="📥 Scarica Lettera Assunzione PDF",
-                        data=pdf_bytes,
-                        file_name=f"Lettera_{candidato_scelto}.pdf",
-                        mime="application/pdf"
-                    )
-                else:
-                    st.error("❌ Compila i campi obbligatori.")
+                    st.download_button("📥 Scarica Lettera Assunzione", pdf_bytes, file_name=f"Lettera_{candidato_scelto}.pdf", mime="application/pdf")
+                    st.rerun()
 
     with col_tabella:
         st.markdown("### 📋 Registro Assunzioni Attive")
         response = supabase.table("assunzioni_attive").select("*").execute()
         if response.data:
-            df_assunzioni = pd.DataFrame(response.data)
-            st.data_editor(
-                df_assunzioni,
-                use_container_width=True,
-                column_config={
-                    "nome_dipendente": "Dipendente",
-                    "ruolo": "Ruolo / Mansione",
-                    "data_inizio": "Data Inizio",
-                    "ral": "RAL (€)"
-                }
-            )
+            df = pd.DataFrame(response.data)
+            st.data_editor(df, use_container_width=True)
         else:
-            st.info("Nessuna assunzione registrata nel database.")
-        
-        # --- TAB 6: REPORT ---
-        with scelta_tab[5]:
-            st.subheader("📊 Report e Statistiche Personale")
-            st.info("I grafici analitici del personale, i tempi medi di onboarding e le metriche di screening verranno renderizzati in questa sezione.")
+            st.info("Nessuna assunzione registrata.")
+
+# --- TAB 6: REPORT ---
+with scelta_tab[5]:
+    st.subheader("📊 Report e Statistiche Personale")
+    st.info("I grafici analitici del personale verranno renderizzati in questa sezione.")
 
         # --- TAB 7: ANAGRAFICA CLIENTI B2B ---
         with scelta_tab[6]:
