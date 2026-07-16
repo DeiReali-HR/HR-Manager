@@ -840,25 +840,38 @@ else:
         
         # --- TAB 7: ANAGRAFICA CLIENTI B2B ---
         with scelta_tab[6]:
-        st.markdown("## 🏢 Anagrafica Clienti B2B")
-        # ... (inizializzazione st.session_state.lista_clienti) ...
-    
-    with col_mod:
-        st.markdown("### ➕ Inserisci Nuovo Cliente")
-        with st.form("form_nuovo_cliente", clear_on_submit=True):
-            ragione_sociale = st.text_input("Ragione Sociale Azienda*")
-            partita_iva = st.text_input("Partita IVA*")
-            indirizzo_op = st.text_input("Indirizzo Operativo") # Nuovo campo
-            codice_inail = st.text_input("Codice PAT INAIL")   # Nuovo campo
-            # ... resto dei campi ...
-            if st.form_submit_button("Registra Cliente"):
-                st.session_state.lista_clienti.append({
-                    "azienda": ragione_sociale, 
-                    "piva": partita_iva, 
-                    "indirizzo": indirizzo_op, 
-                    "inail": codice_inail
-                })
-                st.rerun()
+            st.markdown("## 🏢 Anagrafica Clienti B2B")
+            
+            if "lista_clienti" not in st.session_state:
+                st.session_state.lista_clienti = [
+                    {"azienda": "Reali Logistics S.r.l.", "piva": "01234567890", "indirizzo": "Via Roma 1", "inail": "PAT123", "referente": "Mario Rossi", "email": "mario.rossi@realilogistics.it", "stato": "Attivo"}
+                ]
+            
+            col_mod, col_elenco = st.columns([1, 1.6])
+            
+            with col_mod:
+                st.markdown("### ➕ Inserisci Nuovo Cliente")
+                with st.form("form_nuovo_cliente", clear_on_submit=True):
+                    ragione_sociale = st.text_input("Ragione Sociale Azienda*")
+                    partita_iva = st.text_input("Partita IVA*")
+                    indirizzo_op = st.text_input("Indirizzo Operativo")
+                    codice_inail = st.text_input("Codice PAT INAIL")
+                    nome_referente = st.text_input("Nome Referente")
+                    email_contatto = st.text_input("Email di Contatto")
+                    stato_contratto = st.selectbox("Stato Contrattuale", ["Attivo", "In Attivazione", "Sospeso"])
+                    
+                    if st.form_submit_button("Registra Cliente"):
+                        if ragione_sociale and partita_iva:
+                            st.session_state.lista_clienti.append({
+                                "azienda": ragione_sociale, 
+                                "piva": partita_iva, 
+                                "indirizzo": indirizzo_op, 
+                                "inail": codice_inail,
+                                "referente": nome_referente,
+                                "email": email_contatto,
+                                "stato": stato_contratto
+                            })
+                            st.rerun()
             
             with col_elenco:
                 st.markdown("### 📋 Elenco & Gestione Clienti Partner")
@@ -873,7 +886,8 @@ else:
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
             col_ord1, col_ord2 = st.columns([2, 2])
-            with col_ord1: ordine_scelto = st.selectbox("Ordina per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
+            with col_ord1: 
+                ordine_scelto = st.selectbox("Ordina per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
             with col_ord2:
                 res_posizioni = supabase.table("candidati").select("posizione").execute()
                 lista_posizioni = list(set([item['posizione'] for item in res_posizioni.data if item.get('posizione')])) if res_posizioni.data else []
