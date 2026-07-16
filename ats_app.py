@@ -46,7 +46,6 @@ def mostra_form_assunzione():
     with st.form("form_assunzione_completo"):
         col1, col2 = st.columns(2)
         with col1:
-            st.json(dati_candidato)
             nome = st.text_input("Nome e Cognome")
             nascita = st.text_input("Luogo di Nascita")
             stato = st.text_input("Stato di Nascita (se straniero)")
@@ -93,6 +92,7 @@ def mostra_form_assunzione():
                     "iban": iban,
                     "intestatario": intestatario
                 }
+                st.json(dati_candidato)
                 
                 try:
                     # Inserimento nel DB
