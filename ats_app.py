@@ -839,9 +839,9 @@ else:
             st.info("I grafici analitici del personale, i tempi medi di onboarding e le metriche di screening verranno renderizzati in questa sezione.")
         
         # --- TAB 7: ANAGRAFICA CLIENTI B2B ---
-with scelta_tab[6]:
-    st.markdown("## 🏢 Anagrafica Clienti B2B")
-    # ... (inizializzazione st.session_state.lista_clienti) ...
+        with scelta_tab[6]:
+        st.markdown("## 🏢 Anagrafica Clienti B2B")
+        # ... (inizializzazione st.session_state.lista_clienti) ...
     
     with col_mod:
         st.markdown("### ➕ Inserisci Nuovo Cliente")
