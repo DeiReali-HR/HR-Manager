@@ -13,15 +13,22 @@ from openai import OpenAI
 from fpdf import FPDF
 import io
 def genera_lettera_pdf(nome, ruolo, ral, data):
+    from fpdf import FPDF
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(200, 10, txt="LETTERA DI ASSUNZIONE", ln=True, align='C')
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
-    testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sarà pari a € {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
-    pdf.multi_cell(0, 10, txt=testo)
-    return pdf.output(dest='S').encode('latin-1')
+    
+    # Pulizia del testo: sostituiamo le lettere accentate problematiche se necessario
+    # oppure usiamo una stringa codificata correttamente
+    testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sara pari a Euro {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
+    
+    # Proviamo a convertire in latin-1 ignorando gli errori o sostituendoli
+    pdf.multi_cell(0, 10, txt=testo.encode('latin-1', 'replace').decode('latin-1'))
+    
+    return pdf.output(dest='S')
 
 # 1. Configurazione della pagina
 st.set_page_config(page_title="Dei Reali - Suite Enterprise Risorse Umane", page_icon="👑", layout="wide")
