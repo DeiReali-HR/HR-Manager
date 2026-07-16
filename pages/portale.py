@@ -5,7 +5,7 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# Stili CSS
+# Stili CSS integrati per la perfetta fusione Banner-Input
 st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
@@ -13,17 +13,17 @@ st.markdown("""
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
     
-    /* Contenitore per allineare input e banner */
-    .banner-wrapper { position: relative; width: 100%; }
-    .input-box-container {
-        background-color: #f8f9fb; 
-        padding: 20px; 
-        margin-top: -30px; /* "Attacca" l'input all'immagine */
+    /* Contenitore per fondere banner e input */
+    .banner-container { width: 100%; margin-bottom: 0px; }
+    .input-fusion-container {
+        background-color: #f8f9fb; /* Colore di sfondo che simula la base dell'immagine */
+        padding: 20px 50px;
+        margin-top: -10px; /* "Aggancia" visivamente l'input all'immagine */
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
-        border-left: 1px solid #e0e0e0;
-        border-right: 1px solid #e0e0e0;
-        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 20px;
     }
     
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
@@ -58,11 +58,13 @@ def render_card(a):
     """
 
 def mostra_portale():
-    # Banner
+    # 1. Banner
+    st.markdown('<div class="banner-container">', unsafe_allow_html=True)
     st.image("BOX_ASS.png", use_column_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Input Area che si incastra sotto il banner
-    st.markdown('<div class="input-box-container">', unsafe_allow_html=True)
+    # 2. Area Input "fusa" al banner
+    st.markdown('<div class="input-fusion-container">', unsafe_allow_html=True)
     c1, c2 = st.columns([3, 1])
     with c1:
         codice = st.text_input("Inserisci Codice", type="password", key="login_fix", label_visibility="collapsed")
@@ -77,11 +79,11 @@ def mostra_portale():
     
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
-    # Annunci
+    # Caricamento Annunci
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # Vetrina
+    # In Evidenza
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
