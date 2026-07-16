@@ -46,11 +46,14 @@ def mostra_form_assunzione():
     with st.form("form_assunzione_completo"):
         col1, col2 = st.columns(2)
         with col1:
+            st.json(dati_candidato)
             nome = st.text_input("Nome e Cognome")
             nascita = st.text_input("Luogo di Nascita")
             stato = st.text_input("Stato di Nascita (se straniero)")
             prov = st.text_input("Provincia")
             data_nascita = st.date_input("Data di Nascita")
+            st.write("Data selezionata:", data_nascita)
+            st.write("Tipo:", type(data_nascita))
         with col2:
             residenza = st.text_input("Indirizzo Residenza")
             domicilio = st.text_input("Domicilio (se diverso)")
