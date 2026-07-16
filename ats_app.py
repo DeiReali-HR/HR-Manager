@@ -91,8 +91,8 @@ def mostra_form_assunzione():
                     "intestatario": intestatario
                 }
                 
-                # Inserimento nel DB
-                risposta = supabase.table("candidati").insert(dati_candidato).execute()
+                # 2. Inserimento nel DB (Aggiornato alla nuova tabella)
+                risposta = supabase.table("candidati2").insert(dati_candidato).execute()
                 candidato_id = risposta.data[0]['id']
                 
                 def carica_file(file_obj, tipo, nome_file):
