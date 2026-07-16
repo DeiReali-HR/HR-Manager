@@ -11,48 +11,38 @@ from supabase import create_client, Client
 from pypdf import PdfReader
 from openai import OpenAI
 
-# 1. Configurazione della pagina Enterprise
+# 1. Configurazione della pagina
 st.set_page_config(page_title="Dei Reali - Suite Enterprise Risorse Umane", page_icon="👑", layout="wide")
-st.markdown("""
-<style>
-    [data-testid="stSidebar"] { display: none; }
-    header { visibility: hidden; }
-    #MainMenu { visibility: hidden; }
-    .block-container { padding-top: 0rem !important; }
-</style>
-""", unsafe_allow_html=True)
+
+# Configurazione globale Supabase
+@st.cache_resource
+def init_supabase():
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    return create_client(url, key)
+
+supabase = init_supabase()
+
 def mostra_form_assunzione():
+    global supabase  # <--- FONDAMENTALE: permette alla funzione di usare la variabile globale
+    
     st.markdown("""
         <style>
-            /* Sfondo blu navy per tutta la pagina */
             .stApp { background-color: #0f172a !important; }
-            
-            /* Larghezza fissa centrata per Form e Testata */
-            .main-container { 
-                max-width: 950px !important; 
-                margin: 0 auto !important; 
-            }
-            
-            /* Stile per le etichette e i subheader */
+            .main-container { max-width: 950px !important; margin: 0 auto !important; }
             label { color: white !important; font-weight: 600 !important; }
             h3 { color: white !important; } 
-            
-            /* Stile del form */
             .stForm { background-color: #0f172a !important; border: 1px solid #1e293b !important; }
         </style>
     """, unsafe_allow_html=True)
 
-    # Contenitore centrato
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # Inserimento della tua immagine di testata
     if os.path.exists("testata.png"):
         st.image("testata.png", use_column_width=True)
     else:
         st.markdown("<h2>👑 DEI REALI</h2>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
    
-    # FORM UNICO
     with st.form("form_assunzione_completo"):
         col1, col2 = st.columns(2)
         with col1:
@@ -71,7 +61,6 @@ def mostra_form_assunzione():
         st.write("---")
         note = st.text_area("Note categorie protette")
         
-        # Area Upload
         st.subheader("Documenti")
         doc_att = st.file_uploader("documentazione attestante")
         id_f = st.file_uploader("Carta Identità")
@@ -87,7 +76,6 @@ def mostra_form_assunzione():
         
         if st.form_submit_button("INVIO"):
             if consenso and firma:
-                # 1. Dati Anagrafici
                 dati_candidato = {
                     "nome_cognome": nome,
                     "luogo_nascita": nascita,
@@ -103,11 +91,10 @@ def mostra_form_assunzione():
                     "intestatario": intestatario
                 }
                 
-                # 2. Inserimento nel DB
+                # Inserimento nel DB
                 risposta = supabase.table("candidati").insert(dati_candidato).execute()
                 candidato_id = risposta.data[0]['id']
                 
-                # 3. Funzione per upload singolo per evitare ripetizioni
                 def carica_file(file_obj, tipo, nome_file):
                     if file_obj:
                         path = f"{candidato_id}/{nome_file}"
@@ -118,139 +105,6 @@ def mostra_form_assunzione():
                             "percorso_file": path
                         }).execute()
 
-                # Eseguiamo l'upload per i file che hai definito tu
-                carica_file(doc_att, "documentazione Attestante", "doc_att.pdf")
-                carica_file(id_f, "Carta Identità", "carta_identita.pdf")
-                carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
-                carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
-                
-                st.success("Candidatura inviata con successo!")
-            else:
-                st.error("Per favore, firma e dai il consenso al trattamento dati.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-import streamlit as st
-import pandas as pd
-import os
-import random
-import string
-import urllib.parse
-import re
-import base64
-from datetime import datetime, date, time
-from supabase import create_client, Client
-from pypdf import PdfReader
-from openai import OpenAI
-
-# 1. Configurazione della pagina Enterprise
-st.set_page_config(page_title="Dei Reali - Suite Enterprise Risorse Umane", page_icon="👑", layout="wide")
-st.markdown("""
-<style>
-    [data-testid="stSidebar"] { display: none; }
-    header { visibility: hidden; }
-    #MainMenu { visibility: hidden; }
-    .block-container { padding-top: 0rem !important; }
-</style>
-""", unsafe_allow_html=True)
-def mostra_form_assunzione():
-    st.markdown("""
-        <style>
-            /* Sfondo blu navy per tutta la pagina */
-            .stApp { background-color: #0f172a !important; }
-            
-            /* Larghezza fissa centrata per Form e Testata */
-            .main-container { 
-                max-width: 950px !important; 
-                margin: 0 auto !important; 
-            }
-            
-            /* Stile per le etichette e i subheader */
-            label { color: white !important; font-weight: 600 !important; }
-            h3 { color: white !important; } 
-            
-            /* Stile del form */
-            .stForm { background-color: #0f172a !important; border: 1px solid #1e293b !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Contenitore centrato
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    
-    # Inserimento della tua immagine di testata
-    if os.path.exists("testata.png"):
-        st.image("testata.png", use_column_width=True)
-    else:
-        st.markdown("<h2>👑 DEI REALI</h2>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-   
-    # FORM UNICO
-    with st.form("form_assunzione_completo"):
-        col1, col2 = st.columns(2)
-        with col1:
-            nome = st.text_input("Nome e Cognome")
-            nascita = st.text_input("Luogo di Nascita")
-            stato = st.text_input("Stato di Nascita (se straniero)")
-            prov = st.text_input("Provincia")
-            data_nascita = st.date_input("Data di Nascita")
-        with col2:
-            residenza = st.text_input("Indirizzo Residenza")
-            domicilio = st.text_input("Domicilio (se diverso)")
-            titolo = st.text_input("Titolo di Studio")
-            tel = st.text_input("Recapito Telefonico")
-            mail = st.text_input("Mail")
-        
-        st.write("---")
-        note = st.text_area("Note categorie protette")
-        
-        # Area Upload
-        st.subheader("Documenti")
-        doc_att = st.file_uploader("documentazione attestante")
-        id_f = st.file_uploader("Carta Identità")
-        cf = st.file_uploader("Codice Fiscale")
-        perm = st.file_uploader("Permesso di soggiorno")
-        
-        st.subheader("Dati Fiscali")
-        iban = st.text_input("IBAN")
-        intestatario = st.text_input("Intestatario")
-        
-        consenso = st.checkbox("Consenso al trattamento dati personali")
-        firma = st.text_input("Firma per accettazione")
-        
-        if st.form_submit_button("INVIO"):
-            if consenso and firma:
-                # 1. Dati Anagrafici
-                dati_candidato = {
-                    "nome_cognome": nome,
-                    "luogo_nascita": nascita,
-                    "stato_nascita": stato,
-                    "provincia": prov,
-                    "data_nascita": str(data_nascita),
-                    "indirizzo_residenza": residenza,
-                    "domicilio": domicilio,
-                    "titolo_studio": titolo,
-                    "recapito_telefonico": tel,
-                    "email": mail,
-                    "iban": iban,
-                    "intestatario": intestatario
-                }
-                
-                # 2. Inserimento nel DB
-                risposta = supabase.table("candidati").insert(dati_candidato).execute()
-                candidato_id = risposta.data[0]['id']
-                
-                # 3. Funzione per upload singolo per evitare ripetizioni
-                def carica_file(file_obj, tipo, nome_file):
-                    if file_obj:
-                        path = f"{candidato_id}/{nome_file}"
-                        supabase.storage.from_("documenti-candidati").upload(path, file_obj.getvalue())
-                        supabase.table("documenti_assunzione").insert({
-                            "candidato_id": candidato_id,
-                            "tipo_documento": tipo,
-                            "percorso_file": path
-                        }).execute()
-
-                # Eseguiamo l'upload per i file che hai definito tu
                 carica_file(doc_att, "documentazione Attestante", "doc_att.pdf")
                 carica_file(id_f, "Carta Identità", "carta_identita.pdf")
                 carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
@@ -264,7 +118,8 @@ def mostra_form_assunzione():
 
 # 2. LOGICA PRIORITARIA: AREA ASSUNZIONI
 if "area_assunzione" in st.query_params:
-    if "autenticato_assunzione" not in st.session_state: st.session_state.autenticato_assunzione = False
+    if "autenticato_assunzione" not in st.session_state: 
+        st.session_state.autenticato_assunzione = False
     
     if not st.session_state.autenticato_assunzione:
         codice_input = st.text_input("Inserisci il codice di accesso:", type="password")
@@ -272,10 +127,11 @@ if "area_assunzione" in st.query_params:
             if codice_input == "AS2026Reali@":
                 st.session_state.autenticato_assunzione = True
                 st.rerun()
-            else: st.error("Codice non valido.")
+            else: 
+                st.error("Codice non valido.")
     else:
         mostra_form_assunzione()
-    st.stop() # FERMA LO SCRIPT QUI
+    st.stop()
 
 # 1. Configurazione della pagina Enterprise
 st.set_page_config(
