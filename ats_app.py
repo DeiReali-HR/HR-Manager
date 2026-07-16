@@ -50,7 +50,7 @@ def mostra_form_assunzione():
             nascita = st.text_input("Luogo di Nascita")
             stato = st.text_input("Stato di Nascita (se straniero)")
             prov = st.text_input("Provincia")
-            data_nascita = st.date_input("Data di Nascita")
+            data_nascita = st.date_input("Data di Nascita", min_value=date(1900, 1, 1))
         with col2:
             residenza = st.text_input("Indirizzo Residenza")
             domicilio = st.text_input("Domicilio (se diverso)")
