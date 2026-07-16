@@ -719,10 +719,10 @@ else:
                         st.rerun()
 
         # --- TAB 5: ASSUNZIONI & GENERAZIONE CONTRATTI ---
-with scelta_tab[4]:
-    st.markdown("## 💼 Gestione Assunzioni & Onboarding")
-    from fpdf import FPDF
-    import io
+        with scelta_tab[4]:
+            st.markdown("## 💼 Gestione Assunzioni & Onboarding")
+            from fpdf import FPDF
+            import io
 
     # Funzione interna per generare il PDF
     def genera_lettera_pdf(nome, ruolo, ral, data):
