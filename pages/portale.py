@@ -13,7 +13,6 @@ st.markdown("""
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
     
-    /* Contenitore che unisce banner e area input */
     .banner-container { width: 100%; margin-bottom: 0px; }
     .input-fusion-container {
         background-color: #f8f9fb; 
@@ -62,7 +61,7 @@ def mostra_portale():
     # 1. Visualizzazione Banner
     st.image("BOX_ASS.png", use_column_width=True)
     
-    # 2. Area Input chiaramente visibile
+    # 2. Area Input
     st.markdown('<div class="input-fusion-container">', unsafe_allow_html=True)
     c1, c2 = st.columns([3, 1])
     with c1:
@@ -70,6 +69,7 @@ def mostra_portale():
     with c2:
         if st.button("ACCEDI AL PROCESSO"):
             if codice == "AS2026Reali@":
+                # Impostiamo il parametro di autenticazione e ricarichiamo
                 st.query_params["area_assunzione"] = "true"
                 st.rerun()
             else:
@@ -105,7 +105,12 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
+# Logica principale
 if "job" in st.query_params:
     st.write("Redirect al form...")
+elif st.query_params.get("area_assunzione") == "true":
+    st.success("Accesso effettuato! Reindirizzamento in corso...")
+    # Qui il tuo codice dovrebbe richiamare la funzione che mostra il form
+    # o fare il redirect effettivo a https://deireali-hr.streamlit.app/?area_assunzione=true
 else:
     mostra_portale()
