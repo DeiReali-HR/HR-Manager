@@ -781,54 +781,41 @@ else:
                         else:
                             st.error("❌ Compila i campi obbligatori.")
 
-            with col_tabella:
-        st.markdown("### 📋 Registro Assunzioni Attive")
-        response = supabase.table("assunzioni_attive").select("*").execute()
-        
-        if response.data:
-            for ass in response.data:
-                with st.expander(f"👤 {ass['nome_dipendente']} - {ass['ruolo']}"):
-                    st.write(f"**Data Inizio:** {ass['data_inizio']} | **RAL:** {ass['ral']}€")
-                    st.write(f"**Contratto:** {ass['tipo_contratto']}")
-                    
-                    # Pulsanti Azione
-                    col_b1, col_b2 = st.columns(2)
-                    
-                    # 1. Visione Dettagli (qui puoi richiamare i dati da 'candidati2')
-                    if col_b1.button("📂 Apri Scheda Dettagli", key=f"scheda_{ass['id']}"):
-                        st.session_state.scheda_aperta = ass['id']
-                    
-                    # 2. Elimina Assunzione
-                    if col_b2.button("🗑️ Elimina", key=f"del_{ass['id']}", type="primary"):
-                        supabase.table("assunzioni_attive").delete().eq("id", ass['id']).execute()
-                        st.rerun()
+        with col_tabella:
+                st.markdown("### 📋 Registro Assunzioni Attive")
+                response = supabase.table("assunzioni_attive").select("*").execute()
+                
+                if response.data:
+                    for ass in response.data:
+                        with st.expander(f"👤 {ass['nome_dipendente']} - {ass['ruolo']}"):
+                            st.write(f"**Data Inizio:** {ass['data_inizio']} | **RAL:** {ass['ral']}€")
+                            st.write(f"**Contratto:** {ass['tipo_contratto']}")
+                            
+                            col_b1, col_b2 = st.columns(2)
+                            if col_b1.button("📂 Apri Scheda", key=f"scheda_{ass['id']}"):
+                                st.session_state.scheda_aperta = ass['id']
+                            
+                            if col_b2.button("🗑️ Elimina", key=f"del_{ass['id']}", type="primary"):
+                                supabase.table("assunzioni_attive").delete().eq("id", ass['id']).execute()
+                                st.rerun()
 
-            # Logica di visualizzazione Scheda se aperta
-            if "scheda_aperta" in st.session_state:
-                id_ass = st.session_state.scheda_aperta
-                ass = next(item for item in response.data if item['id'] == id_ass)
-                
-                st.markdown("---")
-                st.subheader(f"Scheda Assunzione: {ass['nome_dipendente']}")
-                
-                # Recupera dati personali da candidati2
-                cand = supabase.table("candidati2").select("*").eq("nome_cognome", ass['nome_dipendente']).single().execute()
-                if cand.data:
-                    st.write(f"**Luogo di Nascita:** {cand.data['luogo_nascita']}")
-                    st.write(f"**Residenza:** {cand.data['indirizzo_residenza']}")
-                
-                # Visualizzazione documenti (Listati dallo storage)
-                st.markdown("#### 📄 Documenti Caricati")
-                # Esempio di lista file dal bucket documenti-candidati
-                file_list = supabase.storage.from_("documenti-candidati").list(path=f"{cand.data['id'] if cand.data else ''}")
-                for f in file_list:
-                    st.write(f"📎 {f['name']}")
-                
-                if st.button("Chiudi Scheda"):
-                    del st.session_state.scheda_aperta
-                    st.rerun()
-        else:
-            st.info("Nessuna assunzione registrata.")
+                    # Gestione Scheda Aperta
+                    if "scheda_aperta" in st.session_state:
+                        id_ass = st.session_state.scheda_aperta
+                        ass = next((item for item in response.data if item['id'] == id_ass), None)
+                        if ass:
+                            st.markdown("---")
+                            st.subheader(f"Scheda: {ass['nome_dipendente']}")
+                            cand = supabase.table("candidati2").select("*").eq("nome_cognome", ass['nome_dipendente']).single().execute()
+                            if cand.data:
+                                st.write(f"**Luogo di Nascita:** {cand.data['luogo_nascita']}")
+                                st.write(f"**Residenza:** {cand.data['indirizzo_residenza']}")
+                            
+                            if st.button("Chiudi Scheda"):
+                                del st.session_state.scheda_aperta
+                                st.rerun()
+                else:
+                    st.info("Nessuna assunzione registrata.")
 
         # --- TAB 6: REPORT ---
         with scelta_tab[5]:
