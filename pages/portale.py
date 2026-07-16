@@ -16,7 +16,7 @@ st.markdown("""
     /* Contenitore per fondere banner e input */
     .banner-container { width: 100%; margin-bottom: 0px; }
     .input-fusion-container {
-        background-color: #f8f9fb; /* Colore di sfondo che simula la base dell'immagine */
+        background-color: #f8f9fb; /* Colore di sfondo che simula la be dell'immagine */
         padding: 20px 50px;
         margin-top: -10px; /* "Aggancia" visivamente l'input all'immagine */
         border-bottom-left-radius: 8px;
@@ -70,7 +70,7 @@ def mostra_portale():
         codice = st.text_input("Inserisci Codice", type="password", key="login_fix", label_visibility="collapsed")
     with c2:
         if st.button("ACCEDI AL PROCESSO"):
-            if codice == "As2026Reali@":
+            if codice == "AS2026Reali@":
                 st.query_params["area_assunzione"] = "true"
                 st.rerun()
             else:
