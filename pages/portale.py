@@ -1,5 +1,4 @@
 import streamlit as st
-import base64
 from supabase import create_client
 
 # Configurazione
@@ -13,6 +12,19 @@ st.markdown("""
     footer { visibility: hidden; }
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
+    
+    /* Contenitore per allineare input e banner */
+    .banner-wrapper { position: relative; width: 100%; }
+    .input-box-container {
+        background-color: #f8f9fb; 
+        padding: 20px; 
+        margin-top: -30px; /* "Attacca" l'input all'immagine */
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border-left: 1px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+    }
     
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
@@ -46,19 +58,14 @@ def render_card(a):
     """
 
 def mostra_portale():
-    # 1. Visualizzazione Banner
+    # Banner
     st.image("BOX_ASS.png", use_column_width=True)
     
-    # 2. Contenitore che "si attacca" all'immagine
-    st.markdown("""
-        <div style="background-color: #f8f9fb; padding: 20px; border-radius: 0 0 8px 8px; margin-top: -30px; margin-bottom: 30px;">
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # 3. Input e Bottone allineati sotto il banner
+    # Input Area che si incastra sotto il banner
+    st.markdown('<div class="input-box-container">', unsafe_allow_html=True)
     c1, c2 = st.columns([3, 1])
     with c1:
-        codice = st.text_input("Inserisci Codice Accesso", type="password", key="login_fix", label_visibility="collapsed")
+        codice = st.text_input("Inserisci Codice", type="password", key="login_fix", label_visibility="collapsed")
     with c2:
         if st.button("ACCEDI AL PROCESSO"):
             if codice == "As2026Reali@":
@@ -66,14 +73,15 @@ def mostra_portale():
                 st.rerun()
             else:
                 st.error("Codice errato")
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
-    # Caricamento Annunci
+    # Annunci
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # In Evidenza
+    # Vetrina
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
@@ -88,7 +96,7 @@ def mostra_portale():
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
-    # Selezioni Aperte
+    # Selezioni
     st.markdown('<p class="titolo-area">Selezioni Aperte</p>', unsafe_allow_html=True)
     for i in range(0, len(annunci_vivi), 2):
         cols = st.columns(2)
