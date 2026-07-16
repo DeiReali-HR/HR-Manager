@@ -719,100 +719,95 @@ else:
                         st.rerun()
 
         # --- TAB 5: ASSUNZIONI & GENERAZIONE CONTRATTI ---
-        with scelta_tab[4]:
-            st.markdown("## 💼 Gestione Assunzioni & Onboarding")
-            from fpdf import FPDF
-            import io
+with scelta_tab[4]:
+    st.markdown("## 💼 Gestione Assunzioni & Onboarding")
+    from fpdf import FPDF
+    import io
 
-            if "lista_assunzioni" not in st.session_state:
-                st.session_state.lista_assunzioni = [
-                    {"candidato": "Daniele Rossi", "ruolo": "Specializzando HR", "tipo_contratto": "Determinato", "data_inizio": "2026-04-01", "retribuzione": "28000"},
-                    {"candidato": "Marco Verdone", "ruolo": "Senior Recruiter", "tipo_contratto": "Indeterminato", "data_inizio": "2026-05-15", "retribuzione": "42000"}
-                ]
+    # Funzione interna per generare il PDF
+    def genera_lettera_pdf(nome, ruolo, ral, data):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, txt="LETTERA DI ASSUNZIONE", ln=True, align='C')
+        pdf.ln(10)
+        pdf.set_font("Arial", size=12)
+        testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sarà pari a € {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
+        pdf.multi_cell(0, 10, txt=testo)
+        return pdf.output(dest='S').encode('latin-1')
+
+    # Recupero dinamico candidati da Supabase (Tabella 'candidati2')
+    try:
+        res_cand = supabase.table("candidati2").select("nome_cognome").execute()
+        opzioni_candidati = [c['nome_cognome'] for c in res_cand.data]
+    except:
+        opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri"]
+
+    col_form, col_tabella = st.columns([1, 1.4])
+
+    with col_form:
+        st.markdown("### ➕ Perfeziona Nuova Assunzione")
+        with st.form("form_nuova_assunzione", clear_on_submit=True):
+            candidato_scelto = st.selectbox("Seleziona Candidato*", opzioni_candidati)
+            ruolo_aziendale = st.text_input("Qualifica / Ruolo*")
+            tipo_contratto = st.selectbox("Tipologia Contrattuale", ["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"])
             
-            if "lista_candidati" in st.session_state and st.session_state.lista_candidati:
-                opzioni_candidati = [c.get("nome", "Candidato") for c in st.session_state.lista_candidati]
-            else:
-                opzioni_candidati = ["Daniele Rossi", "Elena Bianchi", "Alessandro Neri", "Simona Viola"]
+            c1, c2 = st.columns(2)
+            with c1: data_inizio = st.date_input("Data Decorrenza", value=None)
+            with c2: ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
+            
+            documentazione = st.file_uploader("Carica Documenti d'Identità / Contratto Firmato", type=["pdf", "png", "jpg"])
+            submit_assunzione = st.form_submit_button("Registra Assunzione & Crea Scheda", use_container_width=True)
+            
+            if submit_assunzione:
+                if candidato_scelto and ruolo_aziendale and data_inizio:
+                    # 1. Upload File
+                    percorso_file = None
+                    if documentazione:
+                        percorso_file = f"assunzioni/{candidato_scelto}_{data_inizio}.pdf"
+                        supabase.storage.from_("documenti-candidati").upload(percorso_file, documentazione.getvalue())
 
-            col_form, col_tabella = st.columns([1, 1.4])
-
-            with col_form:
-                st.markdown("### ➕ Perfeziona Nuova Assunzione")
-                with st.form("form_nuova_assunzione", clear_on_submit=True):
-                    candidato_scelto = st.selectbox("Seleziona Candidato*", opzioni_candidati)
-                    ruolo_aziendale = st.text_input("Qualifica / Ruolo*")
-                    tipo_contratto = st.selectbox("Tipologia Contrattuale", ["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"])
+                    # 2. Inserimento Database
+                    nuova_ass = {
+                        "nome_dipendente": candidato_scelto, 
+                        "ruolo": ruolo_aziendale, 
+                        "tipo_contratto": tipo_contratto, 
+                        "data_inizio": str(data_inizio), 
+                        "ral": float(ral_proposta),
+                        "documenti_path": percorso_file
+                    }
+                    supabase.table("assunzioni_attive").insert(nuova_ass).execute()
                     
-                    c1, c2 = st.columns(2)
-                    with c1: data_inizio = st.date_input("Data Decorrenza", value=None)
-                    with c2: ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
+                    st.success(f"✔️ Assunzione di {candidato_scelto} registrata!")
                     
-                    documentazione = st.file_uploader("Carica Documenti d'Identità / Contratto Firmato", type=["pdf", "png", "jpg"])
-                    submit_assunzione = st.form_submit_button("Registra Assunzione & Crea Scheda", use_container_width=True)
-                    
-                    if submit_assunzione:
-                        if candidato_scelto and ruolo_aziendale and data_inizio:
-                            # 1. Gestione Upload File (se presente)
-                            percorso_file = None
-                            if documentazione:
-                                percorso_file = f"assunzioni/{candidato_scelto}_{data_inizio}.pdf"
-                                supabase.storage.from_("documenti-candidati").upload(percorso_file, documentazione.getvalue())
-
-                            # 2. Inserimento nel Database Supabase
-                            nuova_ass = {
-                                "nome_dipendente": candidato_scelto, 
-                                "ruolo": ruolo_aziendale, 
-                                "tipo_contratto": tipo_contratto, 
-                                "data_inizio": str(data_inizio), 
-                                "ral": float(ral_proposta), # Assicurati che sia numerico
-                                "documenti_path": percorso_file
-                            }
-                            supabase.table("assunzioni_attive").insert(nuova_ass).execute()
-                            
-                            st.success(f"✔️ Assunzione di {candidato_scelto} salvata nel database!")
-                            st.rerun()
-                        else:
-                            st.error("❌ Compila i campi obbligatori.")
-
-            with col_tabella:
-                st.markdown("### 📋 Registro Assunzioni Attive")
-            
-                # Recupera i dati da Supabase
-                response = supabase.table("assunzioni_attive").select("*").execute()
-                data = response.data
-            
-                if data:
-                    df_assunzioni = pd.DataFrame(data)
-            
-                    df_ass_modificato = st.data_editor(
-                        df_assunzioni,
-                        use_container_width=True,
-                        num_rows="dynamic",
-                        column_config={
-                            "nome_dipendente": "Dipendente",
-                            "ruolo": "Ruolo / Mansione",
-                            "tipo_contratto": st.column_config.SelectboxColumn(
-                                "Contratto",
-                                options=[
-                                    "Indeterminato",
-                                    "Determinato",
-                                    "Apprendistato",
-                                    "Stage / Tirocinio"
-                                ]
-                            ),
-                            "data_inizio": "Data Inizio",
-                            "ral": "RAL (€)"
-                        },
-                        key="editor_assunzioni_db"
+                    # 3. Generazione e Download PDF
+                    pdf_bytes = genera_lettera_pdf(candidato_scelto, ruolo_aziendale, ral_proposta, str(data_inizio))
+                    st.download_button(
+                        label="📥 Scarica Lettera Assunzione PDF",
+                        data=pdf_bytes,
+                        file_name=f"Lettera_{candidato_scelto}.pdf",
+                        mime="application/pdf"
                     )
-            
-                    if not df_ass_modificato.equals(df_assunzioni):
-                        st.warning(
-                            "Nota: Le modifiche richiedono una funzione di update."
-                        )
                 else:
-                    st.info("Nessuna assunzione registrata nel database.")
+                    st.error("❌ Compila i campi obbligatori.")
+
+    with col_tabella:
+        st.markdown("### 📋 Registro Assunzioni Attive")
+        response = supabase.table("assunzioni_attive").select("*").execute()
+        if response.data:
+            df_assunzioni = pd.DataFrame(response.data)
+            st.data_editor(
+                df_assunzioni,
+                use_container_width=True,
+                column_config={
+                    "nome_dipendente": "Dipendente",
+                    "ruolo": "Ruolo / Mansione",
+                    "data_inizio": "Data Inizio",
+                    "ral": "RAL (€)"
+                }
+            )
+        else:
+            st.info("Nessuna assunzione registrata nel database.")
         
         # --- TAB 6: REPORT ---
         with scelta_tab[5]:
