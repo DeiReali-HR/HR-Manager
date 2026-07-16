@@ -761,6 +761,20 @@ else:
                     with c1: data_inizio = st.date_input("Data Decorrenza", value=None)
                     with c2: ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
                     
+                    # --- SEZIONE DISTACCO OPERATIVO ---
+                    st.markdown("---")
+                    st.markdown("### 📍 Distacco Operativo")
+                    lista_aziende = [c['azienda'] for c in st.session_state.lista_clienti]
+                    cliente_distacco = st.selectbox("Seleziona Cliente per Distacco", ["Nessuno"] + lista_aziende)
+                    
+                    indirizzo_operativo = ""
+                    pat_inail = ""
+                    
+                    if cliente_distacco != "Nessuno":
+                        dati_cliente = next(c for c in st.session_state.lista_clienti if c['azienda'] == cliente_distacco)
+                        indirizzo_operativo = st.text_input("Indirizzo Operativo", value=dati_cliente.get('indirizzo', ''))
+                        pat_inail = st.text_input("Codice PAT INAIL", value=dati_cliente.get('inail', ''))
+                    
                     documentazione = st.file_uploader("Carica Documenti d'Identità / Contratto Firmato", type=["pdf", "png", "jpg"])
                     submit_assunzione = st.form_submit_button("Registra Assunzione & Crea Scheda", use_container_width=True)
                     
@@ -771,7 +785,10 @@ else:
                                 "ruolo": ruolo_aziendale, 
                                 "tipo_contratto": tipo_contratto, 
                                 "data_inizio": str(data_inizio), 
-                                "ral": float(ral_proposta)
+                                "ral": float(ral_proposta),
+                                "cliente_distacco": cliente_distacco,
+                                "indirizzo_operativo": indirizzo_operativo,
+                                "pat_inail": pat_inail
                             }
                             supabase.table("assunzioni_attive").insert(nuova_ass).execute()
                             
@@ -781,7 +798,7 @@ else:
                         else:
                             st.error("❌ Compila i campi obbligatori.")
 
-        with col_tabella:
+            with col_tabella:
                 st.markdown("### 📋 Registro Assunzioni Attive")
                 response = supabase.table("assunzioni_attive").select("*").execute()
                 
@@ -789,7 +806,7 @@ else:
                     for ass in response.data:
                         with st.expander(f"👤 {ass['nome_dipendente']} - {ass['ruolo']}"):
                             st.write(f"**Data Inizio:** {ass['data_inizio']} | **RAL:** {ass['ral']}€")
-                            st.write(f"**Contratto:** {ass['tipo_contratto']}")
+                            st.write(f"**Distacco:** {ass.get('cliente_distacco', 'Nessuno')}")
                             
                             col_b1, col_b2 = st.columns(2)
                             if col_b1.button("📂 Apri Scheda", key=f"scheda_{ass['id']}"):
@@ -799,24 +816,23 @@ else:
                                 supabase.table("assunzioni_attive").delete().eq("id", ass['id']).execute()
                                 st.rerun()
 
-                    # Gestione Scheda Aperta
                     if "scheda_aperta" in st.session_state:
                         id_ass = st.session_state.scheda_aperta
                         ass = next((item for item in response.data if item['id'] == id_ass), None)
                         if ass:
                             st.markdown("---")
                             st.subheader(f"Scheda: {ass['nome_dipendente']}")
+                            # Recupero info da candidati2
                             cand = supabase.table("candidati2").select("*").eq("nome_cognome", ass['nome_dipendente']).single().execute()
                             if cand.data:
-                                st.write(f"**Luogo di Nascita:** {cand.data['luogo_nascita']}")
-                                st.write(f"**Residenza:** {cand.data['indirizzo_residenza']}")
+                                st.write(f"**Luogo di Nascita:** {cand.data.get('luogo_nascita', 'N/D')}")
+                                st.write(f"**Indirizzo Distacco:** {ass.get('indirizzo_operativo', 'N/D')}")
                             
                             if st.button("Chiudi Scheda"):
                                 del st.session_state.scheda_aperta
                                 st.rerun()
                 else:
                     st.info("Nessuna assunzione registrata.")
-
         # --- TAB 6: REPORT ---
         with scelta_tab[5]:
             st.subheader("📊 Report e Statistiche Personale")
