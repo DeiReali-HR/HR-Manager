@@ -1,28 +1,27 @@
 import streamlit as st
 from supabase import create_client
-import streamlit.components.v1 as components
+import os
 
 # Configurazione
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
+# Stili CSS
 st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
-    @media (max-width: 600px) {
-        .block-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
-        div[data-testid="stDecoration"] { display: none; }
+    
+    /* Stile Box Navy */
+    .box-navy { 
+        background-color: #000080; color: white; padding: 15px; 
+        border-radius: 8px; width: 250px; height: 100px;
+        display: flex; flex-direction: column; justify-content: center;
+        font-family: sans-serif; font-size: 14px;
     }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400&display=swap');
-    .main .block-container { padding-top: 1rem !important; }
+    
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
     .vetrina-full-width { background-color: #f1f5f9; margin-left: -500px; margin-right: -500px; padding: 30px 500px; margin-bottom: 30px; }
@@ -53,17 +52,33 @@ def render_card(a):
             <a href="{link_candidatura}" target="_blank" class="btn-black">CANDIDATI ORA ↗️</a>
         </div>
     </div>
-    <div class="riga-blu"></div>
     """
 
 def mostra_portale():
-    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    # Header con Box di Accesso
+    col_titolo, col_login = st.columns([4, 1])
+    
+    with col_titolo:
+        st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
+        st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    
+    with col_login:
+        st.markdown('<div class="box-navy"><b>ACCESSO AREA ASSUNZIONI</b></div>', unsafe_allow_html=True)
+        codice = st.text_input("Codice:", type="password", label_visibility="collapsed", key="login_nav")
+        if st.button("Entra"):
+            if codice == "As2026Reali@":
+                st.query_params["area_assunzione"] = "true"
+                st.rerun()
+            else:
+                st.error("Codice errato")
+    
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
+    # Caricamento Annunci
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
+    # Sezione In Evidenza
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
@@ -78,6 +93,7 @@ def mostra_portale():
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
+    # Sezione Selezioni Aperte
     st.markdown('<p class="titolo-area">Selezioni Aperte</p>', unsafe_allow_html=True)
     for i in range(0, len(annunci_vivi), 2):
         cols = st.columns(2)
@@ -85,6 +101,7 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
+# Logica di routing
 if "job" in st.query_params:
     st.write("Redirect al form...")
 else:
