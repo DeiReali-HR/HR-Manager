@@ -86,11 +86,6 @@ def mostra_form_assunzione():
         st.error("Inserisci la firma.")
         st.stop()
 
-    # Controllo data
-    if data_nascita is None:
-        st.error("Seleziona la data di nascita.")
-        st.stop()
-
     dati_candidato = {
         "nome_cognome": nome.strip(),
         "luogo_nascita": nascita.strip(),
@@ -106,29 +101,16 @@ def mostra_form_assunzione():
         "intestatario": intestatario.strip()
     }
 
-    # DEBUG
-    st.subheader("DEBUG DATI INVIATI")
-    st.json(dati_candidato)
-
     try:
-
-        risposta = (
-            supabase
-            .table("candidati2")
-            .insert(dati_candidato)
-            .execute()
-        )
+        risposta = supabase.table("candidati2").insert(dati_candidato).execute()
 
         if not risposta.data:
-            st.error("Supabase non ha restituito alcun record.")
+            st.error("Errore durante il salvataggio del candidato.")
             st.stop()
 
         candidato_id = risposta.data[0]["id"]
 
-        st.success("Candidato salvato correttamente.")
-
     except Exception as e:
-        st.error("ERRORE SUPABASE")
         st.exception(e)
         st.stop()
 
@@ -137,7 +119,6 @@ def mostra_form_assunzione():
             return
 
         try:
-
             path = f"{candidato_id}/{nome_file}"
 
             supabase.storage.from_("documenti-candidati").upload(
@@ -151,16 +132,16 @@ def mostra_form_assunzione():
                 "percorso_file": path
             }).execute()
 
-        except Exception as e:
-            st.warning(f"Errore caricamento {tipo}")
-            st.exception(e)
+        except Exception as err:
+            st.error(f"Errore caricamento {tipo}")
+            st.exception(err)
 
     carica_file(doc_att, "Documentazione Attestante", "doc_att.pdf")
     carica_file(id_f, "Carta Identità", "carta_identita.pdf")
     carica_file(cf, "Codice Fiscale", "codice_fiscale.pdf")
     carica_file(perm, "Permesso di Soggiorno", "permesso.pdf")
 
-    st.success("✅ Procedura di assunzione completata.")
+    st.success("✅ Candidatura inviata con successo.")
             else:
                 st.error("Per favore, firma e dai il consenso al trattamento dati.")
     
