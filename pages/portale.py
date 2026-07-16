@@ -5,7 +5,7 @@ from supabase import create_client
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 st.set_page_config(layout="wide", page_title="Lavora con Noi - Dei Reali")
 
-# Stili CSS integrati per la perfetta fusione Banner-Input
+# Stili CSS
 st.markdown("""
 <style>
     #MainMenu { visibility: hidden; }
@@ -13,14 +13,15 @@ st.markdown("""
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
     
-    /* Contenitore per fondere banner e input */
+    /* Contenitore che unisce banner e area input */
     .banner-container { width: 100%; margin-bottom: 0px; }
     .input-fusion-container {
-        background-color: #f8f9fb; /* Colore di sfondo che simula la be dell'immagine */
+        background-color: #f8f9fb; 
         padding: 20px 50px;
-        margin-top: -10px; /* "Aggancia" visivamente l'input all'immagine */
+        margin-top: -10px; 
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
+        border: 1px solid #e0e0e0;
         display: flex;
         align-items: center;
         gap: 20px;
@@ -58,16 +59,14 @@ def render_card(a):
     """
 
 def mostra_portale():
-    # 1. Banner
-    st.markdown('<div class="banner-container">', unsafe_allow_html=True)
+    # 1. Visualizzazione Banner
     st.image("BOX_ASS.png", use_column_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
     
-    # 2. Area Input "fusa" al banner
+    # 2. Area Input chiaramente visibile
     st.markdown('<div class="input-fusion-container">', unsafe_allow_html=True)
     c1, c2 = st.columns([3, 1])
     with c1:
-        codice = st.text_input("Inserisci Codice", type="password", key="login_fix", label_visibility="collapsed")
+        codice = st.text_input("Inserisci Codice", type="password", placeholder="Inserisci qui il codice...", key="login_fix")
     with c2:
         if st.button("ACCEDI AL PROCESSO"):
             if codice == "AS2026Reali@":
