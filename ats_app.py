@@ -741,6 +741,10 @@ else:
         with scelta_tab[4]:
             st.markdown("## 💼 Gestione Assunzioni & Onboarding")
             
+            # 1. Inizializzazione sicura della lista clienti
+            if "lista_clienti" not in st.session_state:
+                st.session_state.lista_clienti = []
+            
             # Recupero candidati dal DB
             try:
                 res_cand = supabase.table("candidati2").select("nome_cognome").execute()
@@ -761,9 +765,10 @@ else:
                     with c1: data_inizio = st.date_input("Data Decorrenza", value=None)
                     with c2: ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
                     
-                    # --- SEZIONE DISTACCO OPERATIVO ---
+                    # --- SEZIONE DISTACCO OPERATIVO (CORRETTA) ---
                     st.markdown("---")
                     st.markdown("### 📍 Distacco Operativo")
+                    # Ora questa riga non darà più errore perché abbiamo verificato l'esistenza sopra
                     lista_aziende = [c['azienda'] for c in st.session_state.lista_clienti]
                     cliente_distacco = st.selectbox("Seleziona Cliente per Distacco", ["Nessuno"] + lista_aziende)
                     
