@@ -12,20 +12,11 @@ st.markdown("""
     footer { visibility: hidden; }
     header { visibility: hidden; }
     .block-container { padding-top: 0rem !important; }
-    
-    .banner-container { width: 100%; margin-bottom: 0px; }
     .input-fusion-container {
-        background-color: #f8f9fb; 
-        padding: 20px 50px;
-        margin-top: -10px; 
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-        border: 1px solid #e0e0e0;
-        display: flex;
-        align-items: center;
-        gap: 20px;
+        background-color: #f8f9fb; padding: 20px 50px; margin-top: -10px; 
+        border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+        border: 1px solid #e0e0e0; display: flex; align-items: center; gap: 20px;
     }
-    
     .riga-blu { border-top: 2px solid #0f172a; margin: 20px 0; width: 100%; }
     .titolo-area { font-family: 'Playfair Display', serif; font-size: 0.9rem; color: #64748b; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
     .vetrina-full-width { background-color: #f1f5f9; margin-left: -500px; margin-right: -500px; padding: 30px 500px; margin-bottom: 30px; }
@@ -41,16 +32,15 @@ st.markdown("""
 
 def render_card(a):
     img_url = a.get("foto_annuncio") or a.get("immagine") or "https://via.placeholder.com/200x350"
-    note_testo = str(a.get('note', ''))
     link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
     return f"""
     <div class="card-orizzontale">
         <div class="img-lato" style="background-image: url('{img_url}');"></div>
         <div class="testo-lato">
             <div class="contenuto-scrollabile">
-                <h3 style="font-family: 'Playfair Display', serif; margin-top:0; font-size:1.2rem;">{a.get('posizione', 'Posizione')}</h3>
+                <h3 style="font-family: 'Playfair Display', serif; font-size:1.2rem;">{a.get('posizione', 'Posizione')}</h3>
                 <p style="font-size:0.85rem; color: #64748B;">📍 {a.get('sede', 'Roma')} | 💸 {a.get('importo', '0')}€</p>
-                <p style="font-size:0.85rem;">{note_testo}</p>
+                <p style="font-size:0.85rem;">{str(a.get('note', ''))}</p>
             </div>
             <a href="{link_candidatura}" target="_blank" class="btn-black">CANDIDATI ORA ↗️</a>
         </div>
@@ -58,18 +48,14 @@ def render_card(a):
     """
 
 def mostra_portale():
-    # 1. Visualizzazione Banner
     st.image("BOX_ASS.png", use_column_width=True)
-    
-    # 2. Area Input
     st.markdown('<div class="input-fusion-container">', unsafe_allow_html=True)
     c1, c2 = st.columns([3, 1])
     with c1:
-        codice = st.text_input("Inserisci Codice", type="password", placeholder="Inserisci qui il codice...", key="login_fix")
+        codice = st.text_input("Inserisci Codice", type="password", placeholder="Inserisci il codice...", key="login_fix")
     with c2:
         if st.button("ACCEDI AL PROCESSO"):
-            if codice == "AS2026Reali@":
-                # Impostiamo il parametro di autenticazione e ricarichiamo
+            if codice == "As2026Reali@":
                 st.query_params["area_assunzione"] = "true"
                 st.rerun()
             else:
@@ -78,11 +64,9 @@ def mostra_portale():
     
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
-    # Caricamento Annunci
     annunci = supabase.table("annunci").select("*").execute().data or []
     annunci_vivi = [a for a in annunci if a.get("stato") != "Sospeso"]
 
-    # In Evidenza
     evidenza = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
     if evidenza:
         st.markdown('<p class="titolo-area">In primo piano</p>', unsafe_allow_html=True)
@@ -90,14 +74,10 @@ def mostra_portale():
         for a in evidenza:
             img_url = a.get("foto_vetrina") or a.get("immagine") or "https://via.placeholder.com/395x704"
             target_url = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-            html_vetrina += f'''
-            <a href="{target_url}" target="_blank" style="display: block; text-decoration: none;">
-                <div class="card-vetrina" style="background-image: url('{img_url}');"></div>
-            </a>'''
+            html_vetrina += f'''<a href="{target_url}" target="_blank" style="display: block; text-decoration: none;"><div class="card-vetrina" style="background-image: url('{img_url}');"></div></a>'''
         html_vetrina += '</div></div>'
         st.markdown(html_vetrina, unsafe_allow_html=True)
 
-    # Selezioni
     st.markdown('<p class="titolo-area">Selezioni Aperte</p>', unsafe_allow_html=True)
     for i in range(0, len(annunci_vivi), 2):
         cols = st.columns(2)
@@ -105,12 +85,11 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
-# Logica principale
+# Esecuzione finale
 if "job" in st.query_params:
     st.write("Redirect al form...")
 elif st.query_params.get("area_assunzione") == "true":
-    st.success("Accesso effettuato! Reindirizzamento in corso...")
-    # Qui il tuo codice dovrebbe richiamare la funzione che mostra il form
-    # o fare il redirect effettivo a https://deireali-hr.streamlit.app/?area_assunzione=true
+    # Qui il portale viene caricato regolarmente, ma sei autenticato
+    mostra_portale()
 else:
     mostra_portale()
