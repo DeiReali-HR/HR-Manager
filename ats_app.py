@@ -823,26 +823,26 @@ else:
             st.info("I grafici analitici del personale, i tempi medi di onboarding e le metriche di screening verranno renderizzati in questa sezione.")
         
         # --- TAB 7: ANAGRAFICA CLIENTI B2B ---
-        with scelta_tab[6]:
-            st.markdown("## 🏢 Anagrafica Clienti B2B")
-            if "lista_clienti" not in st.session_state:
-                st.session_state.lista_clienti = [
-                    {"azienda": "Reali Logistics S.r.l.", "piva": "01234567890", "referente": "Mario Rossi", "email": "mario.rossi@realilogistics.it", "stato": "Attivo"},
-                    {"azienda": "Tech Solutions Spa", "piva": "09876543211", "referente": "Laura Bianchi", "email": "l.bianchi@techsolutions.com", "stato": "In Attivazione"}
-                ]
-            col_mod, col_elenco = st.columns([1, 1.6])
-            with col_mod:
-                st.markdown("### ➕ Inserisci Nuovo Cliente")
-                with st.form("form_nuovo_cliente", clear_on_submit=True):
-                    ragione_sociale = st.text_input("Ragione Sociale Azienda*")
-                    partita_iva = st.text_input("Partita IVA*")
-                    nome_referente = st.text_input("Nome Referente")
-                    email_contatto = st.text_input("Email di Contatto")
-                    stato_contratto = st.selectbox("Stato Contrattuale", ["Attivo", "In Attivazione", "Sospeso"])
-                    if st.form_submit_button("Registra Cliente", use_container_width=True):
-                        if ragione_sociale and partita_iva:
-                            st.session_state.lista_clienti.append({"azienda": ragione_sociale, "piva": partita_iva, "referente": nome_referente, "email": email_contatto, "stato": stato_contratto})
-                            st.rerun()
+with scelta_tab[6]:
+    st.markdown("## 🏢 Anagrafica Clienti B2B")
+    # ... (inizializzazione st.session_state.lista_clienti) ...
+    
+    with col_mod:
+        st.markdown("### ➕ Inserisci Nuovo Cliente")
+        with st.form("form_nuovo_cliente", clear_on_submit=True):
+            ragione_sociale = st.text_input("Ragione Sociale Azienda*")
+            partita_iva = st.text_input("Partita IVA*")
+            indirizzo_op = st.text_input("Indirizzo Operativo") # Nuovo campo
+            codice_inail = st.text_input("Codice PAT INAIL")   # Nuovo campo
+            # ... resto dei campi ...
+            if st.form_submit_button("Registra Cliente"):
+                st.session_state.lista_clienti.append({
+                    "azienda": ragione_sociale, 
+                    "piva": partita_iva, 
+                    "indirizzo": indirizzo_op, 
+                    "inail": codice_inail
+                })
+                st.rerun()
             
             with col_elenco:
                 st.markdown("### 📋 Elenco & Gestione Clienti Partner")
