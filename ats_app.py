@@ -1171,30 +1171,31 @@ else:
                             """, unsafe_allow_html=True)
                 
                 st.markdown("</div>", unsafe_allow_html=True)
+
         # --- TAB 10: REPORT DIPENDENTI PER APPALTO / CLIENTE ---
-with scelta_tab[9]:
-    st.markdown("## 📊 Lista Dipendenti per Appalto, Cliente e Cantiere")
-    
-    res_ass = supabase.table("assunzioni_attive").select("*").execute()
-    
-    if res_ass.data:
-        df_assunzioni = pd.DataFrame(res_ass.data)
-        df_assunzioni['cliente_distacco'] = df_assunzioni['cliente_distacco'].fillna('Sede Centrale / Interno')
-        
-        clienti_presenti = ["Tutti i Clienti"] + list(df_assunzioni['cliente_distacco'].unique())
-        filtro_cliente = st.selectbox("Filtra per Cliente / Appalto:", clienti_presenti, key="filtro_appalto_tab10")
-        
-        if filtro_cliente != "Tutti i Clienti":
-            df_filtrato = df_assunzioni[df_assunzioni['cliente_distacco'] == filtro_cliente]
-        else:
-            df_filtrato = df_assunzioni
-        
-        st.markdown("---")
-        
-        for cliente, gruppo in df_filtrato.groupby('cliente_distacco'):
-            with st.expander(f"🏢 Appalto / Cliente: {cliente} ({len(gruppo)} dipendenti)", expanded=True):
-                colonne_visibili = [c for c in ['nome_dipendente', 'codice_fiscale', 'ruolo', 'tipo_contratto', 'data_inizio', 'indirizzo_operativo', 'pat_inail'] if c in gruppo.columns]
-                tabella_mostrata = gruppo[colonne_visibili]
-                st.dataframe(tabella_mostrata, use_container_width=True)
-    else:
-        st.info("Nessuna assunzione registrata nel sistema al momento.")
+        with scelta_tab[9]:
+            st.markdown("## 📊 Lista Dipendenti per Appalto, Cliente e Cantiere")
+            
+            res_ass = supabase.table("assunzioni_attive").select("*").execute()
+            
+            if res_ass.data:
+                df_assunzioni = pd.DataFrame(res_ass.data)
+                df_assunzioni['cliente_distacco'] = df_assunzioni['cliente_distacco'].fillna('Sede Centrale / Interno')
+                
+                clienti_presenti = ["Tutti i Clienti"] + list(df_assunzioni['cliente_distacco'].unique())
+                filtro_cliente = st.selectbox("Filtra per Cliente / Appalto:", clienti_presenti, key="filtro_appalto_tab10")
+                
+                if filtro_cliente != "Tutti i Clienti":
+                    df_filtrato = df_assunzioni[df_assunzioni['cliente_distacco'] == filtro_cliente]
+                else:
+                    df_filtrato = df_assunzioni
+                
+                st.markdown("---")
+                
+                for cliente, gruppo in df_filtrato.groupby('cliente_distacco'):
+                    with st.expander(f"🏢 Appalto / Cliente: {cliente} ({len(gruppo)} dipendenti)", expanded=True):
+                        colonne_visibili = [c for c in ['nome_dipendente', 'codice_fiscale', 'ruolo', 'tipo_contratto', 'data_inizio', 'indirizzo_operativo', 'pat_inail'] if c in gruppo.columns]
+                        tabella_mostrata = gruppo[colonne_visibili]
+                        st.dataframe(tabella_mostrata, use_container_width=True)
+            else:
+                st.info("Nessuna assunzione registrata nel sistema al momento.")
