@@ -1197,4 +1197,4 @@ with scelta_tab[9]:
                 tabella_mostrata = gruppo[colonne_visibili]
                 st.dataframe(tabella_mostrata, use_container_width=True)
     else:
-        st.info("Nessuna assunzione registrata nel sistema al momento.")        
+        st.info("Nessuna assunzione registrata nel sistema al momento.")
