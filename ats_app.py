@@ -1172,7 +1172,7 @@ else:
                 
                 st.markdown("</div>", unsafe_allow_html=True)
                 # --- TAB 10: REPORT DIPENDENTI PER APPALTO / CLIENTE ---
-with scelta_tab[9]:
+    with scelta_tab[9]:
     st.markdown("## 📊 Lista Dipendenti per Appalto, Cliente e Cantiere")
     
     # Recupera tutte le assunzioni attive dal database
