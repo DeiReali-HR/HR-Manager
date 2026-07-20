@@ -438,7 +438,7 @@ else:
         st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
         # Inizializzazione dei Tab di navigazione principale (9 elementi stabili)
-        tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)", "👑 Appalti"]
+        ab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)", "👑 Appalti"]
         scelta_tab = st.tabs(tab_nomi)
 
         # --- TAB 1: HOME / PLANCIA ---
