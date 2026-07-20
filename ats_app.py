@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from openai import OpenAI
 from fpdf import FPDF
 import io
-def genera_lettera_pdf(nome, ruolo, ral, data):
+def genera_lettera_pdf(nome, codice_fiscale, ruolo, ral, data, indirizzo_op, inail):
     from fpdf import FPDF
     pdf = FPDF()
     pdf.add_page()
@@ -21,13 +21,14 @@ def genera_lettera_pdf(nome, ruolo, ral, data):
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
     
-    # Pulizia del testo: sostituiamo le lettere accentate problematiche se necessario
-    # oppure usiamo una stringa codificata correttamente
-    testo = f"Spett.le {nome},\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sara pari a Euro {ral:,.2f}.\n\nCordiali saluti,\nLa Direzione HR"
+    testo = f"Spett.le {nome}\nCodice Fiscale: {codice_fiscale}\n\nSiamo lieti di confermare la Sua assunzione nel ruolo di {ruolo} con decorrenza {data}.\n\nLa Sua retribuzione annua lorda (R.A.L.) sara pari a Euro {ral:,.2f}."
     
-    # Proviamo a convertire in latin-1 ignorando gli errori o sostituendoli
+    if indirizzo_op and indirizzo_op != "Nessuno":
+        testo += f"\n\nLa prestazione lavorativa si svolgerà in regime di distacco operativo presso la sede di: {indirizzo_op} (Cod. INAIL PAT: {inail})."
+        
+    testo += "\n\nCordiali saluti,\nLa Direzione HR"
+    
     pdf.multi_cell(0, 10, txt=testo.encode('latin-1', 'replace').decode('latin-1'))
-    
     return pdf.output(dest='S')
 
 # 1. Configurazione della pagina
@@ -741,15 +742,15 @@ else:
         with scelta_tab[4]:
             st.markdown("## 💼 Gestione Assunzioni & Onboarding")
             
-            # 1. Inizializzazione sicura della lista clienti
             if "lista_clienti" not in st.session_state:
                 st.session_state.lista_clienti = []
             
-            # Recupero candidati dal DB
             try:
-                res_cand = supabase.table("candidati2").select("nome_cognome").execute()
-                opzioni_candidati = [c['nome_cognome'] for c in res_cand.data]
+                res_cand = supabase.table("candidati2").select("*").execute()
+                candidati_db = res_cand.data if res_cand.data else []
+                opzioni_candidati = [c['nome_cognome'] for c in candidati_db]
             except:
+                candidati_db = []
                 opzioni_candidati = ["Daniele Rossi"]
 
             col_form, col_tabella = st.columns([1, 1.4])
@@ -758,6 +759,16 @@ else:
                 st.markdown("### ➕ Perfeziona Nuova Assunzione")
                 with st.form("form_nuova_assunzione", clear_on_submit=True):
                     candidato_scelto = st.selectbox("Seleziona Candidato*", opzioni_candidati)
+                    
+                    # Recupero automatico dei dati inseriti dal candidato nel modulo
+                    dati_candidato_selezionato = next((c for c in candidati_db if c.get('nome_cognome') == candidato_scelto), {})
+                    
+                    # Estraiamo il codice fiscale (assicurati che la colonna nel DB si chiami 'codice_fiscale')
+                    cf_precompilato = dati_candidato_selezionato.get('codice_fiscale', '')
+                    
+                    # Campo Codice Fiscale visibile (bloccato o modificabile)
+                    codice_fiscale = st.text_input("Codice Fiscale", value=cf_precompilato)
+                    
                     ruolo_aziendale = st.text_input("Qualifica / Ruolo*")
                     tipo_contratto = st.selectbox("Tipologia Contrattuale", ["Indeterminato", "Determinato", "Apprendistato", "Stage / Tirocinio"])
                     
@@ -765,10 +776,9 @@ else:
                     with c1: data_inizio = st.date_input("Data Decorrenza", value=None)
                     with c2: ral_proposta = st.number_input("R.A.L. Offerta (€)", min_value=0, step=1000, value=26000)
                     
-                    # --- SEZIONE DISTACCO OPERATIVO (CORRETTA) ---
+                    # --- SEZIONE DISTACCO OPERATIVO ---
                     st.markdown("---")
                     st.markdown("### 📍 Distacco Operativo")
-                    # Ora questa riga non darà più errore perché abbiamo verificato l'esistenza sopra
                     lista_aziende = [c['azienda'] for c in st.session_state.lista_clienti]
                     cliente_distacco = st.selectbox("Seleziona Cliente per Distacco", ["Nessuno"] + lista_aziende)
                     
@@ -776,7 +786,7 @@ else:
                     pat_inail = ""
                     
                     if cliente_distacco != "Nessuno":
-                        dati_cliente = next(c for c in st.session_state.lista_clienti if c['azienda'] == cliente_distacco)
+                        dati_cliente = next((c for c in st.session_state.lista_clienti if c['azienda'] == cliente_distacco), {})
                         indirizzo_operativo = st.text_input("Indirizzo Operativo", value=dati_cliente.get('indirizzo', ''))
                         pat_inail = st.text_input("Codice PAT INAIL", value=dati_cliente.get('inail', ''))
                     
@@ -787,6 +797,7 @@ else:
                         if candidato_scelto and ruolo_aziendale and data_inizio:
                             nuova_ass = {
                                 "nome_dipendente": candidato_scelto, 
+                                "codice_fiscale": codice_fiscale, # Salvataggio CF
                                 "ruolo": ruolo_aziendale, 
                                 "tipo_contratto": tipo_contratto, 
                                 "data_inizio": str(data_inizio), 
@@ -798,7 +809,8 @@ else:
                             supabase.table("assunzioni_attive").insert(nuova_ass).execute()
                             
                             st.success("✔️ Assunzione registrata!")
-                            pdf_bytes = genera_lettera_pdf(candidato_scelto, ruolo_aziendale, ral_proposta, str(data_inizio))
+                            # Passiamo anche il codice fiscale alla funzione PDF
+                            pdf_bytes = genera_lettera_pdf(candidato_scelto, codice_fiscale, ruolo_aziendale, ral_proposta, str(data_inizio), indirizzo_operativo, pat_inail)
                             st.download_button("📥 Scarica Lettera Assunzione", pdf_bytes, file_name=f"Lettera_{candidato_scelto}.pdf", mime="application/pdf")
                         else:
                             st.error("❌ Compila i campi obbligatori.")
