@@ -1171,7 +1171,7 @@ else:
                             """, unsafe_allow_html=True)
                 
                 st.markdown("</div>", unsafe_allow_html=True)
-                # --- TAB 10: REPORT DIPENDENTI PER APPALTO / CLIENTE ---
+          # --- TAB 10: REPORT DIPENDENTI PER APPALTO / CLIENTE ---
                 with scelta_tab[8]:
                 st.markdown("## 📊 Lista Dipendenti per Appalto, Cliente e Cantiere")
                 
@@ -1204,3 +1204,4 @@ else:
                             st.dataframe(tabella_mostrata, use_container_width=True)
                 else:
                     st.info("Nessuna assunzione registrata nel sistema al momento.")
+      
