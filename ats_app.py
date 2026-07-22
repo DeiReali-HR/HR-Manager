@@ -959,15 +959,18 @@ else:
                             if nome_cand:
                                 dati_nuovo = {
                                     "nome": nome_cand,
-                                    "email": email_cand,
-                                    "telefono": telefono_cand,
-                                    "posizione": mansione_attr,
+                                    "email": email_cand if email_cand else "non_disponibile@email.it",
+                                    "telefono": telefono_cand if telefono_cand else "0000000000",
+                                    "posizione": mansione_attr if mansione_attr else "Generico",
                                     "note": f"Formazione: {formazione_cand}\n\nEsperienze/CV:\n{note_auto}",
                                     "stato": "In Screening"
                                 }
-                                supabase.table("candidati").insert(dati_nuovo).execute()
-                                st.success(f"Candidato {nome_cand} salvato e catalogato con successo!")
-                                st.rerun()
+                                try:
+                                    supabase.table("candidati").insert(dati_nuovo).execute()
+                                    st.success(f"Candidato {nome_cand} salvato e catalogato con successo!")
+                                    st.rerun()
+                                except Exception as err:
+                                    st.error(f"Errore di salvataggio nel database: {err}")
                             else:
                                 st.warning("Inserisci almeno il nome del candidato.")
 
