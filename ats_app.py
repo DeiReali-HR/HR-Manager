@@ -962,7 +962,6 @@ else:
                                     "email": email_cand if email_cand else "non_disponibile@email.it",
                                     "telefono": telefono_cand if telefono_cand else "0000000000",
                                     "posizione": mansione_attr if mansione_attr else "Generico",
-                                    "note": f"Formazione: {formazione_cand}\n\nEsperienze/CV:\n{note_auto}",
                                     "stato": "In Screening"
                                 }
                                 try:
@@ -978,11 +977,11 @@ else:
             
             col_ord1, col_ord2 = st.columns([2, 2])
             with col_ord1: 
-                ordine_scelto = st.selectbox("Ordina per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
+                ordine_scelto = st.selectbox("Ordina per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"], key="ord_cand_tab8")
             with col_ord2:
                 res_posizioni = supabase.table("candidati").select("posizione").execute()
                 lista_posizioni = list(set([item['posizione'] for item in res_posizioni.data if item.get('posizione')])) if res_posizioni.data else []
-                posizione_filtro = st.selectbox("Filtra per Ruolo:", ["Tutti i Ruoli"] + lista_posizioni)
+                posizione_filtro = st.selectbox("Filtra per Ruolo:", ["Tutti i Ruoli"] + lista_posizioni, key="filt_ruolo_tab8")
 
             res_tutti = supabase.table("candidati").select("*").execute()
             tutti = res_tutti.data if res_tutti.data else []
