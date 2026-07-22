@@ -1001,8 +1001,11 @@ else:
                                 supabase.table("candidati").update({"stato": nuovo_stato}).eq("id", c['id']).execute()
                                 st.rerun()
                         with col_pop2:
-                            url_pdf = c.get('immagine', '')
-                            if url_pdf.startswith("http"): st.link_button("📥 Apri PDF Originale", url_pdf, use_container_width=True)
+                            url_pdf = c.get('immagine')
+                            if url_pdf and isinstance(url_pdf, str) and url_pdf.startswith("http"):
+                                st.link_button("📥 Apri PDF Originale", url_pdf, use_container_width=True)
+                            else:
+                                st.caption("Nessun PDF allegato")
                         with col_pop3:
                             if st.button("🗑️ Elimina Risorsa", key=f"pop_del_{c['id']}", use_container_width=True, type="secondary"):
                                 supabase.table("candidati").delete().eq("id", c['id']).execute()
