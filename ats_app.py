@@ -903,9 +903,9 @@ else:
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
             
-            # --- MODULO CARICAMENTO RAPIDO CV E AUTO-PROFILAZIONE ---
+            # --- MODULO CARICAMENTO RAPIDO CV E AUTO-PROFILAZIONE INTELLIGENTE ---
             with st.expander("📄 Carica Nuovo CV Manualmente (Auto-Profilazione)", expanded=False):
-                st.caption("Carica il CV in formato PDF o TXT: il sistema compilerà la scheda in automatico.")
+                st.caption("Carica il CV in formato PDF o TXT: il sistema leggerà il documento e compilerà i campi specifici.")
                 uploaded_cv = st.file_uploader("Seleziona il file del CV (PDF o TXT)", type=["pdf", "txt"], key="upload_cv_rapido_tab8")
 
                 if uploaded_cv is not None:
@@ -923,21 +923,45 @@ else:
                         testo_cv = str(uploaded_cv.read(), "utf-8", errors="ignore")
                         
                     if testo_cv:
-                        st.success("CV caricato e letto con successo!")
+                        st.success("CV letto con successo! Ecco i dati estratti dal documento:")
                         
-                        # Estrazione intelligente di base (cerca la prima riga o parole chiave)
+                        # --- ESTRAZIONE AUTOMATICA INTELLIGENTE ---
+                        import re
+                        
+                        # 1. Estrazione Email
+                        email_trovata = ""
+                        match_email = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', testo_cv)
+                        if match_email:
+                            email_trovata = match_email.group(0)
+                            
+                        # 2. Estrazione Telefono (cerca numeri da 9 a 10+ cifre)
+                        tel_trovato = ""
+                        match_tel = re.search(r'(\+39)?\s*3\d{2}\s*\d{6,7}', testo_cv)
+                        if match_tel:
+                            tel_trovato = match_tel.group(0)
+                            
+                        # 3. Nome (Prende la prima riga sensata del CV)
                         righe_cv = [r.strip() for r in testo_cv.split("\n") if r.strip()]
                         nome_rilevato = righe_cv[0] if len(righe_cv) > 0 else ""
+
+                        # 4. Recupero ruoli già esistenti su Supabase per catalogare o crearne uno nuovo al volo
+                        res_pos = supabase.table("candidati").select("posizione").execute()
+                        ruoli_esistenti = sorted(list(set([item['posizione'] for item in res_pos.data if item.get('posizione')]))) if res_pos.data else ["Amministrazione", "Tecnico", "Commerciale"]
                         
-                        # Campi liberi (ora pre-compilabili e modificabili al volo)
+                        # Campi pre-compilati dall'estrazione automatica (modificabili se necessario)
                         nome_cand = st.text_input("Nome e Cognome Candidato", value=nome_rilevato)
-                        email_cand = st.text_input("E-mail di Contatto")
-                        telefono_cand = st.text_input("Telefono")
+                        email_cand = st.text_input("E-mail di Contatto", value=email_trovata)
+                        telefono_cand = st.text_input("Telefono", value=tel_trovato)
                         
-                        mansione_attr = st.selectbox("Mansione Attitudinale / Ruolo", ["Amministrazione", "Tecnico / Operativo", "Commerciale", "Medico / Sanitario", "Altro"])
-                        formazione_cand = st.text_input("Formazione / Titolo di Studio", placeholder="Es. Laurea, Diploma, Qualifica...")
-                        
-                        note_auto = st.text_area("Note / Competenze estratte", value=testo_cv[:500] + "...")
+                        # Gestione Mansione: seleziona esistente o permetti di digitarne una nuova al volo
+                        scelta_mansione = st.selectbox("Mansione Attitudinale / Ruolo (Seleziona o compila)", ["Altro (Crea Nuova)"] + ruoli_esistenti)
+                        if scelta_mansione == "Altro (Crea Nuova)":
+                            mansione_attr = st.text_input("Specifica la nuova mansione rilevata dal CV:")
+                        else:
+                            mansione_attr = scelta_mansione
+                            
+                        formazione_cand = st.text_input("Formazione / Titolo di Studio", placeholder="Es. Laurea, Diploma...")
+                        note_auto = st.text_area("Note / Competenze del profilo", value=testo_cv[:800])
                         
                         if st.button("💾 Salva Candidato nel Database", type="primary"):
                             if nome_cand:
@@ -945,15 +969,15 @@ else:
                                     "nome": nome_cand,
                                     "email": email_cand,
                                     "telefono": telefono_cand,
-                                    "posizione": mansione_attr,
+                                    "posizione": mansione_attr if mansione_attr else "Generico",
                                     "note": f"Formazione: {formazione_cand}\n\n{note_auto}",
                                     "stato": "In Screening"
                                 }
                                 supabase.table("candidati").insert(dati_nuovo).execute()
-                                st.success(f"Candidato {nome_cand} salvato con successo nel database!")
+                                st.success(f"Candidato {nome_cand} catalogato e salvato con successo!")
                                 st.rerun()
                             else:
-                                st.warning("Inserisci almeno il nome del candidato prima di salvare.")
+                                st.warning("Inserisci almeno il nome del candidato.")
 
             st.markdown("---")
             
