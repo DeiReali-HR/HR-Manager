@@ -905,7 +905,7 @@ else:
             
             # --- MODULO CARICAMENTO RAPIDO CV E AUTO-PROFILAZIONE ---
             with st.expander("📄 Carica Nuovo CV Manualmente (Auto-Profilazione)", expanded=False):
-                st.caption("Carica il CV in formato PDF o TXT: il sistema estrarrà i dati e compilerà la scheda in automatico.")
+                st.caption("Carica il CV in formato PDF o TXT: il sistema compilerà la scheda in automatico.")
                 uploaded_cv = st.file_uploader("Seleziona il file del CV (PDF o TXT)", type=["pdf", "txt"], key="upload_cv_rapido_tab8")
 
                 if uploaded_cv is not None:
@@ -925,35 +925,37 @@ else:
                     if testo_cv:
                         st.success("CV caricato e letto con successo!")
                         
-                        with st.form("form_salvataggio_cv_rapido"):
-                            nome_cand = st.text_input("Nome e Cognome Candidato")
-                            email_cand = st.text_input("E-mail di Contatto")
-                            telefono_cand = st.text_input("Telefono")
-                            
-                            mansione_attr = st.selectbox("Mansione Attitudinale / Ruolo", ["Amministrazione", "Tecnico / Operativo", "Commerciale", "Medico / Sanitario", "Altro"])
-                            formazione_cand = st.text_input("Formazione / Titolo di Studio", placeholder="Es. Laurea, Diploma, Qualifica...")
-                            
-                            note_auto = st.text_area("Note / Competenze estratte", value=testo_cv[:500] + "...")
-                            
-                            salva_db = st.form_submit_button("💾 Salva Candidato nel Database")
-                            
-                            if salva_db:
-                                if nome_cand:
-                                    dati_nuovo = {
-                                        "nome": nome_cand,
-                                        "email": email_cand,
-                                        "telefono": telefono_cand,
-                                        "posizione": mansione_attr,
-                                        "formazione": formazione_cand,
-                                        "testo_cv": note_auto,
-                                        "stato": "In Screening",
-                                        "idoneita": "85%"
-                                    }
-                                    supabase.table("candidati").insert(dati_nuovo).execute()
-                                    st.success(f"Candidato {nome_cand} salvato con successo!")
-                                    st.rerun()
-                                else:
-                                    st.warning("Inserisci almeno il nome del candidato prima di salvare.")
+                        # Estrazione intelligente di base (cerca la prima riga o parole chiave)
+                        righe_cv = [r.strip() for r in testo_cv.split("\n") if r.strip()]
+                        nome_rilevato = righe_cv[0] if len(righe_cv) > 0 else ""
+                        
+                        # Campi liberi (ora pre-compilabili e modificabili al volo)
+                        nome_cand = st.text_input("Nome e Cognome Candidato", value=nome_rilevato)
+                        email_cand = st.text_input("E-mail di Contatto")
+                        telefono_cand = st.text_input("Telefono")
+                        
+                        mansione_attr = st.selectbox("Mansione Attitudinale / Ruolo", ["Amministrazione", "Tecnico / Operativo", "Commerciale", "Medico / Sanitario", "Altro"])
+                        formazione_cand = st.text_input("Formazione / Titolo di Studio", placeholder="Es. Laurea, Diploma, Qualifica...")
+                        
+                        note_auto = st.text_area("Note / Competenze estratte", value=testo_cv[:500] + "...")
+                        
+                        if st.button("💾 Salva Candidato nel Database", type="primary"):
+                            if nome_cand:
+                                dati_nuovo = {
+                                    "nome": nome_cand,
+                                    "email": email_cand,
+                                    "telefono": telefono_cand,
+                                    "posizione": mansione_attr,
+                                    "formazione": formazione_cand,
+                                    "testo_cv": note_auto,
+                                    "stato": "In Screening",
+                                    "idoneita": "85%"
+                                }
+                                supabase.table("candidati").insert(dati_nuovo).execute()
+                                st.success(f"Candidato {nome_cand} salvato con successo!")
+                                st.rerun()
+                            else:
+                                st.warning("Inserisci almeno il nome del candidato prima di salvare.")
 
             st.markdown("---")
             
