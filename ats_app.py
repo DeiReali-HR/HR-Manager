@@ -946,13 +946,11 @@ else:
                                     "email": email_cand,
                                     "telefono": telefono_cand,
                                     "posizione": mansione_attr,
-                                    "formazione": formazione_cand,
-                                    "testo_cv": note_auto,
-                                    "stato": "In Screening",
-                                    "idoneita": "85%"
+                                    "note": f"Formazione: {formazione_cand}\n\n{note_auto}",
+                                    "stato": "In Screening"
                                 }
                                 supabase.table("candidati").insert(dati_nuovo).execute()
-                                st.success(f"Candidato {nome_cand} salvato con successo!")
+                                st.success(f"Candidato {nome_cand} salvato con successo nel database!")
                                 st.rerun()
                             else:
                                 st.warning("Inserisci almeno il nome del candidato prima di salvare.")
