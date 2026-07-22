@@ -899,9 +899,64 @@ else:
                         st.session_state.lista_clienti = df_modificato.to_dict(orient="records")
                         st.rerun()
         
-        # --- TAB 8: DATABASE ANAGRAFICO CANDIDATI ---
+        # --- TAB 8: DATABASE ANAGRAFICO GLOBALE CANDIDATI ---
         with scelta_tab[7]:
             st.subheader("👥 Database Anagrafico Globale Candidati")
+            
+            # --- MODULO CARICAMENTO RAPIDO CV E AUTO-PROFILAZIONE ---
+            with st.expander("📄 Carica Nuovo CV Manualmente (Auto-Profilazione)", expanded=False):
+                st.caption("Carica il CV in formato PDF o TXT: il sistema estrarrà i dati e compilerà la scheda in automatico.")
+                uploaded_cv = st.file_uploader("Seleziona il file del CV (PDF o TXT)", type=["pdf", "txt"], key="upload_cv_rapido_tab8")
+
+                if uploaded_cv is not None:
+                    testo_cv = ""
+                    if uploaded_cv.type == "application/pdf":
+                        try:
+                            import pypdf
+                            reader = pypdf.PdfReader(uploaded_cv)
+                            for page in reader.pages:
+                                if page.extract_text():
+                                    testo_cv += page.extract_text() + "\n"
+                        except Exception as e:
+                            st.error(f"Errore nella lettura del PDF: {e}")
+                    else:
+                        testo_cv = str(uploaded_cv.read(), "utf-8", errors="ignore")
+                        
+                    if testo_cv:
+                        st.success("CV caricato e letto con successo!")
+                        
+                        with st.form("form_salvataggio_cv_rapido"):
+                            nome_cand = st.text_input("Nome e Cognome Candidato")
+                            email_cand = st.text_input("E-mail di Contatto")
+                            telefono_cand = st.text_input("Telefono")
+                            
+                            mansione_attr = st.selectbox("Mansione Attitudinale / Ruolo", ["Amministrazione", "Tecnico / Operativo", "Commerciale", "Medico / Sanitario", "Altro"])
+                            formazione_cand = st.text_input("Formazione / Titolo di Studio", placeholder="Es. Laurea, Diploma, Qualifica...")
+                            
+                            note_auto = st.text_area("Note / Competenze estratte", value=testo_cv[:500] + "...")
+                            
+                            salva_db = st.form_submit_button("💾 Salva Candidato nel Database")
+                            
+                            if salva_db:
+                                if nome_cand:
+                                    dati_nuovo = {
+                                        "nome": nome_cand,
+                                        "email": email_cand,
+                                        "telefono": telefono_cand,
+                                        "posizione": mansione_attr,
+                                        "formazione": formazione_cand,
+                                        "testo_cv": note_auto,
+                                        "stato": "In Screening",
+                                        "idoneita": "85%"
+                                    }
+                                    supabase.table("candidati").insert(dati_nuovo).execute()
+                                    st.success(f"Candidato {nome_cand} salvato con successo!")
+                                    st.rerun()
+                                else:
+                                    st.warning("Inserisci almeno il nome del candidato prima di salvare.")
+
+            st.markdown("---")
+            
             col_ord1, col_ord2 = st.columns([2, 2])
             with col_ord1: 
                 ordine_scelto = st.selectbox("Ordina per:", ["Ultimi Arrivi", "Ordine Alfabetico (A-Z)"])
@@ -919,7 +974,7 @@ else:
                     punteggio_ia = c.get('idoneita', '85%')
                     st.markdown(f"<div style='background-color:#FFF; padding:14px; border-radius:8px; border:1px solid #E2E8F0; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;'><div><b>👤 {c['nome']}</b> <span style='background-color:#EFF6FF; color:#2563EB; padding:3px 8px; border-radius:4px; font-size:12px;'>{c['posizione']}</span></div><div><span style='background-color:#DCFCE7; color:#15803D; font-weight:bold; padding:5px 10px; border-radius:6px;'>🤖 IA: {punteggio_ia}</span></div></div>", unsafe_allow_html=True)
                     with st.expander(f"🔍 Apri Scheda Completa: {c['nome']}"):
-                        st.write(f"**Email:** {c['email']} | **Telefono:** {c['telefono']}")
+                        st.write(f"**Email:** {c.get('email', 'N/D')} | **Telefono:** {c.get('telefono', 'N/D')}")
                         st.info(c.get('testo_cv', 'Nessun CV estratto.'))
                         col_pop1, col_pop2, col_pop3 = st.columns(3)
                         with col_pop1:
