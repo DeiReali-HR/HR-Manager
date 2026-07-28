@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import streamlit as st
 from supabase import create_client
 import streamlit.components.v1 as components
@@ -58,11 +59,15 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Caricamento immagine dalla root principale del repository
-    if os.path.exists("../testata.png"):
-        st.image("../testata.png", use_container_width=True)
-    elif os.path.exists("testata.png"):
-        st.image("testata.png", use_container_width=True)
+    # Ricerca dinamica del file testata.png nella cartella corrente o nella cartella superiore (root)
+    base_path = Path(__file__).resolve().parent
+    path_img1 = base_path / "testata.png"
+    path_img2 = base_path.parent / "testata.png"
+
+    if path_img1.exists():
+        st.image(str(path_img1), use_container_width=True)
+    elif path_img2.exists():
+        st.image(str(path_img2), use_container_width=True)
     else:
         st.markdown("""
             <div style='background-color: #0f172a; padding: 30px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
