@@ -451,27 +451,7 @@ else:
                         st.error("Credenziali non corrette.")
     else:
         # --- LOGIN EFFETTUATO: INTERFACCIA PRINCIPALE ---
-        from datetime import datetime
-    
-    col_titolo, col_badge = st.columns([4, 3])
-    with col_titolo:
-        st.markdown("## 👑 Suite HR Enterprise - Gruppo Dei Reali")
-    with col_badge:
-        nome_op = "Operatore"
-        ruolo_op = "HR Specialist"
-        if "utente_connesso" in st.session_state and st.session_state.utente_connesso:
-            op_info = st.session_state.utente_connesso
-            nome_op = op_info.get("nome", "Operatore")
-            ruolo_op = op_info.get("ruolo", "HR Specialist")
-        
-        data_ora_corrente = datetime.now().strftime("%d/%m/%Y - %H:%M")
-        
-        st.markdown(f"""
-            <div style='background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 8px; text-align: right; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
-                <div style='font-size: 13px; font-weight: bold; color: #1E293B;'>👤 {nome_op} ({ruolo_op})</div>
-                <div style='font-size: 11px; color: #64748B; font-weight: 500; margin-top: 2px;'>📅 {data_ora_corrente}</div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.title("👑 Suite HR Enterprise - Gruppo Dei Reali")
 
         # Inizializzazione dei Tab di navigazione principale (9 elementi stabili)
         tab_nomi = ["🏠 Home / Plancia", "📢 Annunci", "🔬 Screening", "🤝 Colloqui", "💼 Assunzioni", "📊 Report", "👥 Clienti", "👥 Candidati", "🌐 Vetrina Carriere (Web)"]
