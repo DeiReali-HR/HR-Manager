@@ -327,6 +327,10 @@ st.markdown("""
     .meet-btn { background-color: #1a73e8 !important; color: white !important; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center; font-weight: bold; font-size: 13px; }
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
     .sidebar-spec { background-color: #F1F5F9; padding: 12px; border-radius: 8px; border: 1px solid #CBD5E1; margin-top: 15px; font-size: 12px; color: #334155; }
+    /* Rende bianche le etichette del form di accesso */
+        label {
+            color: #FFFFFF !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
