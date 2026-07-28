@@ -355,7 +355,6 @@ if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_te
 if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
-# --- DEBUG AREA ASSUNZIONE ---
 if "area_assunzione" in st.query_params:
     st.markdown("""
         <div style='background-color: red; padding: 30px; text-align: center; color: white; font-size: 24px; font-weight: bold;'>
