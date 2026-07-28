@@ -56,9 +56,49 @@ def render_card(a):
     <div class="riga-blu"></div>
     """
 
+def gestisci_area_assunzione():
+    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2rem;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
+    
+    if "autenticato_assunzione" not in st.session_state:
+        st.session_state.autenticato_assunzione = False
+
+    if not st.session_state.autenticato_assunzione:
+        codice_input = st.text_input("Inserisci il codice di accesso riservato:", type="password")
+        if st.button("Accedi all'Area"):
+            if codice_input == "AS2026Reali@":
+                st.session_state.autenticato_assunzione = True
+                st.rerun()
+            else:
+                st.error("Codice non valido.")
+    else:
+        st.success("Accesso autorizzato con successo!")
+        st.info("Pannello di controllo del processo di assunzione e contratti.")
+        
+        res_assunzioni = supabase.table("candidati").select("*").eq("stato", "Assunto").execute()
+        assunti = res_assunzioni.data if res_assunzioni.data else []
+        
+        st.subheader("Risorse Registrate come Assunte")
+        if assunti:
+            for cand in assunti:
+                st.markdown(f"- **{cand.get('nome')}** (Ruolo: {cand.get('posizione')})")
+        else:
+            st.write("Nessuna risorsa registrata come assunta al momento.")
+            
+        if st.button("Esci dall'Area Riservata"):
+            st.session_state.autenticato_assunzione = False
+            st.rerun()
+
 def mostra_portale():
-    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    # Intestazione con titolo e pulsante rapido per l'Area Assunzioni in testata
+    col_tit, col_btn = st.columns([3, 1])
+    with col_tit:
+        st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
+        st.markdown('<p style="font-family: \'Inter\', sans-serif; color: #64748b; font-size: 0.9rem; margin-bottom: 5px;">Selezioniamo i migliori talenti per una crescita professionale d\'eccellenza.</p>', unsafe_allow_html=True)
+    with col_btn:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.link_button("🔐 Area Assunzioni", "https://deireali-hr.streamlit.app/?area_assunzione=true", use_container_width=True)
+
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     annunci = supabase.table("annunci").select("*").execute().data or []
@@ -85,7 +125,9 @@ def mostra_portale():
         if i + 1 < len(annunci_vivi):
             cols[1].markdown(render_card(annunci_vivi[i+1]), unsafe_allow_html=True)
 
-if "job" in st.query_params:
+if "area_assunzione" in st.query_params:
+    gestisci_area_assunzione()
+elif "job" in st.query_params:
     st.write("Redirect al form...")
 else:
     mostra_portale()
