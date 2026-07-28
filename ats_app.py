@@ -1175,23 +1175,25 @@ else:
             # 1. Rilettura annunci real-time da Supabase
             res_vetrina_live = supabase.table("annunci").select("*").execute()
             elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
-            annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
+            
+            # Mostriamo tutti gli annunci che non sono esplicitamente sospesi
+            annunci_vivi = [a for a in elenco_live if str(a.get("stato", "")).lower() != "sospeso"]
 
-            # Estrazione liste per i filtri dinamici della barra di ricerca
-            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
-            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
+            # Estrazione liste per i filtri dinamici
+            ruoli_disponibili = sorted(list(set([str(a["posizione"]) for a in annunci_vivi if a.get("posizione")])))
+            citta_disponibili = sorted(list(set([str(a["sede"]) for a in annunci_vivi if a.get("sede")])))
 
             # --- LIVELLO 1: TOP 7 IN VETRINA ---
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True", "Sì", "SI"]][:7]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
-                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
+                st.info("Nessun annuncio in evidenza impostato al momento.")
             else:
-                cols = st.columns(7)
+                cols = st.columns(min(len(annunci_flag_vetrina), 7))
                 for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a.get('id')}"
                     
                     with cols[index]:
                         st.markdown(f'''
@@ -1209,15 +1211,12 @@ else:
             # --- BARRA DI RICERCA AVANZATA ---
             col_search1, col_search2 = st.columns(2)
             with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
+                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili, key="filtro_ruolo_vett")
             with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
+                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili, key="filtro_citta_vett")
 
-            # Filtriamo l'elenco escludendo la riga in evidenza
-            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if not annunci_filtrati:
-                annunci_filtrati = annunci_vivi
-
+            # Filtriamo gli annunci per la griglia inferiore
+            annunci_filtrati = list(annunci_vivi)
             if search_ruolo != "Tutti i Ruoli":
                 annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
             if search_citta != "Tutte le Sedi":
