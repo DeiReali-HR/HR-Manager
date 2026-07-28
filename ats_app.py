@@ -1175,25 +1175,26 @@ else:
             # 1. Rilettura annunci real-time da Supabase
             res_vetrina_live = supabase.table("annunci").select("*").execute()
             elenco_live = res_vetrina_live.data if res_vetrina_live.data else []
-            
-            # Mostriamo tutti gli annunci che non sono esplicitamente sospesi
-            annunci_vivi = [a for a in elenco_live if str(a.get("stato", "")).lower() != "sospeso"]
+            annunci_vivi = [a for a in elenco_live if a.get("stato") != "Sospeso"]
 
-            # Estrazione liste per i filtri dinamici
-            ruoli_disponibili = sorted(list(set([str(a["posizione"]) for a in annunci_vivi if a.get("posizione")])))
-            citta_disponibili = sorted(list(set([str(a["sede"]) for a in annunci_vivi if a.get("sede")])))
+            # Estrazione liste per i filtri dinamici della barra di ricerca
+            ruoli_disponibili = sorted(list(set([a["posizione"] for a in annunci_vivi if a.get("posizione")])))
+            citta_disponibili = sorted(list(set([a["sede"] for a in annunci_vivi if a.get("sede")])))
 
-            # --- LIVELLO 1: TOP 7 IN VETRINA ---
-            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True", "Sì", "SI"]][:7]
+            # --- LIVELLO 1: TOP 7 IN VETRINA (Modificato per ingrandire le immagini) ---
+            # Limitiamo a 7 annunci per avere più spazio per ciascuno
+            annunci_flag_vetrina = [a for a in annunci_vivi if a.get("in_evidenza") in [True, 1, "true", "True"]][:7]
             
             st.markdown("### 🌟 In Vetrina (Selezionati)")
             if not annunci_flag_vetrina:
-                st.info("Nessun annuncio in evidenza impostato al momento.")
+                st.info("Spunta il flag all'interno della gestione annunci per inserire offerte in questa riga superiore.")
             else:
-                cols = st.columns(min(len(annunci_flag_vetrina), 7))
+                # Creiamo 7 colonne invece di 8 per rendere le immagini più grandi
+                cols = st.columns(7)
+                
                 for index, a in enumerate(annunci_flag_vetrina):
                     img_v_url = a.get("foto_vetrina") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a.get('id')}"
+                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
                     
                     with cols[index]:
                         st.markdown(f'''
@@ -1211,18 +1212,21 @@ else:
             # --- BARRA DI RICERCA AVANZATA ---
             col_search1, col_search2 = st.columns(2)
             with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili, key="filtro_ruolo_vett")
+                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
             with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili, key="filtro_citta_vett")
+                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
 
-            # Filtriamo gli annunci per la griglia inferiore
-            annunci_filtrati = list(annunci_vivi)
+            # Filtriamo l'elenco escludendo la riga in evidenza
+            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
+            if not annunci_filtrati:
+                annunci_filtrati = annunci_vivi
+
             if search_ruolo != "Tutti i Ruoli":
                 annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
             if search_citta != "Tutte le Sedi":
                 annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
-            # --- GESTIONE DELLE PAGINE ---
+            # --- GESTIONE DELLE PAGINE (MAX 5 FILE DI 2 COLONNE = 10 ANNUNCI MAX PER PAGINA) ---
             CONTEGGIO_PER_PAGINA = 10  
             totale_annunci_filtrati = len(annunci_filtrati)
             
@@ -1234,35 +1238,46 @@ else:
                 if pagine_totali > 1:
                     col_pag1, col_pag2 = st.columns([4, 1])
                     with col_pag2:
-                        pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1, key="paginazione_vetrina")
+                        pagina_corrente = st.number_input(f"Pagina (di {pagine_totali})", min_value=1, max_value=pagine_totali, value=1, step=1)
                 
                 inizio_index = (pagina_corrente - 1) * CONTEGGIO_PER_PAGINA
                 fine_index = inizio_index + CONTEGGIO_PER_PAGINA
                 annunci_da_mostrare = annunci_filtrati[inizio_index:fine_index]
 
-                # --- GRIGLIA A DUE COLONNE HTML PURA (SENZA CONFLITTI STREAMLIT) ---
-                html_griglia = "<div class='showcase-grid-2columns'>"
-                for a in annunci_da_mostrare:
-                    img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
-                    link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
-                    
-                    html_griglia += f"""
-                    <div class="showcase-card-row">
-                        <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
-                        <div class="showcase-content-side">
-                            <div class="showcase-scrollable-body">
-                                <div class="showcase-title">{a.get('posizione', 'Posizione Aperta')}</div>
-                                <div class="showcase-meta-grid">
-                                    <span>📍 {a.get('sede', 'Roma')}</span>
-                                    <span>💼 {a.get('inquadramento', 'RAL')}</span>
-                                    <span>💸 {a.get('importo', 'N/D')} €</span>
-                                </div>
-                                <div class="showcase-text">{a.get('note', '')}</div>
-                            </div>
-                            <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗️</a>
-                        </div>
-                    </div>
-                    """
-                html_griglia += "</div>"
+                # --- GRIGLIA A DUE COLONNE AFFIANCATE ---
+                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
+                # Raggruppa gli annunci in coppie
+                def chunk_list(lst, n):
+                    for i in range(0, len(lst), n):
+                        yield lst[i:i + n]
                 
-                st.markdown(html_griglia, unsafe_allow_html=True)
+                st.markdown("<div class='showcase-grid-2columns'>", unsafe_allow_html=True)
+                
+                # Iteriamo su coppie di annunci
+                for pair in chunk_list(annunci_da_mostrare, 2):
+                    # Creiamo una riga Streamlit per ogni coppia
+                    cols = st.columns(2)
+                    for i, a in enumerate(pair):
+                        with cols[i]:
+                            img_a_url = a.get("foto_annuncio") or a.get("immagine") or "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=395"
+                            link_candidatura = f"https://deireali-hr.streamlit.app/?job={a['id']}"
+                            
+                            st.markdown(f"""
+                            <div class="showcase-card-row">
+                                <div class="showcase-img-side" style="background-image: url('{img_a_url}');"></div>
+                                <div class="showcase-content-side">
+                                    <div class="showcase-scrollable-body">
+                                        <div class="showcase-title">{a['posizione']}</div>
+                                        <div class="showcase-meta-grid">
+                                            <span>📍 {a.get('sede', 'Roma')}</span>
+                                            <span>💼 {a.get('inquadramento', 'RAL')}</span>
+                                            <span>💸 {a.get('importo', 'N/D')} €</span>
+                                        </div>
+                                        <div class="showcase-text">{a.get('note', '')}</div>
+                                    </div>
+                                    <a href="{link_candidatura}" target="_blank" class="showcase-btn">CANDIDATI ORA ↗️</a>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
