@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import streamlit as st
 from supabase import create_client
 
@@ -57,11 +58,14 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Caricamento immagine direttamente dalla cartella pages/ insieme al file
-    if os.path.exists("testata.png"):
-        st.image("testata.png", use_container_width=True)
-    elif os.path.exists("../testata.png"):
-        st.image("../testata.png", use_container_width=True)
+    # Ricerca e caricamento sicuro del file binario dell'immagine testata.png
+    percorso_img = Path(__file__).resolve().parent / "testata.png"
+    if not percorso_img.exists():
+        percorso_img = Path(__file__).resolve().parent.parent / "testata.png"
+
+    if percorso_img.exists():
+        with open(percorso_img, "rb") as f:
+            st.image(f.read(), use_container_width=True)
     else:
         st.markdown("""
             <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
@@ -70,7 +74,7 @@ def gestisci_area_assunzione():
             </div>
         """, unsafe_allow_html=True)
     
-    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2rem; margin-top: 20px;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 20px;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     if "autenticato_assunzione" not in st.session_state:
