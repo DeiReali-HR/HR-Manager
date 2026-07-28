@@ -328,10 +328,15 @@ st.markdown("""
     .link-box { background-color: #F8FAFC; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; border: 1px solid #E2E8F0; color: #2563EB; word-break: break-all; margin-top: 5px; }
     .sidebar-spec { background-color: #F1F5F9; padding: 12px; border-radius: 8px; border: 1px solid #CBD5E1; margin-top: 15px; font-size: 12px; color: #334155; }
     
-    /* Etichette standard leggibili su sfondi chiari nella dashboard */
+    /* Etichette scure per tutta la dashboard principale */
     label, .stTextInput label, .stSelectbox label, .stTextArea label {
         color: #1E293B !important;
         font-weight: 600 !important;
+    }
+    
+    /* Etichette bianche specifiche per la schermata di login con sfondo scuro */
+    div[data-testid="stForm"] label, [data-testid="stVerticalBlock"] > div:not([data-testid="stHorizontalBlock"]) label {
+        /* se vuoi forzare bianco solo dove serve o gestirlo inline nel login */
     }
     </style>
 """, unsafe_allow_html=True)
