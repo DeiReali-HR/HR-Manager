@@ -352,6 +352,23 @@ if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando =
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
 # AGGIUNTA LOGICA ASSUNZIONE
 if "area_assunzione" in st.query_params:
+    
+    # Caricamento sicuro dell'immagine testata.png dalla root principale
+    percorso_img = Path(__file__).resolve().parent / "testata.png"
+    if not percorso_img.exists():
+        percorso_img = Path(__file__).resolve().parent / "pages" / "testata.png"
+
+    if percorso_img.exists():
+        with open(percorso_img, "rb") as f:
+            st.image(f.read(), use_container_width=True)
+    else:
+        st.markdown("""
+            <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
+                <h2 style='font-family: Playfair Display, serif; margin:0; font-size: 1.8rem;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
+                <p style='margin: 8px 0 0 0; font-size: 0.95rem; color: #94a3b8; letter-spacing: 1px;'>PERSONE GIUSTE. VALORE REALE. FUTURO CONDIVISO.</p>
+            </div>
+        """, unsafe_allow_html=True)
+
     st.subheader("Area Riservata Assunzioni")
     if "autenticato_assunzione" not in st.session_state:
         st.session_state.autenticato_assunzione = False
