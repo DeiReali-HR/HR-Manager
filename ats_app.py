@@ -1219,9 +1219,9 @@ else:
                 annunci_filtrati = annunci_vivi
 
             if search_ruolo != "Tutti i Ruoli":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione"] == search_ruolo]
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
             if search_citta != "Tutte le Sedi":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede"] == search_citta]
+                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
 
             # --- GESTIONE DELLE PAGINE ---
             CONTEGGIO_PER_PAGINA = 10  
