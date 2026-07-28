@@ -1,6 +1,6 @@
+import os
 import streamlit as st
 from supabase import create_client
-import os
 
 # Configurazione
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
@@ -57,18 +57,12 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Verifica multipla dei percorsi possibili per trovare testata.png sia nella root che in pages
-    possibili_percorsi = ["testata.png", "../testata.png", "./testata.png"]
-    immagine_trovata = False
-    
-    for p in possibili_percorsi:
-        if os.path.exists(p):
-            st.image(p, use_container_width=True)
-            immagine_trovata = True
-            break
-            
-    if not immagine_trovata:
-        # Fallback grafico elegante se l'immagine non viene intercettata
+    # Caricamento immagine direttamente dalla cartella pages/ insieme al file
+    if os.path.exists("testata.png"):
+        st.image("testata.png", use_container_width=True)
+    elif os.path.exists("../testata.png"):
+        st.image("../testata.png", use_container_width=True)
+    else:
         st.markdown("""
             <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
                 <h2 style='font-family: Playfair Display, serif; margin:0; font-size: 1.8rem;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
