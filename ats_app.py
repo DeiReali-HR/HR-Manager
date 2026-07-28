@@ -43,6 +43,18 @@ def init_supabase():
 
 supabase = init_supabase()
 
+# --- SISTEMA KEEP-ALIVE INTEGRATO PER EVITARE LO STANDBY ---
+import streamlit.components.v1 as components
+
+components.html("""
+    <script>
+        // Invia un piccolo comando invisibile ogni 4 minuti per mantenere la sessione attiva
+        setInterval(function() {
+            fetch(window.location.href);
+        }, 240000);
+    </script>
+""", height=0, width=0)
+
 def mostra_form_assunzione():
     global supabase  
     
