@@ -350,16 +350,14 @@ if 'ai_generated_text' not in st.session_state: st.session_state.ai_generated_te
 if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando = False
     
 # --- PORTALE PUBBLICO CONTROLLO CANDIDATURA ---
-# AGGIUNTA LOGICA ASSUNZIONE
+# --- DEBUG AREA ASSUNZIONE ---
 if "area_assunzione" in st.query_params:
-    # Banner grafico testuale di test (funziona sempre, senza file esterni)
     st.markdown("""
-        <div style='background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px; border-radius: 10px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-            <h1 style='font-family: Playfair Display, serif; margin: 0; font-size: 2.2rem; letter-spacing: 1px;'>DEI REALI</h1>
-            <p style='margin: 10px 0 0 0; font-size: 1rem; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase;'>Area Riservata Assunzioni</p>
+        <div style='background-color: red; padding: 30px; text-align: center; color: white; font-size: 24px; font-weight: bold;'>
+            TEST FUNZIONAMENTO AREA ASSUNZIONE
         </div>
     """, unsafe_allow_html=True)
-
+    
     st.subheader("Area Riservata Assunzioni")
     if "autenticato_assunzione" not in st.session_state:
         st.session_state.autenticato_assunzione = False
