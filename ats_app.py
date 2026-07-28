@@ -353,14 +353,18 @@ if 'ia_sta_pensando' not in st.session_state: st.session_state.ia_sta_pensando =
 # AGGIUNTA LOGICA ASSUNZIONE
 if "area_assunzione" in st.query_params:
     
-    # Caricamento sicuro dell'immagine testata.png dalla root principale
+    # Caricamento dell'immagine tramite Base64 (garantito al 100%)
+    import base64
+    from pathlib import Path
+    
     percorso_img = Path(__file__).resolve().parent / "testata.png"
     if not percorso_img.exists():
         percorso_img = Path(__file__).resolve().parent / "pages" / "testata.png"
 
     if percorso_img.exists():
         with open(percorso_img, "rb") as f:
-            st.image(f.read(), use_container_width=True)
+            data_b64 = base64.b64encode(f.read()).decode("utf-8")
+        st.markdown(f'<img src="data:image/png;base64,{data_b64}" style="width: 100%; border-radius: 8px; margin-bottom: 20px;">', unsafe_allow_html=True)
     else:
         st.markdown("""
             <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
