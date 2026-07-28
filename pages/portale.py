@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 import streamlit as st
 from supabase import create_client
 
@@ -58,21 +56,12 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Ricerca e caricamento sicuro del file binario dell'immagine testata.png
-    percorso_img = Path(__file__).resolve().parent / "testata.png"
-    if not percorso_img.exists():
-        percorso_img = Path(__file__).resolve().parent.parent / "testata.png"
-
-    if percorso_img.exists():
-        with open(percorso_img, "rb") as f:
-            st.image(f.read(), use_container_width=True)
-    else:
-        st.markdown("""
-            <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
-                <h2 style='font-family: Playfair Display, serif; margin:0; font-size: 1.8rem;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
-                <p style='margin: 8px 0 0 0; font-size: 0.95rem; color: #94a3b8; letter-spacing: 1px;'>PERSONE GIUSTE. VALORE REALE. FUTURO CONDIVISO.</p>
-            </div>
-        """, unsafe_allow_html=True)
+    # Visualizzazione garantita tramite tag HTML img con link diretto al file su GitHub o percorso statico
+    st.markdown("""
+        <div style="width: 100%; text-align: center; margin-bottom: 20px;">
+            <img src="https://raw.githubusercontent.com/DeiReali-HR/HR-Manager/main/testata.png" style="width: 100%; border-radius: 8px;" onerror="this.style.display='none'">
+        </div>
+    """, unsafe_allow_html=True)
     
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 20px;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
