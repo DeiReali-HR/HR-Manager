@@ -1209,22 +1209,28 @@ else:
             st.markdown("---")
             st.markdown("### 📋 Tutte le Posizioni Aperte")
 
-            # --- BARRA DI RICERCA AVANZATA ---
+            # --- BARRA DI RICERCA AVANZATA CON GESTIONE ROBUSTA ---
             col_search1, col_search2 = st.columns(2)
             with col_search1:
-                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili)
+                search_ruolo = st.selectbox("🔍 Cosa stai cercando? (Qualifica)", ["Tutti i Ruoli"] + ruoli_disponibili, key="filtro_ruolo_vett")
             with col_search2:
-                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili)
+                search_citta = st.selectbox("📍 Dove? (Città / Sede)", ["Tutte le Sedi"] + citta_disponibili, key="filtro_citta_vett")
 
-            # Filtriamo l'elenco escludendo la riga in evidenza
-            annunci_filtrati = [a for a in annunci_vivi if a.get("in_evidenza") not in [True, 1, "true", "True"]]
-            if not annunci_filtrati:
-                annunci_filtrati = annunci_vivi
+            # Partiamo da tutti gli annunci vivi
+            annunci_filtrati = list(annunci_vivi)
 
+            # Filtro per ruolo (ignorando eventuali spazi o maiuscole/minuscole se necessario)
             if search_ruolo != "Tutti i Ruoli":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("posizione") == search_ruolo]
+                annunci_filtrati = [a for a in annunci_filtrati if str(a.get("posizione", "")).strip() == str(search_ruolo).strip()]
+
+            # Filtro per sede
             if search_citta != "Tutte le Sedi":
-                annunci_filtrati = [a for a in annunci_filtrati if a.get("sede") == search_citta]
+                annunci_filtrati = [a for a in annunci_filtrati if str(a.get("sede", "")).strip() == str(search_citta).strip()]
+
+            # Se per qualsiasi motivo i filtri escludono tutto ma ci sono annunci, ripristiniamo la visualizzazione di sicurezza
+            if not annunci_filtrati and annunci_vivi:
+                st.warning("Nessun annuncio trovato con i filtri esatti selezionati. Mostriamo tutti gli annunci disponibili:")
+                annunci_filtrati = list(annunci_vivi)
 
             # --- GESTIONE DELLE PAGINE (MAX 5 FILE DI 2 COLONNE = 10 ANNUNCI MAX PER PAGINA) ---
             CONTEGGIO_PER_PAGINA = 10  
