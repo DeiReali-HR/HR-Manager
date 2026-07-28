@@ -1,8 +1,6 @@
-import os
-from pathlib import Path
 import streamlit as st
 from supabase import create_client
-import streamlit.components.v1 as components
+import os
 
 # Configurazione
 supabase = create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
@@ -59,20 +57,22 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Ricerca dinamica del file testata.png nella cartella corrente o nella cartella superiore (root)
-    base_path = Path(__file__).resolve().parent
-    path_img1 = base_path / "testata.png"
-    path_img2 = base_path.parent / "testata.png"
-
-    if path_img1.exists():
-        st.image(str(path_img1), use_container_width=True)
-    elif path_img2.exists():
-        st.image(str(path_img2), use_container_width=True)
-    else:
+    # Verifica multipla dei percorsi possibili per trovare testata.png sia nella root che in pages
+    possibili_percorsi = ["testata.png", "../testata.png", "./testata.png"]
+    immagine_trovata = False
+    
+    for p in possibili_percorsi:
+        if os.path.exists(p):
+            st.image(p, use_container_width=True)
+            immagine_trovata = True
+            break
+            
+    if not immagine_trovata:
+        # Fallback grafico elegante se l'immagine non viene intercettata
         st.markdown("""
-            <div style='background-color: #0f172a; padding: 30px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
-                <h2 style='font-family: Playfair Display, serif; margin:0;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
-                <p style='margin: 5px 0 0 0; font-size: 0.9rem; color: #94a3b8;'>Persone giuste. Valore reale. Futuro condiviso.</p>
+            <div style='background-color: #0f172a; padding: 35px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
+                <h2 style='font-family: Playfair Display, serif; margin:0; font-size: 1.8rem;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
+                <p style='margin: 8px 0 0 0; font-size: 0.95rem; color: #94a3b8; letter-spacing: 1px;'>PERSONE GIUSTE. VALORE REALE. FUTURO CONDIVISO.</p>
             </div>
         """, unsafe_allow_html=True)
     
