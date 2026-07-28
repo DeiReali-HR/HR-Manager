@@ -57,7 +57,10 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2rem;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
+    # Immagine di testata posizionata in cima
+    st.image("testata.png", use_container_width=True)
+    
+    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2rem; margin-top: 20px;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
     
     if "autenticato_assunzione" not in st.session_state:
@@ -90,7 +93,6 @@ def gestisci_area_assunzione():
             st.rerun()
 
 def mostra_portale():
-    # Intestazione con titolo e pulsante rapido per l'Area Assunzioni in testata
     col_tit, col_btn = st.columns([3, 1])
     with col_tit:
         st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2.2rem; margin-top: 0; margin-bottom: 5px;">Opportunità di Carriera</h1>', unsafe_allow_html=True)
