@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from supabase import create_client
 import streamlit.components.v1 as components
@@ -57,8 +58,18 @@ def render_card(a):
     """
 
 def gestisci_area_assunzione():
-    # Immagine di testata posizionata in cima
-    st.image("testata.png", use_container_width=True)
+    # Caricamento immagine dalla root principale del repository
+    if os.path.exists("../testata.png"):
+        st.image("../testata.png", use_container_width=True)
+    elif os.path.exists("testata.png"):
+        st.image("testata.png", use_container_width=True)
+    else:
+        st.markdown("""
+            <div style='background-color: #0f172a; padding: 30px; border-radius: 8px; text-align: center; color: white; margin-bottom: 20px;'>
+                <h2 style='font-family: Playfair Display, serif; margin:0;'>DEI REALI - PROCESSO DI ASSUNZIONE</h2>
+                <p style='margin: 5px 0 0 0; font-size: 0.9rem; color: #94a3b8;'>Persone giuste. Valore reale. Futuro condiviso.</p>
+            </div>
+        """, unsafe_allow_html=True)
     
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-size: 2rem; margin-top: 20px;">🔐 Area Riservata Assunzioni</h1>', unsafe_allow_html=True)
     st.markdown('<div class="riga-blu"></div>', unsafe_allow_html=True)
@@ -67,8 +78,8 @@ def gestisci_area_assunzione():
         st.session_state.autenticato_assunzione = False
 
     if not st.session_state.autenticato_assunzione:
-        codice_input = st.text_input("Inserisci il codice di accesso riservato:", type="password")
-        if st.button("Accedi all'Area"):
+        codice_input = st.text_input("Inserisci il codice di accesso:", type="password")
+        if st.button("Accedi"):
             if codice_input == "AS2026Reali@":
                 st.session_state.autenticato_assunzione = True
                 st.rerun()
